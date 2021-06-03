@@ -210,9 +210,8 @@ pois_mash <- function(data, Ulist, ulist, ulist.epsilon2=NULL, normalizeU=TRUE, 
 
   const <- sum(data%*%log(s)) - sum(lgamma(data+1))
   
-  if(verbose){
+  if(verbose)
     cat("Start fitting Poisson mash model.\n")
-  }
   
   # J x K x R arrays to store the posterior mean gamma_jklr
   gamma <- array(NA, c(J, K, R))
@@ -223,7 +222,7 @@ pois_mash <- function(data, Ulist, ulist, ulist.epsilon2=NULL, normalizeU=TRUE, 
   ELBOs <- matrix(0, nrow=J, ncol=K)
   tmp.mu <- array(0, c(J, K, M))
   tmp.psi2 <- matrix(0, nrow=J, ncol=K)
-  
+
   for(j in 1:J){
     if(H > 0){
       hl <- 0
@@ -245,6 +244,8 @@ pois_mash <- function(data, Ulist, ulist, ulist.epsilon2=NULL, normalizeU=TRUE, 
         }
       }      
     }
+
+    cat("*")
     
     gl <- 0
     for(g in 1:G){
@@ -280,7 +281,7 @@ pois_mash <- function(data, Ulist, ulist, ulist.epsilon2=NULL, normalizeU=TRUE, 
       }
     }
   }
-  
+
   # update zeta
   ELBOs.cen <- ELBOs - apply(ELBOs, 1, max)
   zeta <- t(t(exp(ELBOs.cen)) * pi)
@@ -292,7 +293,6 @@ pois_mash <- function(data, Ulist, ulist, ulist.epsilon2=NULL, normalizeU=TRUE, 
   for(r in 1:R){
     tmp.ruv[,r] <- rowSums(zeta*exp(A[,,r]))
   }
-  
   
   # store the overall ELBO at each iteration
   ELBOs.overall <- c()
