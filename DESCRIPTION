@@ -1,7 +1,7 @@
 Encoding: UTF-8
 Type: Package
 Package: poisson.mash.alpha
-Version: 0.1-0
+Version: 0.1-1
 Date: 2021-06-15
 Title: Poisson Multivariate Adaptive Shrinkage
 Authors@R: c(person("Yusha","Liu",role=c("aut","cre"),
@@ -20,5 +20,7 @@ Description: Implements Poisson multivariate adaptive shrinkage
     package for better modeling count data in a range of realistic 
     settings.
 License: MIT + file LICENSE
+Imports:
+    Matrix
 NeedsCompilation: no
 RoxygenNote: 7.1.1

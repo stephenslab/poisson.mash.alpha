@@ -26,10 +26,14 @@
 #' 
 #' \item{subgroup}{R x 1 factor vector with M levels denoting the
 #'   subgroup status of each of R conditions.}
+#'
+#' @import Matrix
+#' @importFrom Matrix rowSums
+#' @importFrom Matrix colSums
 #' 
 #' @export
 #' 
-pois_mash_set_data <- function(Y, condition, si, subgroup=NULL) {
+pois_mash_set_data <- function (Y, condition, si, subgroup=NULL) {
   
   if (ncol(Y) != length(condition))
     stop("The number of columns of Y and the length of condition do not match")
@@ -57,9 +61,9 @@ pois_mash_set_data <- function(Y, condition, si, subgroup=NULL) {
   names(s) <- trts
   
   for(r in 1:R) {
-    Y.tmp <- Y[, condition==trts[r]]
+    Y.tmp <- Y[, condition == trts[r]]
     X[,r] <- rowSums(Y.tmp)
-    s[r] <- sum(si[condition==trts[r]])
+    s[r] <- sum(si[condition == trts[r]])
   }
   
   data <- list(X=X, s=s/min(s), subgroup=subgroup)
