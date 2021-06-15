@@ -6,7 +6,7 @@
 #'   features (e.g., genes) as rows and observations (e.g., cells) as
 #'   columns. Y should have at least 2 rows and 2 columns.
 #' 
-#' @param condition Factor of length N wiith R levels giving the
+#' @param condition Factor of length N with R > 1 levels giving the
 #'   condition for each observation.
 #' 
 #' @param si Numeric vector of length N containing the size factors for
@@ -23,8 +23,7 @@
 #' \item{X}{J x R matrix of count data collapsed over conditions, with
 #'   features as rows and conditions as columns.}
 #' 
-#' \item{s}{R x 1 numeric vector adjusting for sequencing depth of
-#'   each of R conditions.}
+#' \item{s}{Vector of \dQuote{sequencing depths} for the R conditions.}
 #' 
 #' \item{subgroup}{R x 1 factor vector with M levels denoting the
 #'   subgroup status of each of R conditions.}
@@ -68,13 +67,17 @@ pois_mash_set_data <- function (Y, condition, si = colSums(Y),
   if (is.null(names(condition)))
     names(condition) <- colnames(Y)
   else if (colnames(Y) != names(condition))
-    stop("names(condition) do not match colnames(Y)")
+    stop("names(condition) does not match colnames(Y)")
       
   # Check and process input "si".
   if (!(is.numeric(si) & all(si > 0) & ncol(Y) == length(si)))
     stop("Input \"si\" should be a numeric vector with one entry for each ",
          "column of Y")
-
+  if (is.null(names(si)))
+    names(si) <- colnames(Y)
+  else if (colnames(Y) != names(si))
+    stop("names(si) does not match colnames(Y)")
+  
   # Check and process input "subgroup".
   # subgroup <- subgroup[order(names(subgroup))]
   # if(sum(trts != names(subgroup)) > 0)
@@ -86,10 +89,12 @@ pois_mash_set_data <- function (Y, condition, si = colSums(Y),
   colnames(X) <- trts
   s <- tapply(si,condition,sum)
   names(s) <- trts
-  for(r in 1:R) 
-    X[,r] <- rowSums(Y[, condition == trts[r], drop = FALSE])
+  for (r in trts) 
+    X[, r] <- rowSums(Y[, condition == r, drop = FALSE])
 
+  # Output the summary data in the format expected by other Poisson
+  # mash functions.
   dat <- list(X=X, s=s/min(s), subgroup=subgroup)
-  class(dat) <- c("pois.mash","list")
+  class(dat) <- c("pois.mash", "list")
   return(dat)
 }

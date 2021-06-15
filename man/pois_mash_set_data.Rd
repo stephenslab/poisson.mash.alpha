@@ -16,7 +16,7 @@ pois_mash_set_data(
 features (e.g., genes) as rows and observations (e.g., cells) as
 columns. Y should have at least 2 rows and 2 columns.}
 
-\item{condition}{Factor of length N wiith R levels giving the
+\item{condition}{Factor of length N with R > 1 levels giving the
 condition for each observation.}
 
 \item{si}{Numeric vector of length N containing the size factors for
@@ -34,14 +34,13 @@ A pois.mash data object for poisson mash analysis. It is a list
 \item{X}{J x R matrix of count data collapsed over conditions, with
   features as rows and conditions as columns.}
 
-\item{s}{R x 1 numeric vector adjusting for sequencing depth of
-  each of R conditions.}
+\item{s}{Vector of \dQuote{sequencing depths} for the R conditions.}
 
 \item{subgroup}{R x 1 factor vector with M levels denoting the
   subgroup status of each of R conditions.}
 }
 \description{
-Add slightly more detailed description here.
+Prepare count data for an analysis with Poisson mash.
 }
 \examples{
 # Add examples here.
