@@ -1,19 +1,20 @@
 #' @title Create Data Oject for Poisson Mash Analysis
 #'
-#' @description Add description here.
+#' @description Add slightly more detailed description here.
 #' 
-#' @param Y A J by N matrix of counts with features (e.g., genes) as
-#'   rows and observations (e.g., cells) as columns
+#' @param Y J x N matrix of counts with features (e.g., genes) as
+#'   rows and observations (e.g., cells) as columns.
 #' 
-#' @param condition An N by 1 vector of factors with R levels denoting
-#'   the condition status of each observation
+#' @param condition Factor of length N with R levels denoting
+#'   the condition status of each observation.
 #' 
-#' @param si An N by 1 vector of size factors for each observation 
+#' @param si Numeric vector of length N containing the size factor for
+#'   each of the N observations.
 #' 
-#' @param subgroup An R by 1 named vector of factors with M levels
-#'   denoting the subgroup status of each of R conditions.  Default to
-#'   no subgroup (M=1). If not set to \code{NULL}, the names of subgroup
-#'   must match the levels of condition.
+#' @param subgroup Named vector of factors with M levels denoting the
+#'   subgroup status of each of R conditions.  Default to no subgroup
+#'   (M=1). If not set to \code{NULL}, the names of subgroup must match
+#'   the levels of condition.
 #' 
 #' @return A pois.mash data object for poisson mash analysis,
 #'   including the following components:
@@ -27,14 +28,20 @@
 #' \item{subgroup}{R x 1 factor vector with M levels denoting the
 #'   subgroup status of each of R conditions.}
 #'
+#' @seealso
+#'
+#' @example
+#' # Add examples here.
+#' 
 #' @import Matrix
 #' @importFrom Matrix rowSums
 #' @importFrom Matrix colSums
 #' 
 #' @export
 #' 
-pois_mash_set_data <- function (Y, condition, si, subgroup=NULL) {
-  
+pois_mash_set_data <- function (Y, condition, si, subgroup = NULL) {
+
+  # Check and process the inputs.
   if (ncol(Y) != length(condition))
     stop("The number of columns of Y and the length of condition do not match")
   if (ncol(Y) != length(si))
@@ -53,7 +60,7 @@ pois_mash_set_data <- function (Y, condition, si, subgroup=NULL) {
     names(subgroup) <- trts
   }
 
-  # Aggregate the cell level data into condition level data.
+  # Aggregate the individual-level data into condition-level data.
   X <- matrix(as.numeric(NA), nrow=J, ncol=R)
   rownames(X) <- rownames(Y)
   colnames(X) <- trts
@@ -61,12 +68,12 @@ pois_mash_set_data <- function (Y, condition, si, subgroup=NULL) {
   names(s) <- trts
   
   for(r in 1:R) {
-    Y.tmp <- Y[, condition == trts[r]]
-    X[,r] <- rowSums(Y.tmp)
-    s[r] <- sum(si[condition == trts[r]])
+    j <- which(condition == trts[r])
+    X[,r] <- rowSums(Y[, j])
+    s[r] <- sum(si[j])
   }
   
-  data <- list(X=X, s=s/min(s), subgroup=subgroup)
-  class(data) <- "pois.mash"
-  return(data)
+  dat <- list(X=X, s=s/min(s), subgroup=subgroup)
+  class(dat) <- c("pois.mash","list")
+  return(dat)
 }

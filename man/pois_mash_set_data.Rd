@@ -7,18 +7,19 @@
 pois_mash_set_data(Y, condition, si, subgroup = NULL)
 }
 \arguments{
-\item{Y}{A J by N matrix of counts with features (e.g., genes) as
-rows and observations (e.g., cells) as columns}
+\item{Y}{J x N matrix of counts with features (e.g., genes) as
+rows and observations (e.g., cells) as columns.}
 
-\item{condition}{An N by 1 vector of factors with R levels denoting
-the condition status of each observation}
+\item{condition}{Factor of length N with R levels denoting
+the condition status of each observation.}
 
-\item{si}{An N by 1 vector of size factors for each observation}
+\item{si}{Numeric vector of length N containing the size factor for
+each of the N observations.}
 
-\item{subgroup}{An R by 1 named vector of factors with M levels
-denoting the subgroup status of each of R conditions.  Default to
-no subgroup (M=1). If not set to \code{NULL}, the names of subgroup
-must match the levels of condition.}
+\item{subgroup}{Named vector of factors with M levels denoting the
+subgroup status of each of R conditions.  Default to no subgroup
+(M=1). If not set to \code{NULL}, the names of subgroup must match
+the levels of condition.}
 }
 \value{
 A pois.mash data object for poisson mash analysis,
@@ -34,5 +35,8 @@ A pois.mash data object for poisson mash analysis,
   subgroup status of each of R conditions.}
 }
 \description{
-Add description here.
+Add slightly more detailed description here.
+}
+\seealso{
+
 }
