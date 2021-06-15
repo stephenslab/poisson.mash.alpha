@@ -16,8 +16,8 @@
 #'   (M=1). If not set to \code{NULL}, the names of subgroup must match
 #'   the levels of condition.
 #' 
-#' @return A pois.mash data object for poisson mash analysis,
-#'   including the following components:
+#' @return A pois.mash data object for poisson mash analysis. It is a list
+#'   with the following components:
 #' 
 #' \item{X}{J x R matrix of count data collapsed over conditions, with
 #'   features as rows and conditions as columns.}
@@ -34,8 +34,6 @@
 #' # Add examples here.
 #' 
 #' @import Matrix
-#' @importFrom Matrix rowSums
-#' @importFrom Matrix colSums
 #' 
 #' @export
 #' 
@@ -64,15 +62,11 @@ pois_mash_set_data <- function (Y, condition, si, subgroup = NULL) {
   X <- matrix(as.numeric(NA), nrow=J, ncol=R)
   rownames(X) <- rownames(Y)
   colnames(X) <- trts
-  s <- rep(as.numeric(NA), R)
+  s <- tapply(si,condition,sum)
   names(s) <- trts
-  
-  for(r in 1:R) {
-    j <- which(condition == trts[r])
-    X[,r] <- rowSums(Y[, j])
-    s[r] <- sum(si[j])
-  }
-  
+  for(r in 1:R) 
+    X[,r] <- rowSums(Y[, condition == trts[r], drop = FALSE])
+
   dat <- list(X=X, s=s/min(s), subgroup=subgroup)
   class(dat) <- c("pois.mash","list")
   return(dat)

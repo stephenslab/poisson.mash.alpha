@@ -2,5 +2,3 @@
 
 export(pois_mash_set_data)
 import(Matrix)
-importFrom(Matrix,colSums)
-importFrom(Matrix,rowSums)

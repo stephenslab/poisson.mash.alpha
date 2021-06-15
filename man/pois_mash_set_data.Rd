@@ -22,8 +22,8 @@ subgroup status of each of R conditions.  Default to no subgroup
 the levels of condition.}
 }
 \value{
-A pois.mash data object for poisson mash analysis,
-  including the following components:
+A pois.mash data object for poisson mash analysis. It is a list
+  with the following components:
 
 \item{X}{J x R matrix of count data collapsed over conditions, with
   features as rows and conditions as columns.}
