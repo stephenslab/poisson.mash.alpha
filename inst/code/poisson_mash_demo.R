@@ -9,14 +9,14 @@ suppressMessages(suppressWarnings({
 # Read in functions and data
 # --------------------------
 # load in functions to run poisson mash
-source("code/util.R")
-source("code/set_data.R")
-source("code/pois_mash_ruv_prefit.R")
-source("code/pois_cov_init.R")
-source("code/pois_cov_canonical.R")
-source("code/pois_cov_ed.R")
-source("code/pois_mash_ruv.R")
-source("code/pois_mash_posterior.R")
+# source("code/util.R")
+# source("code/set_data.R")
+# source("code/pois_mash_ruv_prefit.R")
+# source("code/pois_cov_init.R")
+# source("code/pois_cov_canonical.R")
+# source("code/pois_cov_ed.R")
+# source("code/pois_mash_ruv.R")
+# source("code/pois_mash_posterior.R")
 
 # Initialize the sequence of pseudorandom numbers.
 set.seed(1)
@@ -36,6 +36,8 @@ si <- computeSumFactors(scdata$Y, clusters=clusters)
 
 # create a data object for poisson mash analysis
 dat <- pois_mash_set_data(scdata$Y, scdata$condition, si)
+
+stop()
 
 # Estimate matrix of latent factors causing unwanted variation
 # ------------------------------------------------------------
