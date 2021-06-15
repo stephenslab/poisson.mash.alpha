@@ -15,7 +15,7 @@
 #' 
 #' @param Fuv J by D matrix of latent factors causing unwanted variation, with features as rows and latent factors as columns
 #' 
-#' @param rho D by R matrix of effects corresponding to unwanted variation, such that bias = Fuv %*% rho
+#' @param rho D by R matrix of effects corresponding to unwanted variation, such that \code{bias = Fuv \%*\% rho}
 #' 
 #' @param wlist L by 1 numeric vector of scaling factors for the prior covariance matrices
 #' 

@@ -16,17 +16,19 @@ pois_cov_init(
 )
 }
 \arguments{
-\item{data}{A pois.mash data object containing the following components:
-\item{X}{J x R matrix of count data collapsed over conditions, with features as rows and conditions as columns.}
-\item{s}{R x 1 numeric vector adjusting for sequencing depth of each of R conditions.}
-\item{subgroup}{R x 1 factor vector with M levels denoting the subgroup status of each of R conditions.}}
+\item{data}{A pois.mash data object containing the following
+components: X, a J x R matrix of count data collapsed over
+conditions, with features as rows and conditions as columns; s, an
+R x 1 numeric vector adjusting for sequencing depth of each of R
+conditions; subgroup, an R x 1 factor vector with M levels denoting
+the subgroup status of each of R conditions.}
 
 \item{ruv}{A logical scalar indicating whether to account for unwanted variation. Default is \code{FALSE}. 
 If \code{TRUE}, Fuv and rho must be provided.}
 
 \item{Fuv}{A J by D matrix of latent factors causing unwanted variation, with features as rows and latent factors as columns}
 
-\item{rho}{A D by R matrix of effects corresponding to unwanted variation, such that bias = Fuv %*% rho}
+\item{rho}{A D by R matrix of effects corresponding to unwanted variation, such that bias = \code{Fuv \%*\% rho}}
 
 \item{prop}{The proportion by which to take a random subset of genes for prior covariance estimation (useful in case of many genes). Default is 1.}
 

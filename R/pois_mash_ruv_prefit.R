@@ -2,10 +2,12 @@
 #' 
 #' @description There is no need to call this function if unwanted variation is not accounted for.
 #' 
-#' @param data A pois.mash data object containing the following components:
-#' \item{X}{J x R matrix of count data collapsed over conditions, with features as rows and conditions as columns.}
-#' \item{s}{R x 1 numeric vector adjusting for sequencing depth of each of R conditions.}
-#' \item{subgroup}{R x 1 factor vector with M levels denoting the subgroup status of each of R conditions.}
+#' @param data A pois.mash data object containing the following
+#' components: X, J x R matrix of count data collapsed over
+#' conditions, with features as rows and conditions as columns; s, R x
+#' 1 numeric vector adjusting for sequencing depth of each of R
+#' conditions; subgroup, R x 1 factor vector with M levels denoting
+#' the subgroup status of each of R conditions.
 #' 
 #' @param Fuv J by D matrix of latent factors causing unwanted variation, with features as rows and latent factors as columns
 #' 
@@ -13,16 +15,19 @@
 #' 
 #' @param init A list of initial values for model parameters which could be empty
 #' 
-#' @param control A list of control parameters with the following elements:
-#' \item{maxiter}{Maximum number of iterations. Default is 100.}
-#' \item{maxiter.q}{Maximum number of inner loop iterations to update variational parameters at each iteration. Default is 25.}
-#' \item{tol.stop}{Tolerance for assessing convergence of prefit, as measured by relative change in ELBO. Default is 1e-6.} 
-#' \item{tol.q}{Relative tolerance for assessing convergence of variational parameters at each iteration. Default is 1e-2.}
-#' \item{tol.rho}{Tolerance for assessing convergence of effects corresponding to unwanted variation. Default is 1e-4.}
+#' @param control A list of control parameters with the following
+#' elements: maxiter, Maximum number of iterations. Default is 100;
+#' maxiter.q, Maximum number of inner loop iterations to update
+#' variational parameters at each iteration. Default is 25; tol.stop,
+#' Tolerance for assessing convergence of prefit, as measured by
+#' relative change in ELBO. Default is 1e-6; tol.q, Relative tolerance
+#' for assessing convergence of variational parameters at each
+#' iteration. Default is 1e-2; tol.rho, Tolerance for assessing
+#' convergence of effects corresponding to unwanted variation. Default
+#' is 1e-4.
 #' 
 #' @return A list with initial estimates of model parameters
-
-
+#'
 pois_mash_ruv_prefit <- function(data, Fuv, verbose=FALSE, init=list(NULL), 
                                  control=list(maxiter=100, maxiter.q=25, tol.q=1e-2, tol.rho=1e-4, tol.stop=1e-6)){
   s <- data$s

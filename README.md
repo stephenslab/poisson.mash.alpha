@@ -8,14 +8,17 @@ mash"). The Poisson mash model and methods are described in
 
 ## Quick Start
 
-Install the latest version of the package from GitHub using
-[remotes][remotes]:
+Clone or download the git repository from GitHub, then install the
+latest version of the package using [remotes][remotes]:
 
 ```R
 install.packages("remotes")
-remotes::install_github("stephenslab/poisson.mash.alpha")
+remotes::install_local("poisson.mash.alpha")
 ```
 
+This assumes that your R working directory contains a local copy of
+the git repository.
+ 
 ## License
 
 Copyright (c) 2021, Yusha Liu, Peter Carbonetto and Matthew

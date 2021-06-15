@@ -25,10 +25,12 @@ pois_mash(
 )
 }
 \arguments{
-\item{data}{A pois.mash data object containing the following components:
-\item{X}{J x R matrix of count data collapsed over conditions, with features as rows and conditions as columns.}
-\item{s}{R x 1 numeric vector adjusting for sequencing depth of each of R conditions.}
-\item{subgroup}{R x 1 factor vector with M levels denoting the subgroup status of each of R conditions.}}
+\item{data}{A pois.mash data object containing the following
+components: X, an J x R matrix of count data collapsed over
+conditions, with features as rows and conditions as columns; s, an
+R x 1 numeric vector adjusting for sequencing depth of each of R
+conditions; subgroup, an R x 1 factor vector with M levels denoting
+the subgroup status of each of R conditions.}
 
 \item{Ulist}{A list of H full-rank covariance matrices (e.g., returned by \code{pois_cov_ed})}
 
@@ -47,7 +49,7 @@ to avoid tight error bars. Default is 1e-8.}
 
 \item{Fuv}{A J by D matrix of latent factors causing unwanted variation, with features as rows and latent factors as columns}
 
-\item{rho}{A D by R matrix of effects corresponding to unwanted variation, such that bias = Fuv %*% rho}
+\item{rho}{A D by R matrix of effects corresponding to unwanted variation, such that \code{bias = Fuv \%*\% rho}.}
 
 \item{update.rho}{A logical scalar indicating whether to update effects corresponding to unwanted variation if ruv is set to \code{TRUE}.
 Default is \code{TRUE}.}
@@ -60,14 +62,19 @@ Default is \code{TRUE}.}
 
 \item{init}{A list of initial values for model parameters (e.g., returned by \code{pois_mash_ruv_prefit}). Could be empty.}
 
-\item{control}{A list of control parameters with the following elements:
-\item{maxiter}{Maximum number of iterations. Default is 500.}
-\item{maxiter.q}{Maximum number of inner loop iterations to update variational parameters at each iteration. Default is 25.}
-\item{tol.mu}{Threshold for mu (gene-specific, subgroup-specific means on the log scale) to skip update. Default is 1e-2.}
-\item{tol.psi2}{Relative threshold for psi2 (gene-specific dispersion parameter) to skip update. Default is 2e-2.}
-\item{tol.bias}{Threshold for bias caused by unwanted variation to skip update. Default is 1e-2.}
-\item{tol.q}{Relative tolerance for assessing convergence of variational parameters at each iteration. Default is 1e-2.}
-\item{tol.rho}{Tolerance for assessing convergence of effects corresponding to unwanted variation. Default is 1e-6.}}
+\item{control}{A list of control parameters with the following
+elements: maxiter, Maximum number of iterations. Default is 500;
+maxiter.q, Maximum number of inner loop iterations to update
+variational parameters at each iteration. Default is 25; tol.mu,
+Threshold for mu (gene-specific, subgroup-specific means on the log
+scale) to skip update. Default is 1e-2; tol.psi2, relative
+threshold for psi2 (gene-specific dispersion parameter) to skip
+update. Default is 2e-2; tol.bias, threshold for bias caused by
+unwanted variation to skip update. Default is 1e-2; tol.q, Relative
+tolerance for assessing convergence of variational parameters at
+each iteration. Default is 1e-2; tol.rho, Tolerance for assessing
+convergence of effects corresponding to unwanted variation. Default
+is 1e-6.}
 }
 \value{
 A list with the following elements:

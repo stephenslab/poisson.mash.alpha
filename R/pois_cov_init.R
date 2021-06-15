@@ -1,16 +1,18 @@
 #' @title Initialize data-driven prior covariance matrices based on principal component analysis
 #' 
-#' @param data A pois.mash data object containing the following components:
-#' \item{X}{J x R matrix of count data collapsed over conditions, with features as rows and conditions as columns.}
-#' \item{s}{R x 1 numeric vector adjusting for sequencing depth of each of R conditions.}
-#' \item{subgroup}{R x 1 factor vector with M levels denoting the subgroup status of each of R conditions.}
+#' @param data A pois.mash data object containing the following
+#' components: X, a J x R matrix of count data collapsed over
+#' conditions, with features as rows and conditions as columns; s, an
+#' R x 1 numeric vector adjusting for sequencing depth of each of R
+#' conditions; subgroup, an R x 1 factor vector with M levels denoting
+#' the subgroup status of each of R conditions.
 #' 
 #' @param ruv A logical scalar indicating whether to account for unwanted variation. Default is \code{FALSE}. 
 #' If \code{TRUE}, Fuv and rho must be provided.
 #' 
 #' @param Fuv A J by D matrix of latent factors causing unwanted variation, with features as rows and latent factors as columns
 #' 
-#' @param rho A D by R matrix of effects corresponding to unwanted variation, such that bias = Fuv %*% rho
+#' @param rho A D by R matrix of effects corresponding to unwanted variation, such that bias = \code{Fuv \%*\% rho}
 #' 
 #' @param prop The proportion by which to take a random subset of genes for prior covariance estimation (useful in case of many genes). Default is 1.
 #' 
@@ -22,8 +24,6 @@
 #' used for prior covariance estimation. Default is 3.
 #' 
 #' @return A list with initial estimates of prior covariances, and indices of features (from j=1, ..., J) to include in the subsequent ED step
- 
-
 pois_cov_init <- function(data, ruv=FALSE, Fuv=NULL, rho=NULL, prop=1, seed=1, npc=5, cutoff=3){
   
   s <- data$s
