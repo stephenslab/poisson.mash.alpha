@@ -22,7 +22,7 @@ suppressMessages(suppressWarnings({
 set.seed(1)
 
 # read in a simulated single cell dataset
-scdata <- readRDS("data/scdata.Rds")
+scdata <- readRDS("../datafiles/scdata.Rds")
 
 # Take a random subset of the rows (genes) and columns (samples).
 i <- sample(8358, 2000)
@@ -32,12 +32,10 @@ scdata$condition <- scdata$condition[j]
 
 # compute cell-specific size factors using scrna
 clusters <- quickCluster(scdata$Y)
-si <- computeSumFactors(scdata$Y, clusters=clusters)
+si <- calculateSumFactors(scdata$Y, clusters=clusters)
 
 # create a data object for poisson mash analysis
 dat <- pois_mash_set_data(scdata$Y, scdata$condition, si)
-
-stop()
 
 # Estimate matrix of latent factors causing unwanted variation
 # ------------------------------------------------------------
