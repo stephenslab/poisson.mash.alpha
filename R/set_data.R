@@ -1,15 +1,16 @@
 #' @title Create Data Oject for Poisson Mash Analysis
 #'
-#' @description Add slightly more detailed description here.
+#' @description Prepare count data for an analysis with Poisson mash.
 #' 
-#' @param Y J x N matrix of counts with features (e.g., genes) as
-#'   rows and observations (e.g., cells) as columns.
+#' @param Y J x N matrix of counts (non-negative numbers) with
+#'   features (e.g., genes) as rows and observations (e.g., cells) as
+#'   columns. Y should have at least 2 rows and 2 columns.
 #' 
-#' @param condition Factor of length N with R levels denoting
-#'   the condition status of each observation.
+#' @param condition Factor of length N wiith R levels giving the
+#'   condition for each observation.
 #' 
-#' @param si Numeric vector of length N containing the size factor for
-#'   each of the N observations.
+#' @param si Numeric vector of length N containing the size factors for
+#'   the N observations.
 #' 
 #' @param subgroup Named vector of factors with M levels denoting the
 #'   subgroup status of each of R conditions.  Default to no subgroup
@@ -40,16 +41,41 @@
 pois_mash_set_data <- function (Y, condition, si = colSums(Y),
                                 subgroup = gl(1,nlevels(condition))) {
 
-  # Check and process the inputs.
-  if (ncol(Y) != length(condition))
-    stop("The number of columns of Y and the length of condition do not match")
-  if (ncol(Y) != length(si))
-    stop("The number of columns of Y and the length of si do not match")
-  
+  # Check and process input "Y".
+  if (!(((is.matrix(Y) & is.numeric(Y)) | inherits(Y,"dgCMatrix")) &
+        all(Y >= 0) & all(is.finite(Y)) & all(!is.na(Y))))
+    stop("Input argument Y should be a non-negative numeric matrix ",
+         "(a \"matrix\" or a \"dgCMatrix\") in which all elements are ",
+         "finite, and not NA")
+  if (nrow(Y) < 2 | ncol(Y) < 2)
+    stop("Input matrix Y should have at least 2 rows and at least 2 columns")
+  if (is.null(rownames(Y)))
+    rownames(Y) <- paste0("j",1:row(Y))
+  if (is.null(colnames(Y)))
+    colnames(Y) <- paste0("r",1:ncol(Y))
+
+  # Check and process input "condition".
   J    <- nrow(Y)
-  trts <- levels(condition)
   R    <- nlevels(condition)
-  
+  trts <- levels(condition)
+  if (!(is.factor(condition) &
+        length(condition) == ncol(Y) &
+        nlevels(condition) > 1 &
+        all(table(condition) > 0)))
+    stop("Input argument \"condition\" should be a factor with one entry ",
+         "per column of Y, at least two levels, and all levels should occur ",
+         "at least once")
+  if (is.null(names(condition)))
+    names(condition) <- colnames(Y)
+  else if (colnames(Y) != names(condition))
+    stop("names(condition) do not match colnames(Y)")
+      
+  # Check and process input "si".
+  if (!(is.numeric(si) & all(si > 0) & ncol(Y) == length(si)))
+    stop("Input \"si\" should be a numeric vector with one entry for each ",
+         "column of Y")
+
+  # Check and process input "subgroup".
   # subgroup <- subgroup[order(names(subgroup))]
   # if(sum(trts != names(subgroup)) > 0)
   #   stop("The levels of condition and the names of subgroup do not match")

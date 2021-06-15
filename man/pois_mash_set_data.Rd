@@ -12,14 +12,15 @@ pois_mash_set_data(
 )
 }
 \arguments{
-\item{Y}{J x N matrix of counts with features (e.g., genes) as
-rows and observations (e.g., cells) as columns.}
+\item{Y}{J x N matrix of counts (non-negative numbers) with
+features (e.g., genes) as rows and observations (e.g., cells) as
+columns. Y should have at least 2 rows and 2 columns.}
 
-\item{condition}{Factor of length N with R levels denoting
-the condition status of each observation.}
+\item{condition}{Factor of length N wiith R levels giving the
+condition for each observation.}
 
-\item{si}{Numeric vector of length N containing the size factor for
-each of the N observations.}
+\item{si}{Numeric vector of length N containing the size factors for
+the N observations.}
 
 \item{subgroup}{Named vector of factors with M levels denoting the
 subgroup status of each of R conditions.  Default to no subgroup
