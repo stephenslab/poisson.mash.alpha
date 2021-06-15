@@ -4,7 +4,12 @@
 \alias{pois_mash_set_data}
 \title{Create Data Oject for Poisson Mash Analysis}
 \usage{
-pois_mash_set_data(Y, condition, si, subgroup = NULL)
+pois_mash_set_data(
+  Y,
+  condition,
+  si = colSums(Y),
+  subgroup = gl(1, nlevels(condition))
+)
 }
 \arguments{
 \item{Y}{J x N matrix of counts with features (e.g., genes) as
@@ -36,6 +41,10 @@ A pois.mash data object for poisson mash analysis. It is a list
 }
 \description{
 Add slightly more detailed description here.
+}
+\examples{
+# Add examples here.
+
 }
 \seealso{
 

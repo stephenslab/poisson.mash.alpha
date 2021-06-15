@@ -30,14 +30,15 @@
 #'
 #' @seealso
 #'
-#' @example
+#' @examples
 #' # Add examples here.
 #' 
 #' @import Matrix
 #' 
 #' @export
 #' 
-pois_mash_set_data <- function (Y, condition, si, subgroup = NULL) {
+pois_mash_set_data <- function (Y, condition, si = colSums(Y),
+                                subgroup = gl(1,nlevels(condition))) {
 
   # Check and process the inputs.
   if (ncol(Y) != length(condition))
@@ -45,18 +46,13 @@ pois_mash_set_data <- function (Y, condition, si, subgroup = NULL) {
   if (ncol(Y) != length(si))
     stop("The number of columns of Y and the length of si do not match")
   
-  J <- nrow(Y)
-  trts <- sort(unique(condition))
-  R <- length(trts)
+  J    <- nrow(Y)
+  trts <- levels(condition)
+  R    <- nlevels(condition)
   
-  if(!is.null(subgroup)) {
-    subgroup <- subgroup[order(names(subgroup))]
-    if(sum(trts != names(subgroup)) > 0)
-      stop("The levels of condition and the names of subgroup do not match")
-  } else {
-    subgroup <- rep(1, R)
-    names(subgroup) <- trts
-  }
+  # subgroup <- subgroup[order(names(subgroup))]
+  # if(sum(trts != names(subgroup)) > 0)
+  #   stop("The levels of condition and the names of subgroup do not match")
 
   # Aggregate the individual-level data into condition-level data.
   X <- matrix(as.numeric(NA), nrow=J, ncol=R)
