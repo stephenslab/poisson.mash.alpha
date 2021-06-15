@@ -21,3 +21,4 @@ Description: Implements Poisson multivariate adaptive shrinkage
     settings.
 License: MIT + file LICENSE
 NeedsCompilation: no
+RoxygenNote: 7.1.1
