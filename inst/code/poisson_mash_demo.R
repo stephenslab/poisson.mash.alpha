@@ -36,7 +36,7 @@ si <- calculateSumFactors(scdata$Y, clusters=clusters)
 
 # Create a data object for poisson mash analysis.
 dat <- pois_mash_set_data(scdata$Y, scdata$condition, si)
-
+                          
 # Estimate matrix of latent factors causing unwanted variation
 # ------------------------------------------------------------
 # Run glmpca to estimate matrix of latent factors while adjusting for

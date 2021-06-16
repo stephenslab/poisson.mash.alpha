@@ -12,21 +12,20 @@
 #' @param si Numeric vector of length N containing the size factors for
 #'   the N observations.
 #' 
-#' @param subgroup Named vector of factors with M levels denoting the
-#'   subgroup status of each of R conditions.  Default to no subgroup
-#'   (M=1). If not set to \code{NULL}, the names of subgroup must match
-#'   the levels of condition.
+#' @param subgroup Factor of length R with M >= 1 levels encoding the
+#'   subgroup for each of the R conditions. The default is that all
+#'   conditions belong to the same subgroup.
 #' 
-#' @return A pois.mash data object for poisson mash analysis. It is a list
-#'   with the following components:
+#' @return A \dQuote{pois.mash} data object for subsequent analysis
+#' using poisson mash. It is a list with the following
+#' components:
 #' 
 #' \item{X}{J x R matrix of count data collapsed over conditions, with
-#'   features as rows and conditions as columns.}
+#'   features (e.g., genes) as rows and conditions as columns.}
 #' 
 #' \item{s}{Vector of \dQuote{sequencing depths} for the R conditions.}
 #' 
-#' \item{subgroup}{R x 1 factor vector with M levels denoting the
-#'   subgroup status of each of R conditions.}
+#' \item{subgroup}{The \"subgroup\" input.}
 #'
 #' @seealso
 #'
@@ -52,13 +51,14 @@ pois_mash_set_data <- function (Y, condition, si = colSums(Y),
     rownames(Y) <- paste0("j",1:row(Y))
   if (is.null(colnames(Y)))
     colnames(Y) <- paste0("r",1:ncol(Y))
+  J <- nrow(Y)
 
   # Check and process input "condition".
-  J    <- nrow(Y)
-  R    <- nlevels(condition)
+  if (!is.factor(condition))
+    condition <- as.factor(condition)
+  R <- nlevels(condition)
   trts <- levels(condition)
-  if (!(is.factor(condition) &
-        length(condition) == ncol(Y) &
+  if (!(length(condition) == ncol(Y) &
         nlevels(condition) > 1 &
         all(table(condition) > 0)))
     stop("Input argument \"condition\" should be a factor with one entry ",
@@ -66,7 +66,7 @@ pois_mash_set_data <- function (Y, condition, si = colSums(Y),
          "at least once")
   if (is.null(names(condition)))
     names(condition) <- colnames(Y)
-  else if (colnames(Y) != names(condition))
+  else if (!all(colnames(Y) == names(condition)))
     stop("names(condition) does not match colnames(Y)")
       
   # Check and process input "si".
@@ -75,13 +75,19 @@ pois_mash_set_data <- function (Y, condition, si = colSums(Y),
          "column of Y")
   if (is.null(names(si)))
     names(si) <- colnames(Y)
-  else if (colnames(Y) != names(si))
+  else if (!all(colnames(Y) == names(si)))
     stop("names(si) does not match colnames(Y)")
   
   # Check and process input "subgroup".
-  # subgroup <- subgroup[order(names(subgroup))]
-  # if(sum(trts != names(subgroup)) > 0)
-  #   stop("The levels of condition and the names of subgroup do not match")
+  if (!is.factor(subgroup))
+    subgroup <- as.factor(subgroup)
+  if (!(length(subgroup) == R & all(table(subgroup) > 0)))
+    stop("Input argument \"subgroup\" should be a factor with one entry ",
+         "for each level, and all levels should occur at least once")
+  if (is.null(names(subgroup)))
+    names(subgroup) <- trts
+  else if (!all(names(subgroup) == trts))
+    stop("names(subgroup) does not match levels(condition)")
 
   # Aggregate the individual-level data into condition-level data.
   X <- matrix(as.numeric(NA), nrow=J, ncol=R)

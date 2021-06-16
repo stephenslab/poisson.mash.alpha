@@ -22,22 +22,21 @@ condition for each observation.}
 \item{si}{Numeric vector of length N containing the size factors for
 the N observations.}
 
-\item{subgroup}{Named vector of factors with M levels denoting the
-subgroup status of each of R conditions.  Default to no subgroup
-(M=1). If not set to \code{NULL}, the names of subgroup must match
-the levels of condition.}
+\item{subgroup}{Factor of length R with M >= 1 levels encoding the
+subgroup for each of the R conditions. The default is that all
+conditions belong to the same subgroup.}
 }
 \value{
-A pois.mash data object for poisson mash analysis. It is a list
-  with the following components:
+A \dQuote{pois.mash} data object for subsequent analysis
+using poisson mash. It is a list with the following
+components:
 
 \item{X}{J x R matrix of count data collapsed over conditions, with
-  features as rows and conditions as columns.}
+  features (e.g., genes) as rows and conditions as columns.}
 
 \item{s}{Vector of \dQuote{sequencing depths} for the R conditions.}
 
-\item{subgroup}{R x 1 factor vector with M levels denoting the
-  subgroup status of each of R conditions.}
+\item{subgroup}{The \"subgroup\" input.}
 }
 \description{
 Prepare count data for an analysis with Poisson mash.
