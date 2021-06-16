@@ -27,9 +27,8 @@ subgroup for each of the R conditions. The default is that all
 conditions belong to the same subgroup.}
 }
 \value{
-A \dQuote{pois.mash} data object for subsequent analysis
-using poisson mash. It is a list with the following
-components:
+A Poisson mash data object. It is a list with the following
+  components:
 
 \item{X}{J x R matrix of count data collapsed over conditions, with
   features (e.g., genes) as rows and conditions as columns.}

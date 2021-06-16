@@ -2,22 +2,18 @@
 % Please edit documentation in R/pois_cov_canonical.R
 \name{pois_cov_canonical}
 \alias{pois_cov_canonical}
-\title{Compute a list of canonical covariance matrices modeling condition-specific effects}
+\title{Generate Condition-specific Canonical Covariance Matrices}
 \usage{
-pois_cov_canonical(data)
+pois_cov_canonical(dat)
 }
 \arguments{
-\item{data}{A pois.mash data object containing the following
-components: X, an J x R matrix of count data collapsed over
-conditions, with features as rows and conditions as columns; s, an
-R x 1 numeric vector adjusting for sequencing depth of each of R
-conditions; and subgroup, an R x 1 factor vector with M levels
-denoting the subgroup status of each of R conditions.}
+\item{data}{A Poisson mash data object, typically created using
+\code{\link{pois_mash_set_data}}.}
 }
 \value{
-a list of numerical vectors each of which forming a rank-1
-canonical covariance matrix
+A list ii which each list element is a vector \code{u}
+defining a rank-1 covariance matrix \code{tcrossprod(u)}
 }
 \description{
-Compute a list of canonical covariance matrices modeling condition-specific effects
+Generate Condition-specific Canonical Covariance Matrices
 }

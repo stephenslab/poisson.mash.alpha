@@ -80,7 +80,7 @@ saveRDS(fit.ed, file = "pois_mash_ruv_ed.Rds")
 # Construct the canonical prior covariance matrices.
 ulist.c <- pois_cov_canonical(dat)
 
-# Aombine all the rank-1 prior covariance matrice.
+# Combine all the rank-1 prior covariance matrices.
 ulist <- c(fit.ed$ulist, ulist.c)
 
 start_time <- proc.time()
