@@ -38,6 +38,8 @@
 #' @param control A list of control parameters with the following elements:
 #' \item{maxiter}{Maximum number of iterations. Default is 500.}
 #' \item{maxiter.q}{Maximum number of inner loop iterations to update variational parameters at each iteration. Default is 25.}
+#' \item{maxpsi2}{Maximum for the gene-specific dispersion parameter psi2.}
+#' \item{maxbias}{Maximum for the gene-specific range of bias caused by unwanted variation. Default is 10.}
 #' \item{tol.mu}{Threshold for mu (gene-specific, subgroup-specific means on the log scale) to skip update. Default is 1e-2.}
 #' \item{tol.psi2}{Relative threshold for psi2 (gene-specific dispersion parameter) to skip update. Default is 2e-2.}
 #' \item{tol.bias}{Threshold for bias caused by unwanted variation to skip update. Default is 1e-2.}
@@ -50,8 +52,8 @@
 
 
 pois_mash <- function(data, Ulist, ulist, ulist.epsilon2=NULL, normalizeU=TRUE, gridmult=2, wlist=NULL, 
-                      ruv=FALSE, Fuv=NULL, rho=NULL, update.rho=TRUE, verbose=FALSE, C=NULL, res.colnames=NULL,
-                      init=list(NULL), control=list(maxiter=500, maxiter.q=25, tol.mu=1e-2, tol.psi2=2e-2, tol.bias=1e-2, tol.q=1e-2, tol.rho=1e-6)){
+                      ruv=FALSE, Fuv=NULL, rho=NULL, update.rho=TRUE, verbose=FALSE, C=NULL, res.colnames=NULL, init=list(NULL),
+                      control=list(maxiter=500, maxiter.q=25, maxpsi2=NULL, maxbias=10, tol.mu=1e-2, tol.psi2=2e-2, tol.bias=1e-2, tol.q=1e-2, tol.rho=1e-6)){
   
   s <- data$s
   subgroup <- data$subgroup
@@ -64,6 +66,48 @@ pois_mash <- function(data, Ulist, ulist, ulist.epsilon2=NULL, normalizeU=TRUE, 
   # check if ulist is empty
   if(is.null(ulist)){
     stop("ulist cannot be empty!")
+  }
+  
+  maxiter <- control$maxiter
+  maxiter.q <- control$maxiter.q
+  maxpsi2 <- control$maxpsi2
+  maxbias <- control$maxbias
+  tol.q <- control$tol.q
+  tol.rho <- control$tol.rho
+  tol.mu <- control$tol.mu
+  tol.psi2 <- control$tol.psi2
+  tol.bias <- control$tol.bias
+  
+  if(is.null(maxiter)){
+    maxiter <- 500
+  }
+  
+  if(is.null(maxiter.q)){
+    maxiter.q <- 25
+  }
+  
+  if(is.null(maxbias)){
+    maxbias <- 10
+  }
+  
+  if(is.null(tol.q)){
+    tol.q <- 1e-2
+  }
+  
+  if(is.null(tol.rho)){
+    tol.rho <- 1e-6
+  }
+  
+  if(is.null(tol.mu)){
+    tol.mu <- 1e-2
+  }
+  
+  if(is.null(tol.psi2)){
+    tol.psi2 <- 2e-2
+  }
+  
+  if(is.null(tol.bias)){
+    tol.bias <- 1e-2
   }
   
   # initialize rho and bias
@@ -81,6 +125,7 @@ pois_mash <- function(data, Ulist, ulist, ulist.epsilon2=NULL, normalizeU=TRUE, 
     }
     diff.rho <- matrix(0, nrow=D, ncol=R)
     bias <- Fuv %*% rho
+    bias <- scale_bias(bias, maxbias)
   }
   else{
     rho <- NULL
@@ -101,13 +146,15 @@ pois_mash <- function(data, Ulist, ulist, ulist.epsilon2=NULL, normalizeU=TRUE, 
   s.mat <- rep(1,J) %*% t(s)
   loglambda <- log((data+0.1)/s.mat)
   minpsi2 <- pmax(min(apply(loglambda, 1, sd)^2)/1e2, 1e-8)
-  maxpsi2 <- max(apply(loglambda, 1, sd)^2) 
+  if(is.null(maxpsi2)){
+    maxpsi2 <- max(apply(loglambda, 1, sd)^2)
+  }
   
   # use grid search to initialize psi2 by fitting a poisson-log-normal model while ignoring fixed effects (i.e., beta) and unwanted variation
   psi2 <- init$psi2
   if(is.null(psi2)){
     psi2 <- rep(NA, J)
-    
+
     for(j in 1:J){
       psi2_max <- pmax(sd(loglambda[j,])^2, 1)
       log2_psi2_grid <- seq(log2(1e-4), log2(psi2_max), length.out = 25)
@@ -123,6 +170,9 @@ pois_mash <- function(data, Ulist, ulist, ulist.epsilon2=NULL, normalizeU=TRUE, 
       
       psi2[j] <- psi2_grid[which.max(logdens)]
     }
+  }
+  else{
+    psi2 <- pmin(psi2, maxpsi2)
   }
   
   
@@ -171,47 +221,12 @@ pois_mash <- function(data, Ulist, ulist, ulist.epsilon2=NULL, normalizeU=TRUE, 
   if(is.null(pi)){
     pi <- rep(1/K, K)
   }
-  
-  maxiter <- control$maxiter
-  maxiter.q <- control$maxiter.q
-  tol.q <- control$tol.q
-  tol.rho <- control$tol.rho
-  tol.mu <- control$tol.mu
-  tol.psi2 <- control$tol.psi2
-  tol.bias <- control$tol.bias
-
-  if(is.null(maxiter)){
-    maxiter <- 500
-  }
-  
-  if(is.null(maxiter.q)){
-    maxiter.q <- 25
-  }
-  
-  if(is.null(tol.q)){
-    tol.q <- 1e-2
-  }
-  
-  if(is.null(tol.rho)){
-    tol.rho <- 1e-6
-  }
-  
-  if(is.null(tol.mu)){
-    tol.mu <- 1e-2
-  }
-  
-  if(is.null(tol.psi2)){
-    tol.psi2 <- 2e-2
-  }
-  
-  if(is.null(tol.bias)){
-    tol.bias <- 1e-2
-  }
 
   const <- sum(data%*%log(s)) - sum(lgamma(data+1))
   
-  if(verbose)
+  if(verbose){
     cat("Start fitting Poisson mash model.\n")
+  }
   
   # J x K x R arrays to store the posterior mean gamma_jklr
   gamma <- array(NA, c(J, K, R))
@@ -222,7 +237,7 @@ pois_mash <- function(data, Ulist, ulist, ulist.epsilon2=NULL, normalizeU=TRUE, 
   ELBOs <- matrix(0, nrow=J, ncol=K)
   tmp.mu <- array(0, c(J, K, M))
   tmp.psi2 <- matrix(0, nrow=J, ncol=K)
-
+  
   for(j in 1:J){
     if(H > 0){
       hl <- 0
@@ -244,8 +259,6 @@ pois_mash <- function(data, Ulist, ulist, ulist.epsilon2=NULL, normalizeU=TRUE, 
         }
       }      
     }
-
-    cat("*")
     
     gl <- 0
     for(g in 1:G){
@@ -281,7 +294,7 @@ pois_mash <- function(data, Ulist, ulist, ulist.epsilon2=NULL, normalizeU=TRUE, 
       }
     }
   }
-
+  
   # update zeta
   ELBOs.cen <- ELBOs - apply(ELBOs, 1, max)
   zeta <- t(t(exp(ELBOs.cen)) * pi)
@@ -293,6 +306,7 @@ pois_mash <- function(data, Ulist, ulist, ulist.epsilon2=NULL, normalizeU=TRUE, 
   for(r in 1:R){
     tmp.ruv[,r] <- rowSums(zeta*exp(A[,,r]))
   }
+  
   
   # store the overall ELBO at each iteration
   ELBOs.overall <- c()
@@ -334,6 +348,7 @@ pois_mash <- function(data, Ulist, ulist, ulist.epsilon2=NULL, normalizeU=TRUE, 
       }
       diff.rho <- rho.new - rho
       bias.new <- Fuv %*% rho.new
+      bias.new <- scale_bias(bias.new, maxbias)
       idx.update.bias <- apply(abs(bias.new-bias), 1, max) > tol.bias
       rho <- rho.new
     }
@@ -439,14 +454,16 @@ pois_mash <- function(data, Ulist, ulist, ulist.epsilon2=NULL, normalizeU=TRUE, 
   
   # name the model paramter estimates
   rownames(mu) <- rownames(data)
-  colnames(mu) <- names(s)
+  colnames(mu) <- colnames(data)
   names(psi2) <- rownames(data)
   rownames(zeta) <- rownames(data)
-  colnames(rho) <- colnames(data)
+  if(ruv){
+    colnames(rho) <- colnames(data)
+  }
   
   # create the list with model parameters 
-  pois.mash.fit <- list(mu=mu, psi2=psi2, pi=pi, ulist=ulist, ulist.epsilon2=ulist.epsilon2, Ulist=Ulist, wlist=wlist, Fuv=Fuv, rho=rho, zeta=zeta, 
-                        ELBO=ELBOs.overall, j.update=j.update)
+  pois.mash.fit <- list(mu=mu, psi2=psi2, pi=pi, ulist=ulist, ulist.epsilon2=ulist.epsilon2, Ulist=Ulist, wlist=wlist, zeta=zeta, 
+                        Fuv=Fuv, rho=rho, bias=bias, ELBO=ELBOs.overall, j.update=j.update)
   
   if(verbose){
     cat("Finish fitting Poisson mash model.\n")
@@ -455,8 +472,8 @@ pois_mash <- function(data, Ulist, ulist, ulist.epsilon2=NULL, normalizeU=TRUE, 
   
   
   # calculate posterior summaries for the matrix of effects
-  result <- pois_mash_posterior(data=data, s=s, mu=mu, psi2=psi2, ruv=ruv, Fuv=Fuv, rho=rho, 
-                                wlist=wlist, Ulist=Ulist, ulist=ulist, ulist.epsilon2=ulist.epsilon2, zeta=zeta, C=C, res.colnames=res.colnames)
+  result <- pois_mash_posterior(data=data, s=s, mu=mu, psi2=psi2, bias=bias, wlist=wlist, Ulist=Ulist, ulist=ulist, ulist.epsilon2=ulist.epsilon2, 
+                                zeta=zeta, C=C, res.colnames=res.colnames)
   
   if(verbose){
     cat("Finish calculating posterior summary.\n")

@@ -359,3 +359,17 @@ update_rho <- function(Xr, Fuv, sr, mu, Lr, init, control=list(maxiter=100, tol=
   
   return(list(rho=rho, Fr=Fr))
 }
+
+
+
+### function to scale the J x R matrix of bias to avoid too large values in bias
+scale_bias <- function(bias, maxbias){
+  range.bias <- apply(bias, 1, function(x){max(x)-min(x)})
+  idx.bias <- which(range.bias > maxbias)
+  
+  if(length(idx.bias) > 0){
+    bias[idx.bias,] <- maxbias*bias[idx.bias,]/range.bias[idx.bias]
+  }
+  
+  return(bias)
+}

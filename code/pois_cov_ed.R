@@ -25,18 +25,20 @@
 #' @param control A list of control parameters with the following elements:
 #' \item{maxiter}{Maximum number of ED iterations. Default is 500.}
 #' \item{maxiter.q}{Maximum number of inner loop iterations to update variational parameters at each ED iteration. Default is 25.}
+#' \item{maxpsi2}{Maximum for the gene-specific dispersion parameter psi2.}
+#' \item{maxbias}{Maximum for the gene-specific range of bias caused by unwanted variation. Default is 10.}
 #' \item{tol.stop}{Tolerance for assessing convergence of ED, as measured by relative change in ELBO. Default is 1e-6.} 
 #' \item{tol.q}{Relative tolerance for assessing convergence of variational parameters at each ED iteration. Default is 1e-2.}
 #' \item{tol.rho}{Tolerance for assessing convergence of effects corresponding to unwanted variation. Default is 1e-6.}
 #' 
-#' @return A list with the following elements: 
+#' @return A list including the following elements: 
 #' \item{Ulist}{A list of H full-rank covariance matrices.}
 #' \item{ulist}{A list of G numeric vectors each of which forming a rank-1 covariance matrix.}
 #' \item{pi}{(H+G) by 1 numeric vector of mixture proportions for Ulist and ulist.}
 
 
 pois_cov_ed <- function(data, subset=NULL, Ulist, ulist, ulist.dd=NULL, ruv=FALSE, Fuv=NULL, verbose=FALSE, init=list(NULL),  
-                        control=list(maxiter=500, maxiter.q=25, tol.q=1e-2, tol.rho=1e-6, tol.stop=1e-6)){
+                        control=list(maxiter=500, maxiter.q=25, maxpsi2=NULL, maxbias=10, tol.stop=1e-6, tol.q=1e-2, tol.rho=1e-6)){
   X <- data$X
   s <- data$s
   subgroup <- data$subgroup
@@ -56,9 +58,11 @@ pois_cov_ed <- function(data, subset=NULL, Ulist, ulist, ulist.dd=NULL, ruv=FALS
   subgroup <- as.numeric(as.factor(subgroup))
   maxiter <- control$maxiter
   maxiter.q <- control$maxiter.q
+  maxpsi2 <- control$maxpsi2
+  maxbias <- control$maxbias
+  tol.stop <- control$tol.stop
   tol.q <- control$tol.q
   tol.rho <- control$tol.rho
-  tol.stop <- control$tol.stop
   
   if(is.null(maxiter)){
     maxiter <- 500
@@ -66,6 +70,14 @@ pois_cov_ed <- function(data, subset=NULL, Ulist, ulist, ulist.dd=NULL, ruv=FALS
   
   if(is.null(maxiter.q)){
     maxiter.q <- 25
+  }
+  
+  if(is.null(maxbias)){
+    maxbias <- 10
+  }
+  
+  if(is.null(tol.stop)){
+    tol.stop <- 1e-6
   }
   
   if(is.null(tol.q)){
@@ -76,9 +88,6 @@ pois_cov_ed <- function(data, subset=NULL, Ulist, ulist, ulist.dd=NULL, ruv=FALS
     tol.rho <- 1e-6
   }
   
-  if(is.null(tol.stop)){
-    tol.stop <- 1e-6
-  }
   
   H <- length(Ulist)
   G <- length(ulist)
@@ -118,6 +127,7 @@ pois_cov_ed <- function(data, subset=NULL, Ulist, ulist, ulist.dd=NULL, ruv=FALS
       rho <- as.matrix(rho)
     }
     bias <- F.ed %*% rho
+    bias <- scale_bias(bias, maxbias)
   }
   
   # initialize mu by ignoring condition-specific effects (i.e., theta) and unwanted variation
@@ -137,7 +147,9 @@ pois_cov_ed <- function(data, subset=NULL, Ulist, ulist, ulist.dd=NULL, ruv=FALS
   loglambda <- log((data.ed+0.1)/s.mat)
   upr_bd <- 4*max(apply(loglambda, 1, sd)^2) 
   minpsi2 <- pmax(min(apply(loglambda, 1, sd)^2)/1e2, 1e-8)
-  maxpsi2 <- max(apply(loglambda, 1, sd)^2)
+  if(is.null(maxpsi2)){
+    maxpsi2 <- max(apply(loglambda, 1, sd)^2)
+  }
   
   # use grid search to initialize psi^2 by fitting a poisson-log-normal model while ignoring fixed effects (i.e., beta_j) and unwanted variation
   psi2 <- init$psi2
@@ -161,7 +173,7 @@ pois_cov_ed <- function(data, subset=NULL, Ulist, ulist, ulist.dd=NULL, ruv=FALS
     }
   }
   else{
-    psi2 <- psi2[subset]
+    psi2 <- pmin(psi2[subset], maxpsi2)
   }
   
   
@@ -371,6 +383,7 @@ pois_cov_ed <- function(data, subset=NULL, Ulist, ulist, ulist.dd=NULL, ruv=FALS
       diff.rho <- rho.new - rho
       rho <- rho.new
       bias <- F.ed %*% rho
+      bias <- scale_bias(bias, maxbias)
     }
     
     # update posterior mean and covariance of theta and local ELBO F_jk
@@ -410,15 +423,17 @@ pois_cov_ed <- function(data, subset=NULL, Ulist, ulist, ulist.dd=NULL, ruv=FALS
   
   # name the model paramter estimates
   rownames(mu) <- rownames(data.ed)
-  colnames(mu) <- names(s)
+  colnames(mu) <- colnames(data.ed)
   names(psi2) <- rownames(data.ed)
-  colnames(rho) <- colnames(data.ed)
+  if(ruv){
+    colnames(rho) <- colnames(data.ed)
+  }
   names(pi) <- c(names(Ulist), names(ulist))
   
   if(verbose){
     cat("Finish running extreme deconvolution to estimate prior covariance matrices.\n")
   }
   
-  return(list(mu=mu, psi2=psi2, rho=rho, Ulist=Ulist, ulist=ulist, pi=pi, zeta=zeta, ELBO=ELBOs.overall, 
+  return(list(subset=subset, mu=mu, psi2=psi2, rho=rho, Ulist=Ulist, ulist=ulist, ulist.dd=ulist.dd, pi=pi, zeta=zeta, ELBO=ELBOs.overall, 
               diff.U=diff.U, diff.pi=diff.pi, diff.rho=diff.rho))
 }
