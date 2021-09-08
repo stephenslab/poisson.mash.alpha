@@ -1,3 +1,1 @@
-^inst/code/fit_glmpca\.Rds$
-^inst/code/pois_mash_ruv_ed\.Rds$
-^inst/code/pois_mash_ruv_fit\.Rds$
+^inst$
