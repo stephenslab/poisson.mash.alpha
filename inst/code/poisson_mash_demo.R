@@ -1,7 +1,7 @@
+library(Matrix)
+library(scran)
+library(glmpca)
 library(poisson.mash.alpha)
-# library(Matrix)
-# library(glmpca)
-# library(scran)
 # library(psych)
 # library(poilog)
 
@@ -9,21 +9,19 @@ library(poisson.mash.alpha)
 set.seed(1)
 
 # Take a random subset of the rows (genes) and columns (samples).
-data("sim_raw")
+scdata <- readRDS("../datafiles/scdata.Rds")
 i <- sample(8358,2000)
 j <- sample(2096,800)
-sim_raw$Y <- scdata$Y[i,j]
-sim_raw$condition <- sim_raw$condition[j]
-
-stop()
+scdata$Y <- scdata$Y[i,j]
+scdata$condition <- scdata$condition[j]
 
 # Compute cell-specific size factors using scran.
 clusters <- quickCluster(scdata$Y)
 si <- calculateSumFactors(scdata$Y, clusters=clusters)
 
 # Create a data object for poisson mash analysis.
-dat <- pois_mash_set_data(scdata$Y, scdata$condition, si)
-                          
+dat <- pois_mash_set_data(scdata$Y,scdata$condition,si)
+
 # Estimate matrix of latent factors causing unwanted variation
 # ------------------------------------------------------------
 # Run glmpca to estimate matrix of latent factors while adjusting for
