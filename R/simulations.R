@@ -24,7 +24,9 @@
 #' umat <- cbind(c(1,1,0,0,0),c(0,0,0,1,0.5))
 #' pois_mash_sim_data(1000,5,effects = list(umat = umat,prob = rep(0.05,2)))
 #'
+#' @import Matrix
 #' @importFrom methods as
+#' @importFrom utils data
 #' @importFrom stats model.matrix
 #' @importFrom stats runif
 #' @importFrom stats rnorm
@@ -35,7 +37,8 @@
 #' 
 pois_mash_sim_data <- function (J = 1000, R = 5, effects = NULL, seed = 1) {
   set.seed(seed)
-  data(sim_raw)
+  sim_raw <- NULL
+  data("sim_raw",envir = environment())
   n <- nrow(sim_raw)
   if (n >= J) 
     Y <- sim_raw[sample(n,J,replace = FALSE),]
