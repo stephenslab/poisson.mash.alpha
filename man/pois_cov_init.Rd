@@ -2,8 +2,7 @@
 % Please edit documentation in R/pois_cov_init.R
 \name{pois_cov_init}
 \alias{pois_cov_init}
-\title{Initialize data-driven prior covariance matrices based on
-principal component analysis}
+\title{Initialize Data-driven Prior Covariance Matrices using PCA}
 \usage{
 pois_cov_init(
   data,
@@ -17,41 +16,35 @@ pois_cov_init(
 )
 }
 \arguments{
-\item{data}{A pois.mash data object containing the following
-components: \dQuote{X}, J x R matrix of count data collapsed over
-conditions, with features as rows and conditions as columns;
-\dQuote{s}, R x 1 numeric vector adjusting for sequencing depth of
-each of R conditions; \dQuote{subgroup}, R x 1 factor vector with M
-levels denoting the subgroup status of each of R conditions.}
+\item{data}{A \dQuote{pois.mash} data object, typically created by
+calling \code{\link{pois_mash_set_data}}.}
 
 \item{ruv}{A logical scalar indicating whether to account for
-unwanted variation. Default is \code{FALSE}.  If \code{TRUE}, Fuv
-and rho must be provided.}
+unwanted variation. Default is \code{FALSE}. If \code{ruv = TRUE},
+\code{Fuv} and \code{rho} must be provided.}
 
-\item{Fuv}{A J by D matrix of latent factors causing unwanted
-variation, with features as rows and latent factors as columns}
-
-\item{rho}{A D by R matrix of effects corresponding to unwanted
-variation, such that bias = Fuv %*% rho}
+\item{Fuv}{J x D matrix of latent factors causing unwanted
+variation, with features as rows and latent factors as columns.}
 
 \item{prop}{The proportion by which to take a random subset of
 genes for prior covariance estimation (useful in case of many
-genes). Default is 1.}
+genes).}
 
-\item{seed}{Specified for reproducibility if prop is strictly
-smaller than 1. Default is 1.}
+\item{seed}{Useful for reproducibility when \code{prop} is less
+than 1.}
 
-\item{npc}{The number of principal components to use. Default is 5.}
+\item{npc}{The number of principal components to use.}
 
 \item{cutoff}{The threshold for the maximum of absolute values of
-Z-scores taken across conditions to include as "strong" features
-used for prior covariance estimation. Default is 3.}
+ Z-scores taken across conditions to include as "strong" features
+used for prior covariance estimation.}
 }
 \value{
 A list with initial estimates of prior covariances, and
-indices of features (from j=1, ..., J) to include in the subsequent
-ED step
+  indices of the features (j = 1,...,J) to include in the subsequent
+  ED step.
 }
 \description{
-Add description here.
+Initialize data-driven prior covariance matrices based
+  on principal component analysis.
 }

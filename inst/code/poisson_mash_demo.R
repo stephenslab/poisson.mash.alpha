@@ -50,18 +50,19 @@ cat("finish prefit for parameter initialization\n")
 # Initialize the data-driven prior covariance matrices.
 res.pca <- pois_cov_init(dat,ruv = TRUE,Fuv = Fuv,rho = prefit$rho,npc = 5)
 
-stop()
-
 # Run the ED step.
 start_time <- proc.time()
 cat("start fitting ED step\n")
-fit.ed <- pois_cov_ed(dat, subset=res.pca$subset, Ulist=res.pca$Ulist,
-                      ulist=res.pca$ulist, ruv=TRUE, Fuv=Fuv, verbose=TRUE,
-                      init=prefit, control=list(maxiter=100))
+fit.ed <- pois_cov_ed(dat,subset = res.pca$subset,Ulist = res.pca$Ulist,
+                      ulist = res.pca$ulist,ruv = TRUE,Fuv = Fuv,
+                      verbose = TRUE,init = prefit,
+                      control = list(maxiter = 100))
 cat("finish fitting ED step\n")
 runtime <- proc.time() - start_time
 fit.ed$runtime <- runtime
-saveRDS(fit.ed, file = "pois_mash_ruv_ed.Rds")
+saveRDS(fit.ed,file = "pois_mash_ruv_ed.Rds")
+
+stop()
 
 # Run Poisson mash ruv
 # --------------------

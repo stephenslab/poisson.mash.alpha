@@ -1,41 +1,37 @@
-#' @title Initialize data-driven prior covariance matrices based on
-#' principal component analysis
+#' @title Initialize Data-driven Prior Covariance Matrices using PCA
 #'
-#' @description Add description here.
+#' @description Initialize data-driven prior covariance matrices based
+#'   on principal component analysis.
 #' 
-#' @param data A pois.mash data object containing the following
-#' components: \dQuote{X}, J x R matrix of count data collapsed over
-#' conditions, with features as rows and conditions as columns;
-#' \dQuote{s}, R x 1 numeric vector adjusting for sequencing depth of
-#' each of R conditions; \dQuote{subgroup}, R x 1 factor vector with M
-#' levels denoting the subgroup status of each of R conditions.
+#' @param data A \dQuote{pois.mash} data object, typically created by
+#'   calling \code{\link{pois_mash_set_data}}.
 #' 
 #' @param ruv A logical scalar indicating whether to account for
-#' unwanted variation. Default is \code{FALSE}.  If \code{TRUE}, Fuv
-#' and rho must be provided.
+#'   unwanted variation. Default is \code{FALSE}. If \code{ruv = TRUE},
+#'   \code{Fuv} and \code{rho} must be provided.
 #' 
-#' @param Fuv A J by D matrix of latent factors causing unwanted
-#' variation, with features as rows and latent factors as columns
+#' @param Fuv J x D matrix of latent factors causing unwanted
+#'   variation, with features as rows and latent factors as columns.
 #' 
-#' @param rho A D by R matrix of effects corresponding to unwanted
-#' variation, such that bias = Fuv %*% rho
+#' @param rho D x R matrix of effects corresponding to unwanted
+#'   variation, such that \code{bias = Fuv %*% rho}.
 #' 
 #' @param prop The proportion by which to take a random subset of
-#' genes for prior covariance estimation (useful in case of many
-#' genes). Default is 1.
+#'   genes for prior covariance estimation (useful in case of many
+#'   genes).
 #' 
-#' @param seed Specified for reproducibility if prop is strictly
-#' smaller than 1. Default is 1.
+#' @param seed Useful for reproducibility when \code{prop} is less
+#'   than 1.
 #' 
-#' @param npc The number of principal components to use. Default is 5.
+#' @param npc The number of principal components to use.
 #' 
 #' @param cutoff The threshold for the maximum of absolute values of
-#' Z-scores taken across conditions to include as "strong" features
-#' used for prior covariance estimation. Default is 3.
+#'    Z-scores taken across conditions to include as "strong" features
+#'   used for prior covariance estimation.
 #' 
 #' @return A list with initial estimates of prior covariances, and
-#' indices of features (from j=1, ..., J) to include in the subsequent
-#' ED step
+#'   indices of the features (j = 1,...,J) to include in the subsequent
+#'   ED step.
 #'
 #' @importFrom stats sd
 #' @importFrom stats pbinom
