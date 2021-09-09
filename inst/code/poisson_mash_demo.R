@@ -45,12 +45,12 @@ cat("start prefit for parameter initialization\n")
 prefit <- pois_mash_ruv_prefit(dat,Fuv,verbose = TRUE)
 cat("finish prefit for parameter initialization\n")
 
-stop()
-
 # Estimate data-driven prior covariance matrices
 # ----------------------------------------------
 # Initialize the data-driven prior covariance matrices.
-res.pca <- pois_cov_init(dat, ruv=TRUE, Fuv=Fuv, rho=prefit$rho, npc=5)
+res.pca <- pois_cov_init(dat,ruv = TRUE,Fuv = Fuv,rho = prefit$rho,npc = 5)
+
+stop()
 
 # Run the ED step.
 start_time <- proc.time()
