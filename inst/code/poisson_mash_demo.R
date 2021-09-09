@@ -1,7 +1,7 @@
 library(Matrix)
 library(scran)
 library(glmpca)
-library(poisson.mash.alpha)
+# library(poisson.mash.alpha)
 # library(psych)
 # library(poilog)
 
@@ -30,18 +30,19 @@ dat <- pois_mash_set_data(scdata$Y,scdata$condition,si)
 start_time <- proc.time()
 cat("start fitting GLMPCA to estimate matrix of latent factors\n")
 design <- model.matrix(~scdata$condition)
-fit.glmpca <- glmpca(Y = as.matrix(scdata$Y), X=design[,-1], L=10, fam="nb2",
-                     sz=si, ctl=list(verbose=TRUE, maxIter=100, tol=1e-5))
+fit.glmpca <- glmpca(Y = as.matrix(scdata$Y),X = design[,-1],L = 10,
+                     fam = "nb2",sz = si,
+                     ctl = list(verbose = TRUE,maxIter = 100,tol = 1e-5))
 Fuv <- as.matrix(fit.glmpca$loadings)
 cat("finish fitting GLMPCA to estimate matrix of latent factors\n")
 runtime <- proc.time() - start_time
 fit.glmpca$runtime <- runtime
-saveRDS(fit.glmpca, file="fit_glmpca.Rds")
+saveRDS(fit.glmpca,file = "fit_glmpca.Rds")
 
 # Prefit the model to initialize parameters
 # -----------------------------------------
 cat("start prefit for parameter initialization\n")
-prefit <- pois_mash_ruv_prefit(dat, Fuv, verbose=TRUE)
+prefit <- pois_mash_ruv_prefit(dat,Fuv,verbose = TRUE)
 cat("finish prefit for parameter initialization\n")
 
 # Estimate data-driven prior covariance matrices

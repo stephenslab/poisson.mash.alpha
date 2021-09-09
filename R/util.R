@@ -343,3 +343,7 @@ scale_bias <- function (bias, maxbias) {
     bias[idx.bias,] <- maxbias*bias[idx.bias,]/range.bias[idx.bias]
   return(bias)
 }
+
+# Compute the trace of matrix m.
+tr <- function (m)
+  sum(diag(m),na.rm = TRUE)
