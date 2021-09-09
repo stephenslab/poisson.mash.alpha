@@ -1,7 +1,7 @@
 Encoding: UTF-8
 Type: Package
 Package: poisson.mash.alpha
-Version: 0.1-17
+Version: 0.1-18
 Date: 2021-09-09
 Title: Poisson Multivariate Adaptive Shrinkage
 Authors@R: c(person("Yusha","Liu",role=c("aut","cre"),
@@ -10,7 +10,7 @@ Authors@R: c(person("Yusha","Liu",role=c("aut","cre"),
              person("Matthew","Stephens",role="aut"))
 URL: https://github.com/stephenslab/poisson.mash.alpha
 BugReports: https://github.com/stephenslab/poisson.mash.alpha/issues
-Depends: R (>= 3.0.0)
+Depends: R (>= 3.1.0)
 Description: Implements Poisson multivariate adaptive shrinkage
     ("Poisson mash") for analyzing count data obtained in different
     conditions or treatments. Poisson mash takes an empirical Bayes
@@ -25,8 +25,10 @@ Imports:
     utils,
     stats,
     Matrix,
+    Rcpp (>= 1.0.7),
     poilog,
     seqgendiff
+LinkingTo: Rcpp, RcppArmadillo
 NeedsCompilation: no
 LazyData: true
 LazyDataCompression: xz

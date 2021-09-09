@@ -31,6 +31,9 @@
 #'
 #' @importFrom stats sd
 #' @importFrom poilog dpoilog
+#' @importFrom Rcpp evalCpp
+#' 
+#' @useDynLib poisson.mash.alpha
 #' 
 #' @export
 #' 

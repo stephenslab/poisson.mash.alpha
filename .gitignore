@@ -1,1 +1,3 @@
 inst/code/*.Rds
+src/poisson.mash.alpha.so
+src/*.o
