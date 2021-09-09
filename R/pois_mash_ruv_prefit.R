@@ -29,6 +29,7 @@
 #' 
 #' @return A list containing initial estimates of model parameters.
 #'
+#' @importFrom stats sd
 #' @importFrom poilog dpoilog
 #' 
 #' @export
