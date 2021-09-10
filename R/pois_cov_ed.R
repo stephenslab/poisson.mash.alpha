@@ -34,28 +34,28 @@
 #'   (e.g., returned by \code{pois_mash_ruv_prefit}).
 #' 
 #' @param control A list of control parameters with the following
-#' elements: \item{maxiter}{Maximum number of ED iterations. Default
-#' is 500.}  \item{maxiter.q}{Maximum number of inner loop iterations
-#' to update variational parameters at each ED iteration. Default is
-#' 25.}  \item{maxpsi2}{Maximum for the gene-specific dispersion
-#' parameter psi2.}  \item{maxbias}{Maximum for the gene-specific
-#' range of bias caused by unwanted variation. Default is 10.}
-#' \item{tol.stop}{Tolerance for assessing convergence of ED, as
-#' measured by relative change in ELBO. Default is 1e-6.}
-#' \item{tol.q}{Relative tolerance for assessing convergence of
-#' variational parameters at each ED iteration. Default is 1e-2.}
-#' \item{tol.rho}{Tolerance for assessing convergence of effects
-#' corresponding to unwanted variation. Default is 1e-6.}
+#'   elements: \dQuote{maxiter}, maximum number of ED iterations;
+#'   \dQuote{maxiter.q}, maximum number of inner loop iterations to
+#'   update variational parameters at each ED iteration;
+#'   \dQuote{maxpsi2}, maximum for the gene-specific dispersion
+#'   parameter \code{psi2}; \dQuote{maxbias}, maximum for the
+#'   gene-specific range of bias caused by unwanted variation;
+#'   \dQuote{tol.stop}, tolerance for assessing convergence of ED, as
+#'   measured by relative change in ELBO; \dQuote{tol.q}, relative
+#'   tolerance for assessing convergence of variational parameters at
+#'   each ED iteration; and \dQuote{tol.rho}{tolerance for
+#'   assessing convergence of effects corresponding to unwanted
+#'   variation.}
 #' 
 #' @return A list including the following elements:
 #' 
-#' \item{Ulist}{A list of H full-rank covariance matrices.}
+#' \item{Ulist}{List of H full-rank covariance matrices.}
 #' 
-#' \item{ulist}{A list of G numeric vectors each of which forming a
-#' rank-1 covariance matrix.}
+#' \item{ulist}{List of G numeric vectors each of which forms a
+#'   rank-1 covariance matrix.}
 #' 
-#' \item{pi}{(H+G) by 1 numeric vector of mixture proportions for
-#' Ulist and ulist.}
+#' \item{pi}{Numeric vector of length H + G containing the mixture
+#'   proportions for Ulist and ulist.}
 #'
 #' @importFrom stats sd
 #' @importFrom poilog dpoilog
