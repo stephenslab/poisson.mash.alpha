@@ -16,15 +16,18 @@ pois_cov_init(
 )
 }
 \arguments{
-\item{data}{A \dQuote{pois.mash} data object, typically created by
+\item{data}{\dQuote{pois.mash} data object, typically created by
 calling \code{\link{pois_mash_set_data}}.}
 
-\item{ruv}{A logical scalar indicating whether to account for
+\item{ruv}{Logical scalar indicating whether to account for
 unwanted variation. Default is \code{FALSE}. If \code{ruv = TRUE},
 \code{Fuv} and \code{rho} must be provided.}
 
 \item{Fuv}{J x D matrix of latent factors causing unwanted
 variation, with features as rows and latent factors as columns.}
+
+\item{rho}{D x R matrix of effects corresponding to unwanted
+variation, such that \code{bias = Fuv \%*\% rho}.}
 
 \item{prop}{The proportion by which to take a random subset of
 genes for prior covariance estimation (useful in case of many

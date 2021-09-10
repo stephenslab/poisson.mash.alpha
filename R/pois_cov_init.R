@@ -3,10 +3,10 @@
 #' @description Initialize data-driven prior covariance matrices based
 #'   on principal component analysis.
 #' 
-#' @param data A \dQuote{pois.mash} data object, typically created by
+#' @param data \dQuote{pois.mash} data object, typically created by
 #'   calling \code{\link{pois_mash_set_data}}.
 #' 
-#' @param ruv A logical scalar indicating whether to account for
+#' @param ruv Logical scalar indicating whether to account for
 #'   unwanted variation. Default is \code{FALSE}. If \code{ruv = TRUE},
 #'   \code{Fuv} and \code{rho} must be provided.
 #' 
@@ -14,7 +14,7 @@
 #'   variation, with features as rows and latent factors as columns.
 #' 
 #' @param rho D x R matrix of effects corresponding to unwanted
-#'   variation, such that \code{bias = Fuv %*% rho}.
+#'   variation, such that \code{bias = Fuv \%*\% rho}.
 #' 
 #' @param prop The proportion by which to take a random subset of
 #'   genes for prior covariance estimation (useful in case of many

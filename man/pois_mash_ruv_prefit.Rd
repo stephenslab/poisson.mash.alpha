@@ -14,19 +14,19 @@ pois_mash_ruv_prefit(
 )
 }
 \arguments{
-\item{data}{A \dQuote{pois.mash} data object, typically created by
+\item{data}{\dQuote{pois.mash} data object, typically created by
 calling \code{\link{pois_mash_set_data}}.}
 
 \item{Fuv}{J x D matrix of latent factors causing unwanted
 variation, with features as rows and latent factors as columns.}
 
-\item{verbose}{A logical scalar indicating whether to print ELBO at
+\item{verbose}{Logical scalar indicating whether to print ELBO at
 each iteration.}
 
-\item{init}{A list of initial values for model parameters which
+\item{init}{List of initial values for model parameters which
 could be empty.}
 
-\item{control}{A list of control parameters with the following
+\item{control}{List of control parameters with the following
 elements: \dQuote{maxiter}, maximum number of iterations;
 \dQuote{maxiter.q}, maximum number of inner-loop iterations to
 update variational parameters at each iteration; \dQuote{tol.stop},

@@ -5,19 +5,19 @@
 #'   variation. Don't call this function if unwanted variation is not
 #'   accounted for.
 #' 
-#' @param data A \dQuote{pois.mash} data object, typically created by
+#' @param data \dQuote{pois.mash} data object, typically created by
 #'   calling \code{\link{pois_mash_set_data}}.
 #'
 #' @param Fuv J x D matrix of latent factors causing unwanted
 #'   variation, with features as rows and latent factors as columns.
 #' 
-#' @param verbose A logical scalar indicating whether to print ELBO at
+#' @param verbose Logical scalar indicating whether to print ELBO at
 #'   each iteration.
 #' 
-#' @param init A list of initial values for model parameters which
+#' @param init List of initial values for model parameters which
 #'   could be empty.
 #' 
-#' @param control A list of control parameters with the following
+#' @param control List of control parameters with the following
 #'   elements: \dQuote{maxiter}, maximum number of iterations;
 #'   \dQuote{maxiter.q}, maximum number of inner-loop iterations to
 #'   update variational parameters at each iteration; \dQuote{tol.stop},
