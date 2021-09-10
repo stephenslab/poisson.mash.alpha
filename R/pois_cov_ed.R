@@ -167,7 +167,7 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
     psi2 <- rep(NA,J)
     for (j in 1:J) {
       psi2_max       <- pmax(sd(loglambda[j,])^2,1)
-      log2_psi2_grid <- seq(log2(1e-4),log2(psi2_max),length.out = 25)
+       log2_psi2_grid <- seq(log2(1e-4),log2(psi2_max),length.out = 25)
       psi2_grid      <- 2^log2_psi2_grid
       logdens        <- rep(0,length(psi2_grid))
       for (l in 1:length(psi2_grid)) 
@@ -248,7 +248,7 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
   for (iter in 1:maxiter) {
       
     # Calculate overall ELBO at the current iteration.
-    ELBO.overall  <- sum(zeta*(log(rep(1,J)%*%t(pi)) + ELBOs - log(zeta))) +
+    ELBO.overall  <- sum(zeta*(log(rep(1,J) %*% t(pi)) + ELBOs - log(zeta))) +
                      const
     ELBOs.overall <- c(ELBOs.overall,ELBO.overall)
     
@@ -271,7 +271,7 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
     
     if (H > 0) {
       for (h in 1:H) {
-        tmp.U <- matrix(0, nrow=R, ncol=R)
+        tmp.U <- matrix(0,R,R)
         for (j in 1:J) {
           gamma.tmp <- gamma_jk[[h]][j,]
           Sigma.tmp <- Sigma_jk[[h]][j,,]
@@ -328,17 +328,26 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
         for (j in 1:J) {
           gamma.tmp <- gamma_jk[[H+g]][j,]
           Sigma.tmp <- Sigma_jk[[H+g]][j,,]
-          beta.qjg <- update_q_beta_rank1(theta_m=gamma.tmp, theta_V=Sigma.tmp, c2=rep(1,R), psi2=psi2[j], u=ulist[[g]])
-          tmp1.u <- tmp1.u + zeta[j,H+g]*beta.qjg$a2_m/psi2[j]
-          tmp2.u <- tmp2.u + zeta[j,H+g]*beta.qjg$a_theta_m/psi2[j]
-          for (i in 1:M) {
-            tmp.mu[j,H+g,i] <- sum(s[subgroup==i]*exp(bias[j,subgroup==i] + gamma.tmp[subgroup==i] + diag(Sigma.tmp)[subgroup==i]/2))
-          }
-          eta.qjg <- update_q_eta_rank1(theta_m=gamma.tmp, theta_V=Sigma.tmp, a2_m=beta.qjg$a2_m, a_theta_m=beta.qjg$a_theta_m, u=ulist[[g]])
+          beta.qjg  <- update_q_beta_rank1(theta_m = gamma.tmp,
+                                           theta_V = Sigma.tmp,
+                                           c2 = rep(1,R),psi2 = psi2[j],
+                                           u = ulist[[g]])
+          tmp1.u    <- tmp1.u + zeta[j,H+g] * beta.qjg$a2_m/psi2[j]
+          tmp2.u    <- tmp2.u + zeta[j,H+g] * beta.qjg$a_theta_m/psi2[j]
+          for (i in 1:M)
+            tmp.mu[j,H+g,i] <- sum(s[subgroup == i] *
+                                   exp(bias[j,subgroup == i] +
+                                       gamma.tmp[subgroup == i] +
+                                       diag(Sigma.tmp)[subgroup == i]/2))
+          eta.qjg <- update_q_eta_rank1(theta_m = gamma.tmp,
+                                        theta_V = Sigma.tmp,
+                                        a2_m = beta.qjg$a2_m,
+                                        a_theta_m = beta.qjg$a_theta_m,
+                                        u = ulist[[g]])
           tmp.psi2[j,H+g] <- sum(eta.qjg)
         }
         
-        # Update u_g
+        # Update u_g.
         ug.new <- tmp2.u/pmax(tmp1.u,1e-8)
         
         # Avoid too large values in u_g.
@@ -348,29 +357,38 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
         ulist[[g]] <- ug.new
       }
       
-      # if u is canonical
-      else{
-        ug <- ulist[[g]]
-        ug <- ug/ug[which.max(abs(ug))]
+      # If u is canonical.
+      else {
+        ug     <- ulist[[g]]
+        ug     <- ug / ug[which.max(abs(ug))]
         tmp1.u <- 0
         tmp2.u <- 0
         for (j in 1:J) {
           gamma.tmp <- gamma_jk[[H+g]][j,]
           Sigma.tmp <- Sigma_jk[[H+g]][j,,]
-          beta.qjg <- update_q_beta_rank1(theta_m=gamma.tmp, theta_V=Sigma.tmp, c2=rep(1,R), psi2=psi2[j], u=ulist[[g]])
-          tmp1.u <- tmp1.u + zeta[j,H+g]*sum(ug^2)*beta.qjg$a2_m/psi2[j]
-          tmp2.u <- tmp2.u + zeta[j,H+g]*sum(ug*beta.qjg$a_theta_m)/psi2[j]
-          for (i in 1:M) {
-            tmp.mu[j,H+g,i] <- sum(s[subgroup==i]*exp(bias[j,subgroup==i] + gamma.tmp[subgroup==i] + diag(Sigma.tmp)[subgroup==i]/2))
-          }
-          eta.qjg <- update_q_eta_rank1(theta_m=gamma.tmp, theta_V=Sigma.tmp, a2_m=beta.qjg$a2_m, a_theta_m=beta.qjg$a_theta_m, u=ulist[[g]])
+          beta.qjg  <- update_q_beta_rank1(theta_m = gamma.tmp,
+                                           theta_V = Sigma.tmp,
+                                           c2 = rep(1,R),psi2 = psi2[j],
+                                           u = ulist[[g]])
+          tmp1.u <- tmp1.u + zeta[j,H+g] * sum(ug^2) * beta.qjg$a2_m/psi2[j]
+          tmp2.u <- tmp2.u + zeta[j,H+g] * sum(ug * beta.qjg$a_theta_m)/psi2[j]
+          for (i in 1:M)
+            tmp.mu[j,H+g,i] <- sum(s[subgroup == i] *
+                                   exp(bias[j,subgroup == i] +
+                                       gamma.tmp[subgroup == i] +
+                                       diag(Sigma.tmp)[subgroup == i]/2))
+          eta.qjg <- update_q_eta_rank1(theta_m = gamma.tmp,
+                                        theta_V = Sigma.tmp,
+                                        a2_m = beta.qjg$a2_m,
+                                        a_theta_m = beta.qjg$a_theta_m,
+                                        u = ulist[[g]])
           tmp.psi2[j,H+g] <- sum(eta.qjg)
         }
         
-        # update u_g
-        ug.new <- pmin(pmax(tmp2.u/tmp1.u, 0.01), sqrt(upr_bd))*ug
+        # Update u_g.
+        ug.new      <- pmin(pmax(tmp2.u/tmp1.u,0.01),sqrt(upr_bd)) * ug
         diff.U[H+g] <- max(abs(ug.new - ulist[[g]]))
-        ulist[[g]] <- ug.new
+        ulist[[g]]  <- ug.new
       }
     }
     
@@ -393,38 +411,44 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
     
     # Update rho and bias if ruv = TRUE.
     if (ruv) {
-      rho.new <- matrix(NA, nrow=nrow(rho), ncol=ncol(rho))
-      for (r in 1:R) {
-        rho.new[,r] <- update_rho(Xr = data.ed[,r],Fuv = F.ed,sr = s[r],
-                                  mu = mu[,r],Lr = tmp.ruv[,r],init = rho[,r], 
-                                  control = list(maxiter=100, tol=tol.rho, maxrho=100/max(abs(F.ed))))$rho 
-      }
+      rho.new <- matrix(as.numeric(NA),nrow(rho),ncol(rho))
+      for (r in 1:R) 
+        rho.new[,r] <-
+          update_rho(Xr = data.ed[,r],Fuv = F.ed,sr = s[r],mu = mu[,r],
+                     Lr = tmp.ruv[,r],init = rho[,r], 
+                     control = list(maxiter = 100,tol = tol.rho,
+                                    maxrho=100/max(abs(F.ed))))$rho 
       diff.rho <- rho.new - rho
       rho      <- rho.new
       bias     <- F.ed %*% rho
       bias     <- scale_bias(bias, maxbias)
     }
     
-    # update posterior mean and covariance of theta and local ELBO F_jk
+    # Update posterior mean and covariance of theta and local ELBO F_jk.
     for (j in 1:J) {
       if (H > 0) {
         for (h in 1:H) {
-          theta.qjh <- update_q_theta_general(x=data.ed[j,], s=s, mu=mu[j,], bias=bias[j,], c2=rep(1,R), psi2=psi2[j], U=Ulist[[h]],
-                                              init=list(m=gamma_jk[[h]][j,], V=Sigma_jk[[h]][j,,]), control=list(maxiter=maxiter.q, tol=tol.q))
-          gamma_jk[[h]][j,] <- theta.qjh$m
+          theta.qjh <- update_q_theta_general(x = data.ed[j,],s = s,
+            mu = mu[j,],bias = bias[j,],c2 = rep(1,R),psi2 = psi2[j],
+            U = Ulist[[h]],
+            init = list(m = gamma_jk[[h]][j,],V = Sigma_jk[[h]][j,,]),
+            control = list(maxiter = maxiter.q,tol = tol.q))
+          gamma_jk[[h]][j,]  <- theta.qjh$m
           Sigma_jk[[h]][j,,] <- theta.qjh$V
-          ELBOs[j,h] <- theta.qjh$ELBO
-          A[j,h,] <- theta.qjh$m + diag(theta.qjh$V)/2
+          ELBOs[j,h]         <- theta.qjh$ELBO
+          A[j,h,]            <- theta.qjh$m + diag(theta.qjh$V)/2
         }
       }
       
       for (g in 1:G) {
-        theta.qjg <- update_q_theta_rank1(x=data.ed[j,], s=s, mu=mu[j,], bias=bias[j,], c2=rep(1,R), psi2=psi2[j], u=ulist[[g]],
-                                          init=list(m=gamma_jk[[H+g]][j,], V=Sigma_jk[[H+g]][j,,]), control=list(maxiter=maxiter.q, tol=tol.q))
-        gamma_jk[[H+g]][j,] <- theta.qjg$m
+        theta.qjg <- update_q_theta_rank1(x = data.ed[j,],s = s,mu = mu[j,],
+          bias = bias[j,],c2 = rep(1,R),psi2 = psi2[j],u = ulist[[g]],
+          init = list(m = gamma_jk[[H+g]][j,],V = Sigma_jk[[H+g]][j,,]),
+          control = list(maxiter = maxiter.q,tol = tol.q))
+        gamma_jk[[H+g]][j,]  <- theta.qjg$m
         Sigma_jk[[H+g]][j,,] <- theta.qjg$V
-        ELBOs[j,H+g] <- theta.qjg$ELBO
-        A[j,H+g,] <- theta.qjg$m + diag(theta.qjg$V)/2
+        ELBOs[j,H+g]         <- theta.qjg$ELBO
+        A[j,H+g,]            <- theta.qjg$m + diag(theta.qjg$V)/2
       }
     }
     
