@@ -62,15 +62,13 @@ runtime <- proc.time() - start_time
 fit.ed$runtime <- runtime
 saveRDS(fit.ed,file = "pois_mash_ruv_ed.Rds")
 
-stop()
-
 # Run Poisson mash ruv
 # --------------------
 # Construct the canonical prior covariance matrices.
 ulist.c <- pois_cov_canonical(dat)
 
 # Combine all the rank-1 prior covariance matrices.
-ulist <- c(fit.ed$ulist, ulist.c)
+ulist <- c(fit.ed$ulist,ulist.c)
 
 start_time <- proc.time()
 cat("start fitting poisson mash with ruv\n")
