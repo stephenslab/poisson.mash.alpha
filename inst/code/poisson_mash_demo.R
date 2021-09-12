@@ -37,7 +37,7 @@ Fuv <- as.matrix(fit.glmpca$loadings)
 cat("finish fitting GLMPCA to estimate matrix of latent factors\n")
 runtime <- proc.time() - start_time
 fit.glmpca$runtime <- runtime
-saveRDS(fit.glmpca,file = "fit_glmpca.Rds")
+saveRDS(fit.glmpca,"fit_glmpca.Rds")
 
 # Prefit the model to initialize parameters
 # -----------------------------------------
@@ -60,7 +60,7 @@ fit.ed <- pois_cov_ed(dat,subset = res.pca$subset,Ulist = res.pca$Ulist,
 cat("finish fitting ED step\n")
 runtime <- proc.time() - start_time
 fit.ed$runtime <- runtime
-saveRDS(fit.ed,file = "pois_mash_ruv_ed.Rds")
+saveRDS(fit.ed,"pois_mash_ruv_ed.Rds")
 
 # Run Poisson mash ruv
 # --------------------
@@ -72,11 +72,12 @@ ulist <- c(fit.ed$ulist,ulist.c)
 
 start_time <- proc.time()
 cat("start fitting poisson mash with ruv\n")
-res <- pois_mash(data=dat, Ulist=fit.ed$Ulist, ulist=ulist, normalizeU=TRUE,
-                 gridmult=2.5, ruv=TRUE, Fuv=Fuv, rho=prefit$rho, verbose=TRUE,
-                 init=list(mu=prefit$mu, psi2=prefit$psi2)) 
+res <- pois_mash(data = dat,Ulist = fit.ed$Ulist,ulist = ulist,
+                 normalizeU = TRUE,gridmult = 2.5,ruv = TRUE,Fuv = Fuv,
+                 rho = prefit$rho,verbose = TRUE,
+                 init = list(mu = prefit$mu,psi2 = prefit$psi2)) 
 cat("finish fitting poisson mash with ruv\n")
 runtime <- proc.time() - start_time
 res$runtime <- runtime
-saveRDS(res, file = "pois_mash_ruv_fit.Rds")
+saveRDS(res,"pois_mash_ruv_fit.Rds")
 print(sessionInfo())

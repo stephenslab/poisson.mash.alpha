@@ -35,8 +35,11 @@
 #' \item{ZeroProb}{J x Q matrix of posterior probability of being zero.}
 #' \item{NegativeProb}{J x Q matrix of posterior probability of being negative.}
 #' \item{lfsr}{J x Q matrix of local false sign rate estimates.}
-
-
+#'
+#' @keywords internal
+#' 
+#' @export
+#' 
 pois_mash_posterior <- function(data, s, mu, psi2, bias=NULL, wlist, Ulist, ulist, ulist.epsilon2=NULL, zeta, thresh=NULL,
                                 C=NULL, res.colnames=NULL){
   data <- as.matrix(data)

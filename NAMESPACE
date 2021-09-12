@@ -3,6 +3,7 @@
 export(pois_cov_canonical)
 export(pois_cov_ed)
 export(pois_cov_init)
+export(pois_mash_posterior)
 export(pois_mash_ruv_prefit)
 export(pois_mash_set_data)
 export(pois_mash_sim_data)
