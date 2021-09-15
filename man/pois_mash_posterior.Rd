@@ -2,7 +2,7 @@
 % Please edit documentation in R/pois_mash_posterior.R
 \name{pois_mash_posterior}
 \alias{pois_mash_posterior}
-\title{Compute posterior summaries of the given contrasts of the matrix of effects based on the poisson mash fit}
+\title{Compute Posterior Summaries From Poisson Mash Fit}
 \usage{
 pois_mash_posterior(
   data,
@@ -21,42 +21,66 @@ pois_mash_posterior(
 )
 }
 \arguments{
-\item{data}{J by R matrix of counts collapsed over conditions, with features as rows and conditions as columns}
+\item{data}{J x R matrix of counts collapsed over conditions, with
+features as rows and conditions as columns.}
 
-\item{s}{R by 1 numeric vector s adjusting for sequencing depth of each of R conditions}
+\item{s}{Numeric vector of length R adjusting for sequencing depth of
+each of R conditions.}
 
-\item{mu}{J by R matrix of gene-specific means (R conditions are assumed to belong to M subgroups, so each row should have at most M distinct values)}
+\item{mu}{J x R matrix of gene-specific means (R conditions are
+assumed to belong to M subgroups, so each row should have at most M
+distinct values).}
 
-\item{psi2}{J by 1 vector of gene-specific dispersion parameters}
+\item{psi2}{Vector of length J giving the gene-specific dispersion
+parameters.}
 
-\item{bias}{J by R matrix of bias caused by unwanted variation. Default to matrix of all zeros.}
+\item{bias}{J x R matrix of bias caused by unwanted
+variation. Default is a matrix of all zeros.}
 
-\item{wlist}{L by 1 numeric vector of scaling factors for the prior covariance matrices}
+\item{wlist}{Numeric vector of length L specifying the scaling
+factors for the prior covariance matrices.}
 
-\item{Ulist}{A list of H full-rank covariance matrices}
+\item{Ulist}{List of H full-rank covariance matrices}
 
-\item{ulist}{A list of G numeric vectors each of which forming a rank-1 covariance matrix}
+\item{ulist}{List of G numeric vectors each of which forms a
+rank-1 covariance matrix.}
 
-\item{ulist.epsilon2}{G by 1 numeric vector that adds a small positive epsilon2 to the diagonals of each rank-1 prior covariance matrix}
+\item{ulist.epsilon2}{Numeric vector of length G added to the
+diagonals of each rank-1 prior covariance matrix.}
 
-\item{zeta}{J by K matrix of posterior weights, where K=L*(H+G) is the number of mixture components in the prior}
+\item{zeta}{J x K matrix of posterior weights, where K = L*(H + G) is
+the number of prior mixture components.}
 
-\item{thresh}{the threshold for posterior weights below which the corresponding mixture components are ignored in posterior summary calculation}
+\item{thresh}{Posterior weights thresholds. Below this threshold, the
+mixture components are ignored in the posterior calculations.}
 
-\item{C}{Q by R matrix of contrasts for effects}
+\item{C}{Q x R matrix of contrasts for effects.}
 
-\item{res.colnames}{Q by 1 character vector giving the names of the contrasts}
+\item{res.colnames}{Character vector of length Q giving the names
+of the contrasts.}
 }
 \value{
-A list with the following components:
+The return value is a list with the following components:
+
 \item{PosteriorMean}{J x Q matrix of posterior means.}
+
 \item{PosteriorSD}{J x Q matrix of posterior standard deviations.}
-\item{ZeroProb}{J x Q matrix of posterior probability of being zero.}
-\item{NegativeProb}{J x Q matrix of posterior probability of being negative.}
+
+\item{ZeroProb}{J x Q matrix in which each entry is the posterior
+  probability of the true effect being zero.}
+
+\item{NegativeProb}{J x Q matrix in which each entry is the
+  posterior probability of the true effect being negative.}
+
 \item{lfsr}{J x Q matrix of local false sign rate estimates.}
 }
 \description{
-This is an internal function which users might not want to call directly. 
-Mixtures components with very small posterior weights are ignored in the calculation of effect posterior summaries.
+Compute posterior summaries of the given contrasts of
+  the matrix of effects based on the poisson mash fit. Mixture
+  components with very small posterior weights are ignored in the
+  posterior calculations.
+
+  Note this is an internal function which users might not want to
+  call directly.
 }
 \keyword{internal}
