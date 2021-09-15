@@ -77,6 +77,8 @@
 #' \item{pois.mash.fit}{List containing the parameter estimates of the
 #'   poisson mash model.}
 #'
+#' @importFrom poilog dpoilog
+#' 
 #' @export
 #' 
 pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
@@ -149,13 +151,14 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
     bias     <- matrix(0,J,R)
   }
   
-  # IInitialize mu by ignoring condition-specific effects (i.e.,
+  # Initialize mu by ignoring condition-specific effects (i.e.,
   # theta) and unwanted variation.
   mu <- init$mu
   if (is.null(mu)) {
-    mu <- matrix(NA,J,R)
+    mu <- matrix(as.numeric(NA),J,R)
     for (i in 1:M)
-      mu[,subgroup==i] <- log(rowSums(data[,subgroup==i])) - log(exp(bias[,subgroup==i])%*%s[subgroup==i])
+      mu[,subgroup == i] <- log(rowSums(data[,subgroup == i])) -
+          log(exp(bias[,subgroup == i]) %*% s[subgroup == i])
   }
   
   # Get a rough estimate of log lambda, which is useful for estimating
@@ -166,45 +169,48 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
   if (is.null(maxpsi2))
     maxpsi2 <- max(apply(loglambda,1,sd)^2)
   
-  # use grid search to initialize psi2 by fitting a poisson-log-normal model while ignoring fixed effects (i.e., beta) and unwanted variation
+  # Use grid search to initialize psi2 by fitting a poisson-log-normal
+  # model while ignoring fixed effects (i.e., beta) and unwanted
+  # variation.
   psi2 <- init$psi2
   if (is.null(psi2)) {
-    psi2 <- rep(NA, J)
-
+    psi2 <- rep(as.numeric(NA),J)
     for (j in 1:J) {
-      psi2_max <- pmax(sd(loglambda[j,])^2, 1)
-      log2_psi2_grid <- seq(log2(1e-4), log2(psi2_max), length.out = 25)
-      psi2_grid <- 2^log2_psi2_grid
-      logdens <- rep(0, length(psi2_grid))
+      psi2_max       <- pmax(sd(loglambda[j,])^2,1)
+      log2_psi2_grid <- seq(log2(1e-4),log2(psi2_max),length.out = 25)
+      psi2_grid      <- 2^log2_psi2_grid
+      logdens        <- rep(0,length(psi2_grid))
       for (l in 1:length(psi2_grid))
         for (r in 1:R)
-          logdens[l] <- logdens[l] + log(dpoilog(data[j,r], mu[j,r] + bias[j,r] + log(s[r]), sqrt(psi2_grid[l])))
+          logdens[l] <- logdens[l] +
+            log(dpoilog(data[j,r],mu[j,r] + bias[j,r] + log(s[r]),
+                        sqrt(psi2_grid[l])))
       psi2[j] <- psi2_grid[which.max(logdens)]
     }
   }
   else
-    psi2 <- pmin(psi2, maxpsi2)
+    psi2 <- pmin(psi2,maxpsi2)
   
   # Calculate wlist if not provided.
   if (is.null(wlist)) {
     if (is.null(gridmult))
       gridmult <- 2
-    w_max <- 4*max(apply(loglambda, 1, sd)^2) 
-    w_min <- pmax(min(apply(loglambda, 1, sd)^2)/100, 1e-8)
-    log2_wlist <- seq(log2(w_min), log2(w_max), by=log2(gridmult))
-    wlist <- 2^log2_wlist
+    w_max      <- 4*max(apply(loglambda,1,sd)^2) 
+    w_min      <- pmax(min(apply(loglambda,1,sd)^2)/100,1e-8)
+    log2_wlist <- seq(log2(w_min),log2(w_max),by = log2(gridmult))
+    wlist      <- 2^log2_wlist
   }
   
   H <- length(Ulist)
   G <- length(ulist)
   L <- length(wlist)
-  K <- (H+G)*L
+  K <- (H + G)*L
   
-  # specify ulist.epsilon2 if not provided
+  # Specify ulist.epsilon2 if not provided.
   if (is.null(ulist.epsilon2))
-    ulist.epsilon2 <- rep(1e-8, G)
+    ulist.epsilon2 <- rep(1e-8,G)
   
-  # normalize prior covariance matrices if normalizeU=TRUE
+  # Normalize prior covariance matrices if normalizeU = TRUE.
   if (normalizeU) {
     if (H > 0) {
       for (h in 1:H) {
@@ -216,7 +222,7 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
     
     for (g in 1:G) {
       ug <- ulist[[g]]
-      if (sum(ug!=0)!=0) {
+      if (sum(ug != 0) != 0) {
         ug <- ug/ug[which.max(abs(ug))]
         ulist[[g]] <- ug
       }
@@ -226,8 +232,8 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
   # Initialize pi.
   pi <- init$pi
   if (is.null(pi))
-    pi <- rep(1/K, K)
-  const <- sum(data%*%log(s)) - sum(lgamma(data+1))
+    pi <- rep(1/K,K)
+  const <- sum(data %*% log(s)) - sum(lgamma(1 + data))
   if (verbose)
     cat("Start fitting Poisson mash model.\n")
   
@@ -236,7 +242,7 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
   
   # J x K x R arrays to store the quantities related to q_jkl,
   # s.t. A[j,kl,r] = gamma_jklr + 0.5 * Sigma_jkl,rr.
-  A <- array(NA, c(J, K, R))
+  A <- array(as.numeric(NA),c(J,K,R))
   
   # Update posterior mean and covariance of theta and local ELBO.
   ELBOs    <- matrix(0,J,K)
@@ -249,49 +255,70 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
       for (h in 1:H) {
         for (l in 1:L) {
           hl <- hl + 1
-          theta.qjhl <- update_q_theta_general(x=data[j,], s=s, mu=mu[j,], bias=bias[j,], c2=rep(1,R), psi2=psi2[j], w=wlist[l], U=Ulist[[h]],
-                                               control=list(maxiter=maxiter.q, tol=tol.q))
+          theta.qjhl <- update_q_theta_general(x = data[j,],s = s,mu = mu[j,],
+            bias = bias[j,],c2 = rep(1,R),psi2 = psi2[j],w = wlist[l],
+            U = Ulist[[h]],control = list(maxiter = maxiter.q,tol = tol.q))
           ELBOs[j,hl] <- theta.qjhl$ELBO
-          gamma.tmp <- theta.qjhl$m
-          Sigma.tmp <- theta.qjhl$V
+          gamma.tmp   <- theta.qjhl$m
+          Sigma.tmp   <- theta.qjhl$V
           for (i in 1:M)
-            tmp.mu[j,hl,i] <- sum(s[subgroup==i]*exp(bias[j,subgroup==i] + gamma.tmp[subgroup==i] + diag(Sigma.tmp)[subgroup==i]/2))
-          eta.qjhl <- update_q_eta_general(theta_m=gamma.tmp, theta_V=Sigma.tmp, c2=rep(1,R), psi2=psi2[j], w=wlist[l], U=Ulist[[h]])
+            tmp.mu[j,hl,i] <- sum(s[subgroup == i]*exp(bias[j,subgroup == i] +
+                              gamma.tmp[subgroup == i] +
+                              diag(Sigma.tmp)[subgroup == i]/2))
+          eta.qjhl <- update_q_eta_general(theta_m = gamma.tmp,
+                                           theta_V = Sigma.tmp,c2 = rep(1,R),
+                                           psi2 = psi2[j],w = wlist[l],
+                                           U = Ulist[[h]])
           tmp.psi2[j,hl] <- sum(eta.qjhl)
-          gamma[j,hl,] <- gamma.tmp
-          A[j,hl,] <- gamma.tmp + diag(Sigma.tmp)/2 
+          gamma[j,hl,]   <- gamma.tmp
+          A[j,hl,]       <- gamma.tmp + diag(Sigma.tmp)/2 
         }
       }      
     }
     
     gl <- 0
     for (g in 1:G) {
-      ug <- ulist[[g]]
+      ug         <- ulist[[g]]
       epsilon2.g <- ulist.epsilon2[g]
       for (l in 1:L) {
         gl <- gl + 1
-        theta.qjgl <- update_q_theta_rank1(x=data[j,], s=s, mu=mu[j,], bias=bias[j,], c2=rep(1,R), psi2=psi2[j]+wlist[l]*epsilon2.g, 
-                                           w=wlist[l], u=ug, control=list(maxiter=maxiter.q, tol=tol.q))
+        theta.qjgl <- update_q_theta_rank1(x = data[j,],s = s,mu = mu[j,],
+                        bias = bias[j,],c2 = rep(1,R),
+                        psi2 = psi2[j] + wlist[l] * epsilon2.g, 
+                        w = wlist[l],u = ug,
+                        control = list(maxiter = maxiter.q,tol = tol.q))
         ELBOs[j,H*L+gl] <- theta.qjgl$ELBO
-        gamma.tmp <- theta.qjgl$m
-        Sigma.tmp <- theta.qjgl$V
+        gamma.tmp       <- theta.qjgl$m
+        Sigma.tmp       <- theta.qjgl$V
         for (i in 1:M)
-          tmp.mu[j,H*L+gl,i] <- sum(s[subgroup==i]*exp(bias[j,subgroup==i] + gamma.tmp[subgroup==i] + diag(Sigma.tmp)[subgroup==i]/2))
+          tmp.mu[j,H*L+gl,i] <-
+            sum(s[subgroup == i] * exp(bias[j,subgroup == i] +
+            gamma.tmp[subgroup == i] + diag(Sigma.tmp)[subgroup == i]/2))
         gamma[j,H*L+gl,] <- gamma.tmp
-        A[j,H*L+gl,] <- gamma.tmp + diag(Sigma.tmp)/2
+        A[j,H*L+gl,]     <- gamma.tmp + diag(Sigma.tmp)/2
         
-        # if ug is zero vector
+        # If ug is zero vector.
         if (sum(ug != 0) == 0) {
           eta.qjgl <- gamma.tmp^2 + diag(Sigma.tmp) 
           tmp.psi2[j,H*L+gl] <- sum(eta.qjgl)
         }
         else if (epsilon2.g > 1e-4) {
-          eta.qjgl <- update_q_eta_rank1_robust(theta_m=gamma.tmp, theta_V=Sigma.tmp, c2=rep(1,R), psi2=psi2[j], w=wlist[l], u=ug, epsilon2=epsilon2.g)
+          eta.qjgl <- update_q_eta_rank1_robust(theta_m = gamma.tmp,
+                                                theta_V = Sigma.tmp,
+                                                c2 = rep(1,R),psi2 = psi2[j],
+                                                w = wlist[l],u = ug,
+                                                epsilon2 = epsilon2.g)
           tmp.psi2[j,H*L+gl] <- sum(eta.qjgl)
         }
         else {
-          beta.qjgl <- update_q_beta_rank1(theta_m=gamma.tmp, theta_V=Sigma.tmp, c2=rep(1,R), psi2=psi2[j], w=wlist[l], u=ug)
-          eta.qjgl <- update_q_eta_rank1(theta_m=gamma.tmp, theta_V=Sigma.tmp, a2_m=beta.qjgl$a2_m, a_theta_m=beta.qjgl$a_theta_m, u=ug)
+          beta.qjgl <- update_q_beta_rank1(theta_m = gamma.tmp,
+                                           theta_V = Sigma.tmp,c2 = rep(1,R),
+                                           psi2 = psi2[j],w = wlist[l],u = ug)
+          eta.qjgl <- update_q_eta_rank1(theta_m = gamma.tmp,
+                                         theta_V = Sigma.tmp,
+                                         a2_m = beta.qjgl$a2_m,
+                                         a_theta_m = beta.qjgl$a_theta_m,
+                                         u = ug)
           tmp.psi2[j,H*L+gl] <- sum(eta.qjgl)
         }
       }
@@ -299,72 +326,78 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
   }
   
   # Update zeta.
-  ELBOs.cen <- ELBOs - apply(ELBOs, 1, max)
-  zeta <- t(t(exp(ELBOs.cen)) * pi)
-  zeta <- zeta*(1/rowSums(zeta))  
-  zeta <- pmax(zeta, 1e-15)
+  ELBOs.cen <- ELBOs - apply(ELBOs,1,max)
+  zeta      <- t(t(exp(ELBOs.cen)) * pi)
+  zeta      <- zeta*(1/rowSums(zeta))  
+  zeta      <- pmax(zeta,1e-15)
   
-  # update J x R matrix tmp.ruv needed to update rho, s.t. tmp.ruv[j,r] = sum_kl zeta[j,kl]*exp(A[j,kl,r])
-  tmp.ruv <- matrix(NA, nrow=J, ncol=R)
+  # Update J x R matrix tmp.ruv needed to update rho,
+  # s.t. tmp.ruv[j,r] = sum_kl zeta[j,kl] * exp(A[j,kl,r]).
+  tmp.ruv <- matrix(as.numeric(NA),J,R)
   for (r in 1:R)
     tmp.ruv[,r] <- rowSums(zeta*exp(A[,,r]))
   
-  # store the overall ELBO at each iteration
+  # Store the overall ELBO at each iteration.
   ELBOs.overall <- c()
-  # store the number of j to be updated at each iteration
+  
+  # Store the number of j to be updated at each iteration.
   j.update <- c()
   
   for (iter in 1:maxiter) {
       
     # Calculate overall ELBO at the current iteration.
-    ELBO.overall <- sum(zeta*(log(rep(1,J)%*%t(pi)) + ELBOs - log(zeta))) + const
-    ELBOs.overall <- c(ELBOs.overall, ELBO.overall)
+    ELBO.overall <- sum(zeta*(log(rep(1,J) %*% t(pi)) + ELBOs - log(zeta))) +
+                    const
+    ELBOs.overall <- c(ELBOs.overall,ELBO.overall)
     
     # Update pi.
-    pi.new <- colMeans(zeta)
-    pi.new <- pmax(pi.new, 1e-8)
+    pi.new  <- colMeans(zeta)
+    pi.new  <- pmax(pi.new,1e-8)
     diff.pi <- pi.new - pi
-    pi <- pi.new
+    pi      <- pi.new
     
-    # calculate the new mu
+    # Calculate the new mu.
     mu.new <- matrix(as.numeric(NA),J,R)
     for (i in 1:M) {
-        mu.i.new <- log(rowSums(data[,subgroup == i])) -
-                    log(rowSums(zeta * tmp.mu[,,i]))
+      mu.i.new <- log(rowSums(data[,subgroup == i])) -
+                  log(rowSums(zeta * tmp.mu[,,i]))
       mu.new[,subgroup == i] <- mu.i.new
     }
     idx.update.mu <- apply(abs(mu.new - mu),1,max) > tol.mu
     diff.mu       <- mu.new - mu
     
-    # calculate the new psi2
+    # Calculate the new psi2.
     psi2.new        <- rowSums(zeta * tmp.psi2)/R
     psi2.new        <- pmin(pmax(psi2.new,minpsi2),maxpsi2)
     diff.psi2       <- psi2.new/psi2
     idx.update.psi2 <- abs(diff.psi2 - 1) > tol.psi2
     
-    # calculate the new rho and bias
+    # Calculate the new rho and bias.
     if (ruv & update.rho) {
       rho.new <- matrix(as.numeric(NA),nrow(rho),ncol(rho))
       for (r in 1:R)
-        rho.new[,r] <- update_rho(Xr=data[,r], Fuv=Fuv, sr=s[r], mu=mu[,r], Lr=tmp.ruv[,r], init=rho[,r], control=list(maxiter=100, tol=tol.rho, maxrho=100/max(abs(Fuv))))$rho 
-      diff.rho <- rho.new - rho
-      bias.new <- Fuv %*% rho.new
-      bias.new <- scale_bias(bias.new, maxbias)
-      idx.update.bias <- apply(abs(bias.new-bias), 1, max) > tol.bias
-      rho <- rho.new
+        rho.new[,r] <- update_rho(Xr = data[,r],Fuv = Fuv,sr = s[r],
+                                  mu = mu[,r],Lr = tmp.ruv[,r],init = rho[,r],
+                                  control = list(maxiter = 100,tol = tol.rho,
+                                    maxrho = 100/max(abs(Fuv))))$rho 
+      diff.rho        <- rho.new - rho
+      bias.new        <- Fuv %*% rho.new
+      bias.new        <- scale_bias(bias.new,maxbias)
+      idx.update.bias <- apply(abs(bias.new - bias),1,max) > tol.bias
+      rho             <- rho.new
     }
     else {
-      bias.new <- bias
-      idx.update.bias <- rep(FALSE, J)
+      bias.new        <- bias
+      idx.update.bias <- rep(FALSE,J)
     }
     
-    # update the set of indices j that need update, and update mu, psi2, bias for these j
+    # Update the set of indices j that need update, and update mu,
+    # psi2, bias for these j.
     idx.update <- which(idx.update.mu | idx.update.psi2 | idx.update.bias)
-    mu[idx.update,] <- mu.new[idx.update,]
-    psi2[idx.update] <- psi2.new[idx.update]
+    mu[idx.update,]   <- mu.new[idx.update,]
+    psi2[idx.update]  <- psi2.new[idx.update]
     bias[idx.update,] <- bias.new[idx.update,]
-    
-    j.update <- c(j.update, length(idx.update))
+    j.update          <- c(j.update,length(idx.update))
     
     if (verbose) {
       print("iter         ELBO")
@@ -385,56 +418,79 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
         hl <- 0
         for (h in 1:H) {
           for (l in 1:L) {
-            hl <- hl + 1
-            Utilde <- wlist[l]*Ulist[[h]] + psi2[j.idx]*diag(R)
-            a.tmp <- s*exp(mu[j.idx,] + bias[j.idx,] + A[j.idx,hl,])
-            theta.qjhl <- update_q_theta_general(x=data[j.idx,], s=s, mu=mu[j.idx,], bias=bias[j.idx,], c2=rep(1,R), psi2=psi2[j.idx], w=wlist[l],
-                                                 U=Ulist[[h]], init=list(m=gamma[j.idx,hl,], V=solve(solve(Utilde) + diag(a.tmp), tol=1e-50)), 
-                                                 control=list(maxiter=maxiter.q, tol=tol.q))
+            hl         <- hl + 1
+            Utilde     <- wlist[l] * Ulist[[h]] + psi2[j.idx] * diag(R)
+            a.tmp      <- s * exp(mu[j.idx,] + bias[j.idx,] + A[j.idx,hl,])
+            theta.qjhl <- update_q_theta_general(x = data[j.idx,],s = s,
+                            mu = mu[j.idx,],bias = bias[j.idx,],c2 = rep(1,R),
+                            psi2 = psi2[j.idx],w = wlist[l],U = Ulist[[h]],
+                            init = list(m = gamma[j.idx,hl,],
+                                        V = solve(solve(Utilde) + diag(a.tmp),
+                                                  tol = 1e-50)), 
+                                control = list(maxiter=maxiter.q,tol=tol.q))
             ELBOs[j.idx,hl] <- theta.qjhl$ELBO
-            gamma.tmp <- theta.qjhl$m
-            Sigma.tmp <- theta.qjhl$V
+            gamma.tmp       <- theta.qjhl$m
+            Sigma.tmp       <- theta.qjhl$V
             for (i in 1:M)
-              tmp.mu[j.idx,hl,i] <- sum(s[subgroup==i]*exp(bias[j.idx,subgroup==i] + gamma.tmp[subgroup==i] + diag(Sigma.tmp)[subgroup==i]/2))
-            eta.qjhl <- update_q_eta_general(theta_m=gamma.tmp, theta_V=Sigma.tmp, c2=rep(1,R), psi2=psi2[j.idx], w=wlist[l], U=Ulist[[h]])
+              tmp.mu[j.idx,hl,i] <- sum(s[subgroup == i] *
+                                      exp(bias[j.idx,subgroup == i] +
+                                          gamma.tmp[subgroup == i] +
+                                          diag(Sigma.tmp)[subgroup == i]/2))
+            eta.qjhl <- update_q_eta_general(theta_m = gamma.tmp,
+                                             theta_V = Sigma.tmp,c2 = rep(1,R),
+                                             psi2 = psi2[j.idx],w = wlist[l],
+                                             U = Ulist[[h]])
             tmp.psi2[j.idx,hl] <- sum(eta.qjhl)
-            gamma[j.idx,hl,] <- gamma.tmp
-            A[j.idx,hl,] <- gamma.tmp + diag(Sigma.tmp)/2 
+            gamma[j.idx,hl,]   <- gamma.tmp
+            A[j.idx,hl,]       <- gamma.tmp + diag(Sigma.tmp)/2 
           }
         }        
       }
       
       gl <- 0
       for (g in 1:G) {
-        ug <- ulist[[g]]
+        ug         <- ulist[[g]]
         epsilon2.g <- ulist.epsilon2[g]
         for (l in 1:L) {
-          gl <- gl + 1
-          a.tmp <- s*exp(mu[j.idx,] + bias[j.idx,] + A[j.idx, H*L+gl,])
-          S_inv <- 1/(psi2[j.idx]*rep(1,R) + wlist[l]*epsilon2.g)
-          init.V <- mat_inv_rank1(v1=a.tmp+S_inv, v2=-wlist[l]*ug*S_inv, v3=(ug*S_inv)/(1+wlist[l]*sum(ug^2*S_inv)))
-          theta.qjgl <- update_q_theta_rank1(x=data[j.idx,], s=s, mu=mu[j.idx,], bias=bias[j.idx,], c2=rep(1,R), psi2=psi2[j.idx]+wlist[l]*epsilon2.g, 
-                                             w=wlist[l], u=ug, init=list(m=gamma[j.idx,H*L+gl,], V=init.V), control=list(maxiter=maxiter.q, tol=tol.q))
+          gl     <- gl + 1
+          a.tmp  <- s * exp(mu[j.idx,] + bias[j.idx,] + A[j.idx,H*L+gl,])
+          S_inv  <- 1/(psi2[j.idx] * rep(1,R) + wlist[l] * epsilon2.g)
+          init.V <- mat_inv_rank1(a.tmp + S_inv,-wlist[l] * ug * S_inv,
+                                  (ug*S_inv)/(1 + wlist[l]*sum(ug^2*S_inv)))
+          theta.qjgl <- update_q_theta_rank1(x = data[j.idx,],s = s,
+                          mu = mu[j.idx,],bias = bias[j.idx,],c2 = rep(1,R),
+                          psi2 = psi2[j.idx] + wlist[l] * epsilon2.g, 
+                          w = wlist[l],u = ug,
+                          init = list(m = gamma[j.idx,H*L+gl,],V = init.V),
+                          control = list(maxiter = maxiter.q,tol = tol.q))
           ELBOs[j.idx,H*L+gl] <- theta.qjgl$ELBO
-          gamma.tmp <- theta.qjgl$m
-          Sigma.tmp <- theta.qjgl$V
+          gamma.tmp           <- theta.qjgl$m
+          Sigma.tmp           <- theta.qjgl$V
           for (i in 1:M)
-            tmp.mu[j.idx,H*L+gl,i] <- sum(s[subgroup==i]*exp(bias[j.idx,subgroup==i] + gamma.tmp[subgroup==i] + diag(Sigma.tmp)[subgroup==i]/2))
+            tmp.mu[j.idx,H*L+gl,i] <-
+              sum(s[subgroup == i] * exp(bias[j.idx,subgroup == i] +
+              gamma.tmp[subgroup == i] + diag(Sigma.tmp)[subgroup == i]/2))
           gamma[j.idx,H*L+gl,] <- gamma.tmp
-          A[j.idx,H*L+gl,]    <- gamma.tmp + diag(Sigma.tmp)/2
+          A[j.idx,H*L+gl,]     <- gamma.tmp + diag(Sigma.tmp)/2
           
-          # if ug is zero vector
+          # If ug is zero vector.
           if (sum(ug != 0) == 0) {
             eta.qjgl <- gamma.tmp^2 + diag(Sigma.tmp) 
             tmp.psi2[j.idx,H*L+gl] <- sum(eta.qjgl)
           }
           else if (epsilon2.g > 1e-4) {
-            eta.qjgl <- update_q_eta_rank1_robust(theta_m=gamma.tmp, theta_V=Sigma.tmp, c2=rep(1,R), psi2=psi2[j.idx], w=wlist[l], u=ug, epsilon2=epsilon2.g)
+            eta.qjgl <- update_q_eta_rank1_robust(theta_m = gamma.tmp,
+                          theta_V = Sigma.tmp,c2 = rep(1,R),psi2 = psi2[j.idx],
+                          w = wlist[l],u = ug,epsilon2 = epsilon2.g)
             tmp.psi2[j.idx,H*L+gl] <- sum(eta.qjgl)
           }
           else {
-            beta.qjgl <- update_q_beta_rank1(theta_m=gamma.tmp, theta_V=Sigma.tmp, c2=rep(1,R), psi2=psi2[j.idx], w=wlist[l], u=ug)
-            eta.qjgl <- update_q_eta_rank1(theta_m=gamma.tmp, theta_V=Sigma.tmp, a2_m=beta.qjgl$a2_m, a_theta_m=beta.qjgl$a_theta_m, u=ug)
+            beta.qjgl <- update_q_beta_rank1(theta_m = gamma.tmp,
+                           theta_V = Sigma.tmp,c2 = rep(1,R),
+                           psi2 = psi2[j.idx],w = wlist[l],u = ug)
+            eta.qjgl <- update_q_eta_rank1(theta_m = gamma.tmp,
+                           theta_V = Sigma.tmp,a2_m = beta.qjgl$a2_m,
+                           a_theta_m = beta.qjgl$a_theta_m,u = ug)
             tmp.psi2[j.idx,H*L+gl] <- sum(eta.qjgl)
           }
         }
