@@ -1,9 +1,7 @@
 library(Matrix)
 library(scran)
 library(glmpca)
-# library(poisson.mash.alpha)
-# library(psych)
-# library(poilog)
+library(poisson.mash.alpha)
 
 # Initialize the sequence of pseudorandom numbers.
 set.seed(1)
