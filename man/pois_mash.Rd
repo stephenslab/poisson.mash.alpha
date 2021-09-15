@@ -25,56 +25,83 @@ pois_mash(
 )
 }
 \arguments{
-\item{data}{A pois.mash data object containing the following components:
-\item{X}{J x R matrix of count data collapsed over conditions, with features as rows and conditions as columns.}
-\item{s}{R x 1 numeric vector adjusting for sequencing depth of each of R conditions.}
-\item{subgroup}{R x 1 factor vector with M levels denoting the subgroup status of each of R conditions.}}
+\item{data}{\dQuote{pois.mash} data object, typically created by
+calling \code{\link{pois_mash_set_data}}.}
 
-\item{Ulist}{A list of H full-rank covariance matrices (e.g., returned by \code{pois_cov_ed})}
+\item{Ulist}{List of H full-rank covariance matrices, such as the
+list of covariance matrices \code{Ulist} returned by
+\code{\link{pois_cov_ed}}).}
 
-\item{ulist}{A list of G numeric vectors each of which forming a rank-1 covariance matrix (e.g., returned by \code{pois_cov_ed})}
+\item{ulist}{List of G numeric vectors each of which forms a
+rank-1 covariance matrix, such as the list of vectors \code{ulist}
+returned by \code{\link{pois_cov_ed}}.}
 
-\item{ulist.epsilon2}{A G by 1 numeric vector that adds a small positive epsilon2 to the diagonals of each rank-1 prior covariance matrix
-to avoid tight error bars. Default is 1e-8.}
+\item{ulist.epsilon2}{Numeric vector of length G used to add a
+small positive value to the diagonals of each rank-1 prior
+covariance matrix to avoid tight error bars.}
 
-\item{normalizeU}{A logical scalar indicating whether to normalize the prior covariances to have maximum of 1 on diagonal. Default is \code{TRUE}.}
+\item{normalizeU}{Logical scalar indicating whether to normalize
+the prior covariances to have a maximum of 1 on diagonal.}
 
-\item{gridmult}{A numeric scalar indicating factor by which adjacent grid values should differ; close to 1 for fine grid. Default is 2.}
+\item{gridmult}{Numeric scalar indicating factor by which
+adjacent grid values should differ; use a number close to 1 for
+fine grid.}
 
-\item{wlist}{An L by 1 numeric vector of scaling factors for the prior covariance matrices}
+\item{wlist}{Numeric vector of length L giving the scaling
+factors for the prior covariance matrices}
 
-\item{ruv}{A logical scalar indicating whether to account for unwanted variation. Default is \code{FALSE}. If \code{TRUE}, Fuv must be provided.}
+\item{ruv}{Logical scalar indicating whether to account for
+unwanted variation. When \code{ruv = TRUE}, \code{Fuv} must be
+provided.}
 
-\item{Fuv}{A J by D matrix of latent factors causing unwanted variation, with features as rows and latent factors as columns}
+\item{Fuv}{J x D matrix of latent factors causing unwanted
+variation, with features as rows and latent factors as columns.}
 
-\item{rho}{A D by R matrix of effects corresponding to unwanted variation, such that bias = Fuv %*% rho}
+\item{rho}{D x R matrix of effects corresponding to unwanted
+variation, such that \code{bias = Fuv \%*\% rho}.}
 
-\item{update.rho}{A logical scalar indicating whether to update effects corresponding to unwanted variation if ruv is set to \code{TRUE}.
-Default is \code{TRUE}.}
+\item{update.rho}{A logical scalar indicating whether to update
+effects corresponding to unwanted variation. Ignored if \code{ruv =
+FALSE}.}
 
-\item{verbose}{A logical scalar indicating whether to print ELBO at each iteration. Default is \code{FALSE}.}
+\item{verbose}{A logical scalar indicating whether to print ELBO at
+each iteration.}
 
-\item{C}{A Q by R matrix of contrasts for effects. Default is R by R matrix of condition-wise differences relative to the mean across all conditions}
+\item{C}{Q x R matrix of contrasts for effects. The default
+contrasts matrix is an matrix of condition-wise differences
+relative to the mean across all conditions.}
 
-\item{res.colnames}{A Q by 1 character vector giving the names of the contrasts}
+\item{res.colnames}{Character vector of length Q giving the names
+of the contrasts.}
 
-\item{init}{A list of initial values for model parameters (e.g., returned by \code{pois_mash_ruv_prefit}). Could be empty.}
+\item{init}{List of initial values for model parameters, such as an
+output from \code{\link{pois_mash_ruv_prefit}}).}
 
-\item{control}{A list of control parameters with the following elements:
-\item{maxiter}{Maximum number of iterations. Default is 500.}
-\item{maxiter.q}{Maximum number of inner loop iterations to update variational parameters at each iteration. Default is 25.}
-\item{maxpsi2}{Maximum for the gene-specific dispersion parameter psi2.}
-\item{maxbias}{Maximum for the gene-specific range of bias caused by unwanted variation. Default is 10.}
-\item{tol.mu}{Threshold for mu (gene-specific, subgroup-specific means on the log scale) to skip update. Default is 1e-2.}
-\item{tol.psi2}{Relative threshold for psi2 (gene-specific dispersion parameter) to skip update. Default is 2e-2.}
-\item{tol.bias}{Threshold for bias caused by unwanted variation to skip update. Default is 1e-2.}
-\item{tol.q}{Relative tolerance for assessing convergence of variational parameters at each iteration. Default is 1e-2.}
-\item{tol.rho}{Tolerance for assessing convergence of effects corresponding to unwanted variation. Default is 1e-6.}}
+\item{control}{List of control parameters with the following
+elements: \dQuote{maxiter}, maximum number of outer loop
+iterations; \dQuote{maxiter.q}, maximum number of inner loop
+iterations for updating the variational parameters at each outer
+loop iteration; \dQuote{maxpsi2}, maximum value for the
+gene-specific dispersion parameter psi2.; \dQuote{maxbias}, maximum
+value for the gene-specific range of bias caused by unwanted
+variation; \dQuote{tol.mu}, threshold for mu (gene-specific,
+subgroup-specific means on the log scale) to skip update;
+\dQuote{tol.psi2}, relative threshold for psi2 (gene-specific
+dispersion parameter) to skip update; \dQuote{tol.bias}, threshold
+for bias caused by unwanted variation to skip update;
+\dQuote{tol.q}, relative tolerance for assessing convergence of
+variational parameters at each iteration; \dQuote{tol.rho},
+tolerance for assessing convergence of effects corresponding to
+unwanted variation.}
 }
 \value{
-A list with the following elements:
-\item{result}{a list containing the posterior summaries of the J by Q matrix of effects.}
-\item{pois.mash.fit}{a list containing the parameter estimates of the poisson mash model.}
+List with the following elements:
+
+\item{result}{List containing the posterior summaries of the J x Q
+  matrix of effects.}
+
+\item{pois.mash.fit}{List containing the parameter estimates of the
+  poisson mash model.}
 }
 \description{
 Fit poisson mash to data

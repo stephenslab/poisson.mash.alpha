@@ -1,82 +1,81 @@
 #' @title Fit poisson mash to data
 #' 
-#' @param data A pois.mash data object containing the following
-#' components: \item{X}{J x R matrix of count data collapsed over
-#' conditions, with features as rows and conditions as columns.}
-#' \item{s}{R x 1 numeric vector adjusting for sequencing depth of
-#' each of R conditions.}  \item{subgroup}{R x 1 factor vector with M
-#' levels denoting the subgroup status of each of R conditions.}
+#' @param data \dQuote{pois.mash} data object, typically created by
+#'   calling \code{\link{pois_mash_set_data}}.
 #' 
-#' @param Ulist A list of H full-rank covariance matrices (e.g.,
-#' returned by \code{pois_cov_ed})
+#' @param Ulist List of H full-rank covariance matrices, such as the
+#'   list of covariance matrices \code{Ulist} returned by
+#'   \code{\link{pois_cov_ed}}).
 #' 
-#' @param ulist A list of G numeric vectors each of which forming a
-#' rank-1 covariance matrix (e.g., returned by \code{pois_cov_ed})
+#' @param ulist List of G numeric vectors each of which forms a
+#'   rank-1 covariance matrix, such as the list of vectors \code{ulist}
+#'   returned by \code{\link{pois_cov_ed}}.
 #' 
-#' @param ulist.epsilon2 A G by 1 numeric vector that adds a small
-#' positive epsilon2 to the diagonals of each rank-1 prior covariance
-#' matrix to avoid tight error bars. Default is 1e-8.
+#' @param ulist.epsilon2 Numeric vector of length G used to add a
+#'   small positive value to the diagonals of each rank-1 prior
+#'   covariance matrix to avoid tight error bars.
 #' 
-#' @param normalizeU A logical scalar indicating whether to normalize
-#' the prior covariances to have maximum of 1 on diagonal. Default is
-#' \code{TRUE}.
+#' @param normalizeU Logical scalar indicating whether to normalize
+#'   the prior covariances to have a maximum of 1 on diagonal.
 #' 
-#' @param gridmult A numeric scalar indicating factor by which
-#' adjacent grid values should differ; close to 1 for fine
-#' grid. Default is 2.
+#' @param gridmult Numeric scalar indicating factor by which
+#'   adjacent grid values should differ; use a number close to 1 for
+#'   fine grid.
 #' 
-#' @param wlist An L by 1 numeric vector of scaling factors for the
-#' prior covariance matrices
+#' @param wlist Numeric vector of length L giving the scaling
+#'   factors for the prior covariance matrices
 #' 
-#' @param ruv A logical scalar indicating whether to account for
-#' unwanted variation. Default is \code{FALSE}. If \code{TRUE}, Fuv
-#' must be provided.
+#' @param ruv Logical scalar indicating whether to account for
+#'   unwanted variation. When \code{ruv = TRUE}, \code{Fuv} must be
+#'   provided.
 #' 
-#' @param Fuv A J by D matrix of latent factors causing unwanted
-#' variation, with features as rows and latent factors as columns
+#' @param Fuv J x D matrix of latent factors causing unwanted
+#'   variation, with features as rows and latent factors as columns.
 #' 
-#' @param rho A D by R matrix of effects corresponding to unwanted
-#' variation, such that bias = Fuv %*% rho
+#' @param rho D x R matrix of effects corresponding to unwanted
+#'   variation, such that \code{bias = Fuv \%*\% rho}.
 #' 
 #' @param update.rho A logical scalar indicating whether to update
-#' effects corresponding to unwanted variation if ruv is set to
-#' \code{TRUE}.  Default is \code{TRUE}.
+#'   effects corresponding to unwanted variation. Ignored if \code{ruv =
+#'   FALSE}.
 #' 
 #' @param verbose A logical scalar indicating whether to print ELBO at
-#' each iteration. Default is \code{FALSE}.
+#'   each iteration.
 #' 
-#' @param C A Q by R matrix of contrasts for effects. Default is R by
-#' R matrix of condition-wise differences relative to the mean across
-#' all conditions
+#' @param C Q x R matrix of contrasts for effects. The default
+#'   contrasts matrix is an matrix of condition-wise differences
+#'   relative to the mean across all conditions.
 #' 
-#' @param res.colnames A Q by 1 character vector giving the names of
-#' the contrasts
+#' @param res.colnames Character vector of length Q giving the names
+#'   of the contrasts.
 #'
-#' @param init A list of initial values for model parameters (e.g.,
-#' returned by \code{pois_mash_ruv_prefit}). Could be empty.
+#' @param init List of initial values for model parameters, such as an
+#'   output from \code{\link{pois_mash_ruv_prefit}}).
 #' 
-#' @param control A list of control parameters with the following
-#' elements: \item{maxiter}{Maximum number of iterations. Default is
-#' 500.}  \item{maxiter.q}{Maximum number of inner loop iterations to
-#' update variational parameters at each iteration. Default is 25.}
-#' \item{maxpsi2}{Maximum for the gene-specific dispersion parameter
-#' psi2.}  \item{maxbias}{Maximum for the gene-specific range of bias
-#' caused by unwanted variation. Default is 10.}
-#' \item{tol.mu}{Threshold for mu (gene-specific, subgroup-specific
-#' means on the log scale) to skip update. Default is 1e-2.}
-#' \item{tol.psi2}{Relative threshold for psi2 (gene-specific
-#' dispersion parameter) to skip update. Default is 2e-2.}
-#' \item{tol.bias}{Threshold for bias caused by unwanted variation to
-#' skip update. Default is 1e-2.}  \item{tol.q}{Relative tolerance for
-#' assessing convergence of variational parameters at each
-#' iteration. Default is 1e-2.}  \item{tol.rho}{Tolerance for
-#' assessing convergence of effects corresponding to unwanted
-#' variation. Default is 1e-6.}
+#' @param control List of control parameters with the following
+#'   elements: \dQuote{maxiter}, maximum number of outer loop
+#'   iterations; \dQuote{maxiter.q}, maximum number of inner loop
+#'   iterations for updating the variational parameters at each outer
+#'   loop iteration; \dQuote{maxpsi2}, maximum value for the
+#'   gene-specific dispersion parameter psi2.; \dQuote{maxbias}, maximum
+#'   value for the gene-specific range of bias caused by unwanted
+#'   variation; \dQuote{tol.mu}, threshold for mu (gene-specific,
+#'   subgroup-specific means on the log scale) to skip update;
+#'   \dQuote{tol.psi2}, relative threshold for psi2 (gene-specific
+#'   dispersion parameter) to skip update; \dQuote{tol.bias}, threshold
+#'   for bias caused by unwanted variation to skip update;
+#'   \dQuote{tol.q}, relative tolerance for assessing convergence of
+#'   variational parameters at each iteration; \dQuote{tol.rho},
+#'   tolerance for assessing convergence of effects corresponding to
+#'   unwanted variation.
 #' 
-#' @return A list with the following elements: \item{result}{a list
-#' containing the posterior summaries of the J by Q matrix of
-#' effects.} \item{pois.mash.fit}{a list containing the parameter
-#' estimates of the poisson mash model.}
+#' @return List with the following elements:
+#'
+#' \item{result}{List containing the posterior summaries of the J x Q
+#'   matrix of effects.}
+#'
+#' \item{pois.mash.fit}{List containing the parameter estimates of the
+#'   poisson mash model.}
 #'
 #' @export
 #' 
@@ -99,7 +98,7 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
   M        <- length(unique(subgroup))
   subgroup <- as.numeric(as.factor(subgroup))
   
-  # check if ulist is empty
+  # Check if ulist is empty.
   if (is.null(ulist))
     stop("ulist cannot be empty!")
   
@@ -144,7 +143,7 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
     bias     <- Fuv %*% rho
     bias     <- scale_bias(bias,maxbias)
   }
-  else{
+  else {
     rho      <- NULL
     diff.rho <- NULL
     bias     <- matrix(0,J,R)
@@ -169,35 +168,27 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
   
   # use grid search to initialize psi2 by fitting a poisson-log-normal model while ignoring fixed effects (i.e., beta) and unwanted variation
   psi2 <- init$psi2
-  if(is.null(psi2)){
+  if (is.null(psi2)) {
     psi2 <- rep(NA, J)
 
-    for(j in 1:J){
+    for (j in 1:J) {
       psi2_max <- pmax(sd(loglambda[j,])^2, 1)
       log2_psi2_grid <- seq(log2(1e-4), log2(psi2_max), length.out = 25)
       psi2_grid <- 2^log2_psi2_grid
-      
       logdens <- rep(0, length(psi2_grid))
-      
-      for(l in 1:length(psi2_grid)){
-        for(r in 1:R){
+      for (l in 1:length(psi2_grid))
+        for (r in 1:R)
           logdens[l] <- logdens[l] + log(dpoilog(data[j,r], mu[j,r] + bias[j,r] + log(s[r]), sqrt(psi2_grid[l])))
-        }
-      }
-      
       psi2[j] <- psi2_grid[which.max(logdens)]
     }
   }
-  else{
+  else
     psi2 <- pmin(psi2, maxpsi2)
-  }
   
-  
-  # calculate wlist if not provided
-  if(is.null(wlist)){
-    if(is.null(gridmult)){
+  # Calculate wlist if not provided.
+  if (is.null(wlist)) {
+    if (is.null(gridmult))
       gridmult <- 2
-    }
     w_max <- 4*max(apply(loglambda, 1, sd)^2) 
     w_min <- pmax(min(apply(loglambda, 1, sd)^2)/100, 1e-8)
     log2_wlist <- seq(log2(w_min), log2(w_max), by=log2(gridmult))
@@ -210,65 +201,61 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
   K <- (H+G)*L
   
   # specify ulist.epsilon2 if not provided
-  if(is.null(ulist.epsilon2)){
+  if (is.null(ulist.epsilon2))
     ulist.epsilon2 <- rep(1e-8, G)
-  }
   
   # normalize prior covariance matrices if normalizeU=TRUE
-  if(normalizeU){
-    if(H > 0){
-      for(h in 1:H){
+  if (normalizeU) {
+    if (H > 0) {
+      for (h in 1:H) {
         Uh <- Ulist[[h]]
         Uh <- Uh/max(diag(Uh))
         Ulist[[h]] <- Uh
       }
     }
     
-    for(g in 1:G){
+    for (g in 1:G) {
       ug <- ulist[[g]]
-      if(sum(ug!=0)!=0){
+      if (sum(ug!=0)!=0) {
         ug <- ug/ug[which.max(abs(ug))]
         ulist[[g]] <- ug
       }
     }
   }
   
-  # initialize pi
+  # Initialize pi.
   pi <- init$pi
-  if(is.null(pi)){
+  if (is.null(pi))
     pi <- rep(1/K, K)
-  }
-
   const <- sum(data%*%log(s)) - sum(lgamma(data+1))
-  
-  if(verbose){
+  if (verbose)
     cat("Start fitting Poisson mash model.\n")
-  }
   
-  # J x K x R arrays to store the posterior mean gamma_jklr
-  gamma <- array(NA, c(J, K, R))
-  # J x K x R arrays to store the quantities related to q_jkl, s.t. A[j,kl,r] = gamma_jklr + 0.5*Sigma_jkl,rr
+  # J x K x R arrays to store the posterior mean gamma_jklr.
+  gamma <- array(as.numeric(NA),c(J,K,R))
+  
+  # J x K x R arrays to store the quantities related to q_jkl,
+  # s.t. A[j,kl,r] = gamma_jklr + 0.5 * Sigma_jkl,rr.
   A <- array(NA, c(J, K, R))
   
-  # update posterior mean and covariance of theta and local ELBO
-  ELBOs <- matrix(0, nrow=J, ncol=K)
-  tmp.mu <- array(0, c(J, K, M))
-  tmp.psi2 <- matrix(0, nrow=J, ncol=K)
+  # Update posterior mean and covariance of theta and local ELBO.
+  ELBOs    <- matrix(0,J,K)
+  tmp.mu   <- array(0,c(J,K,M))
+  tmp.psi2 <- matrix(0,J,K)
   
-  for(j in 1:J){
-    if(H > 0){
+  for (j in 1:J) {
+    if (H > 0) {
       hl <- 0
-      for(h in 1:H){
-        for(l in 1:L){
+      for (h in 1:H) {
+        for (l in 1:L) {
           hl <- hl + 1
           theta.qjhl <- update_q_theta_general(x=data[j,], s=s, mu=mu[j,], bias=bias[j,], c2=rep(1,R), psi2=psi2[j], w=wlist[l], U=Ulist[[h]],
                                                control=list(maxiter=maxiter.q, tol=tol.q))
           ELBOs[j,hl] <- theta.qjhl$ELBO
           gamma.tmp <- theta.qjhl$m
           Sigma.tmp <- theta.qjhl$V
-          for (i in 1:M){
+          for (i in 1:M)
             tmp.mu[j,hl,i] <- sum(s[subgroup==i]*exp(bias[j,subgroup==i] + gamma.tmp[subgroup==i] + diag(Sigma.tmp)[subgroup==i]/2))
-          }
           eta.qjhl <- update_q_eta_general(theta_m=gamma.tmp, theta_V=Sigma.tmp, c2=rep(1,R), psi2=psi2[j], w=wlist[l], U=Ulist[[h]])
           tmp.psi2[j,hl] <- sum(eta.qjhl)
           gamma[j,hl,] <- gamma.tmp
@@ -278,32 +265,31 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
     }
     
     gl <- 0
-    for(g in 1:G){
+    for (g in 1:G) {
       ug <- ulist[[g]]
       epsilon2.g <- ulist.epsilon2[g]
-      for(l in 1:L){
+      for (l in 1:L) {
         gl <- gl + 1
         theta.qjgl <- update_q_theta_rank1(x=data[j,], s=s, mu=mu[j,], bias=bias[j,], c2=rep(1,R), psi2=psi2[j]+wlist[l]*epsilon2.g, 
                                            w=wlist[l], u=ug, control=list(maxiter=maxiter.q, tol=tol.q))
         ELBOs[j,H*L+gl] <- theta.qjgl$ELBO
         gamma.tmp <- theta.qjgl$m
         Sigma.tmp <- theta.qjgl$V
-        for(i in 1:M){
+        for (i in 1:M)
           tmp.mu[j,H*L+gl,i] <- sum(s[subgroup==i]*exp(bias[j,subgroup==i] + gamma.tmp[subgroup==i] + diag(Sigma.tmp)[subgroup==i]/2))
-        }
         gamma[j,H*L+gl,] <- gamma.tmp
         A[j,H*L+gl,] <- gamma.tmp + diag(Sigma.tmp)/2
         
         # if ug is zero vector
-        if(sum(ug!=0)==0){
+        if (sum(ug != 0) == 0) {
           eta.qjgl <- gamma.tmp^2 + diag(Sigma.tmp) 
           tmp.psi2[j,H*L+gl] <- sum(eta.qjgl)
         }
-        else if(epsilon2.g > 1e-4){
+        else if (epsilon2.g > 1e-4) {
           eta.qjgl <- update_q_eta_rank1_robust(theta_m=gamma.tmp, theta_V=Sigma.tmp, c2=rep(1,R), psi2=psi2[j], w=wlist[l], u=ug, epsilon2=epsilon2.g)
           tmp.psi2[j,H*L+gl] <- sum(eta.qjgl)
         }
-        else{
+        else {
           beta.qjgl <- update_q_beta_rank1(theta_m=gamma.tmp, theta_V=Sigma.tmp, c2=rep(1,R), psi2=psi2[j], w=wlist[l], u=ug)
           eta.qjgl <- update_q_eta_rank1(theta_m=gamma.tmp, theta_V=Sigma.tmp, a2_m=beta.qjgl$a2_m, a_theta_m=beta.qjgl$a_theta_m, u=ug)
           tmp.psi2[j,H*L+gl] <- sum(eta.qjgl)
@@ -320,55 +306,54 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
   
   # update J x R matrix tmp.ruv needed to update rho, s.t. tmp.ruv[j,r] = sum_kl zeta[j,kl]*exp(A[j,kl,r])
   tmp.ruv <- matrix(NA, nrow=J, ncol=R)
-  for(r in 1:R){
+  for (r in 1:R)
     tmp.ruv[,r] <- rowSums(zeta*exp(A[,,r]))
-  }
   
   # store the overall ELBO at each iteration
   ELBOs.overall <- c()
   # store the number of j to be updated at each iteration
   j.update <- c()
   
-  for(iter in 1:maxiter){
-    # calculate overall ELBO at the current iteration
+  for (iter in 1:maxiter) {
+      
+    # Calculate overall ELBO at the current iteration.
     ELBO.overall <- sum(zeta*(log(rep(1,J)%*%t(pi)) + ELBOs - log(zeta))) + const
     ELBOs.overall <- c(ELBOs.overall, ELBO.overall)
     
-    # update pi
+    # Update pi.
     pi.new <- colMeans(zeta)
     pi.new <- pmax(pi.new, 1e-8)
     diff.pi <- pi.new - pi
     pi <- pi.new
     
     # calculate the new mu
-    mu.new <- matrix(NA, nrow=J, ncol=R)
-    for(i in 1:M){
-      mu.i.new <- log(rowSums(data[,subgroup==i])) - log(rowSums(zeta*tmp.mu[,,i]))
-      mu.new[,subgroup==i] <- mu.i.new
+    mu.new <- matrix(as.numeric(NA),J,R)
+    for (i in 1:M) {
+        mu.i.new <- log(rowSums(data[,subgroup == i])) -
+                    log(rowSums(zeta * tmp.mu[,,i]))
+      mu.new[,subgroup == i] <- mu.i.new
     }
-    idx.update.mu <- apply(abs(mu.new-mu), 1, max) > tol.mu
-    diff.mu <- mu.new - mu
+    idx.update.mu <- apply(abs(mu.new - mu),1,max) > tol.mu
+    diff.mu       <- mu.new - mu
     
     # calculate the new psi2
-    psi2.new <- rowSums(zeta*tmp.psi2)/R
-    psi2.new <- pmin(pmax(psi2.new, minpsi2), maxpsi2)
-    diff.psi2 <- psi2.new/psi2
+    psi2.new        <- rowSums(zeta * tmp.psi2)/R
+    psi2.new        <- pmin(pmax(psi2.new,minpsi2),maxpsi2)
+    diff.psi2       <- psi2.new/psi2
     idx.update.psi2 <- abs(diff.psi2 - 1) > tol.psi2
     
     # calculate the new rho and bias
-    if(ruv & update.rho){
-      rho.new <- matrix(NA, nrow=nrow(rho), ncol=ncol(rho))
-      for(r in 1:R){
-        rho.new[,r] <- update_rho(Xr=data[,r], Fuv=Fuv, sr=s[r], mu=mu[,r], Lr=tmp.ruv[,r], init=rho[,r],
-                                  control=list(maxiter=100, tol=tol.rho, maxrho=100/max(abs(Fuv))))$rho 
-      }
+    if (ruv & update.rho) {
+      rho.new <- matrix(as.numeric(NA),nrow(rho),ncol(rho))
+      for (r in 1:R)
+        rho.new[,r] <- update_rho(Xr=data[,r], Fuv=Fuv, sr=s[r], mu=mu[,r], Lr=tmp.ruv[,r], init=rho[,r], control=list(maxiter=100, tol=tol.rho, maxrho=100/max(abs(Fuv))))$rho 
       diff.rho <- rho.new - rho
       bias.new <- Fuv %*% rho.new
       bias.new <- scale_bias(bias.new, maxbias)
       idx.update.bias <- apply(abs(bias.new-bias), 1, max) > tol.bias
       rho <- rho.new
     }
-    else{
+    else {
       bias.new <- bias
       idx.update.bias <- rep(FALSE, J)
     }
@@ -381,23 +366,25 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
     
     j.update <- c(j.update, length(idx.update))
     
-    if(verbose){
+    if (verbose) {
       print("iter         ELBO")
       print(sprintf("%d:    %f", iter, ELBO.overall))
       print("iter         number_of_j_to_update")
       print(sprintf("%d:    %d", iter, length(idx.update)))
     }
     
-    if(length(idx.update)==0) break
+    if (length(idx.update) == 0)
+      break
     
-    # update posterior mean and covariance of theta and local ELBO for these j
-    for(j in 1:length(idx.update)){
+    # Update posterior mean and covariance of theta and local ELBO for
+    # these j.
+    for (j in 1:length(idx.update)) {
       j.idx <- idx.update[j]
       
-      if(H > 0){
+      if (H > 0) {
         hl <- 0
-        for(h in 1:H){
-          for(l in 1:L){
+        for (h in 1:H) {
+          for (l in 1:L) {
             hl <- hl + 1
             Utilde <- wlist[l]*Ulist[[h]] + psi2[j.idx]*diag(R)
             a.tmp <- s*exp(mu[j.idx,] + bias[j.idx,] + A[j.idx,hl,])
@@ -407,9 +394,8 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
             ELBOs[j.idx,hl] <- theta.qjhl$ELBO
             gamma.tmp <- theta.qjhl$m
             Sigma.tmp <- theta.qjhl$V
-            for(i in 1:M){
+            for (i in 1:M)
               tmp.mu[j.idx,hl,i] <- sum(s[subgroup==i]*exp(bias[j.idx,subgroup==i] + gamma.tmp[subgroup==i] + diag(Sigma.tmp)[subgroup==i]/2))
-            }
             eta.qjhl <- update_q_eta_general(theta_m=gamma.tmp, theta_V=Sigma.tmp, c2=rep(1,R), psi2=psi2[j.idx], w=wlist[l], U=Ulist[[h]])
             tmp.psi2[j.idx,hl] <- sum(eta.qjhl)
             gamma[j.idx,hl,] <- gamma.tmp
@@ -419,10 +405,10 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
       }
       
       gl <- 0
-      for(g in 1:G){
+      for (g in 1:G) {
         ug <- ulist[[g]]
         epsilon2.g <- ulist.epsilon2[g]
-        for(l in 1:L){
+        for (l in 1:L) {
           gl <- gl + 1
           a.tmp <- s*exp(mu[j.idx,] + bias[j.idx,] + A[j.idx, H*L+gl,])
           S_inv <- 1/(psi2[j.idx]*rep(1,R) + wlist[l]*epsilon2.g)
@@ -432,22 +418,21 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
           ELBOs[j.idx,H*L+gl] <- theta.qjgl$ELBO
           gamma.tmp <- theta.qjgl$m
           Sigma.tmp <- theta.qjgl$V
-          for(i in 1:M){
+          for (i in 1:M)
             tmp.mu[j.idx,H*L+gl,i] <- sum(s[subgroup==i]*exp(bias[j.idx,subgroup==i] + gamma.tmp[subgroup==i] + diag(Sigma.tmp)[subgroup==i]/2))
-          }
           gamma[j.idx,H*L+gl,] <- gamma.tmp
-          A[j.idx,H*L+gl,] <- gamma.tmp + diag(Sigma.tmp)/2
+          A[j.idx,H*L+gl,]    <- gamma.tmp + diag(Sigma.tmp)/2
           
           # if ug is zero vector
-          if(sum(ug!=0)==0){
+          if (sum(ug != 0) == 0) {
             eta.qjgl <- gamma.tmp^2 + diag(Sigma.tmp) 
             tmp.psi2[j.idx,H*L+gl] <- sum(eta.qjgl)
           }
-          else if(epsilon2.g > 1e-4){
+          else if (epsilon2.g > 1e-4) {
             eta.qjgl <- update_q_eta_rank1_robust(theta_m=gamma.tmp, theta_V=Sigma.tmp, c2=rep(1,R), psi2=psi2[j.idx], w=wlist[l], u=ug, epsilon2=epsilon2.g)
             tmp.psi2[j.idx,H*L+gl] <- sum(eta.qjgl)
           }
-          else{
+          else {
             beta.qjgl <- update_q_beta_rank1(theta_m=gamma.tmp, theta_V=Sigma.tmp, c2=rep(1,R), psi2=psi2[j.idx], w=wlist[l], u=ug)
             eta.qjgl <- update_q_eta_rank1(theta_m=gamma.tmp, theta_V=Sigma.tmp, a2_m=beta.qjgl$a2_m, a_theta_m=beta.qjgl$a_theta_m, u=ug)
             tmp.psi2[j.idx,H*L+gl] <- sum(eta.qjgl)
@@ -456,44 +441,42 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
       }      
     }
     
-    # update zeta
+    # Update zeta.
     ELBOs.cen <- ELBOs - apply(ELBOs, 1, max)
-    zeta <- t(t(exp(ELBOs.cen)) * pi)
-    zeta <- zeta*(1/rowSums(zeta))  
-    zeta <- pmax(zeta, 1e-15)
+    zeta      <- t(t(exp(ELBOs.cen)) * pi)
+    zeta      <- zeta*(1/rowSums(zeta))  
+    zeta      <- pmax(zeta, 1e-15)
     
-    # update J x R matrix tmp.ruv needed to update rho, s.t. tmp.ruv[j,r] = sum_kl zeta[j,kl]*exp(A[j,kl,r])
-    for(r in 1:R){
+    # Update J x R matrix tmp.ruv needed to update rho,
+    # s.t. tmp.ruv[j,r] = sum_kl zeta[j,kl] * exp(A[j,kl,r]).
+    for (r in 1:R)
       tmp.ruv[,r] <- rowSums(zeta*exp(A[,,r]))
-    }
   }
   
-  # name the model paramter estimates
-  rownames(mu) <- rownames(data)
-  colnames(mu) <- colnames(data)
-  names(psi2) <- rownames(data)
+  # Name the model paramter estimates.
+  rownames(mu)   <- rownames(data)
+  colnames(mu)   <- colnames(data)
+  names(psi2)    <- rownames(data)
   rownames(zeta) <- rownames(data)
-  if(ruv){
+  if (ruv)
     colnames(rho) <- colnames(data)
-  }
   
-  # create the list with model parameters 
-  pois.mash.fit <- list(mu=mu, psi2=psi2, pi=pi, ulist=ulist, ulist.epsilon2=ulist.epsilon2, Ulist=Ulist, wlist=wlist, zeta=zeta, 
-                        Fuv=Fuv, rho=rho, bias=bias, ELBO=ELBOs.overall, j.update=j.update)
-  
-  if(verbose){
-    cat("Finish fitting Poisson mash model.\n")
+  # Create the list with model parameters.
+  pois.mash.fit <- list(mu = mu,psi2 = psi2,pi = pi,ulist = ulist,
+                        ulist.epsilon2 = ulist.epsilon2,Ulist = Ulist,
+                        wlist = wlist,zeta = zeta,Fuv = Fuv,rho = rho,
+                        bias = bias,ELBO = ELBOs.overall,j.update = j.update)
+  if (verbose) {
+    cat("Finished fitting Poisson mash model.\n")
     cat("Start calculating posterior summary.\n")
   }
   
-  
-  # calculate posterior summaries for the matrix of effects
-  result <- pois_mash_posterior(data=data, s=s, mu=mu, psi2=psi2, bias=bias, wlist=wlist, Ulist=Ulist, ulist=ulist, ulist.epsilon2=ulist.epsilon2, 
-                                zeta=zeta, C=C, res.colnames=res.colnames)
-  
-  if(verbose){
+  # Calculate posterior summaries for the matrix of effects.
+  result <- pois_mash_posterior(data = data,s = s,mu = mu,psi2 = psi2,
+                                bias = bias,wlist = wlist,Ulist = Ulist,
+                                ulist = ulist,ulist.epsilon2 = ulist.epsilon2, 
+                                zeta = zeta,C = C,res.colnames = res.colnames)
+  if (verbose)
     cat("Finish calculating posterior summary.\n")
-  }
-
-  return(list(pois.mash.fit=pois.mash.fit, result=result))
+  return(list(pois.mash.fit = pois.mash.fit,result = result))
 }
