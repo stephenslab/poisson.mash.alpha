@@ -34,6 +34,7 @@
 #'   ED step.
 #'
 #' @importFrom stats sd
+#' @importFrom stats cov
 #' @importFrom stats pbinom
 #' @importFrom stats dbinom
 #' @importFrom stats qnorm

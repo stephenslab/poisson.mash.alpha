@@ -15,7 +15,8 @@ remotes::install_local("poisson.mash.alpha")
 ```
 
 This assumes that your R working directory contains a local copy of
-the git repository.
+the git repository. This should automatically install the ashr
+package; if it does not, please go [here][ashr].
 
 ## License
 
@@ -28,3 +29,4 @@ under the terms of the [MIT license][mit-license].
 [mit-license]: https://opensource.org/licenses/mit-license.html
 [remotes]: https://github.com/r-lib/remotes
 [overleaf]: https://www.overleaf.com/read/pqzccwzpqpvs
+[ashr]: https://github.com/stephens999/ashr

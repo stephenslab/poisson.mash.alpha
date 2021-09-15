@@ -37,6 +37,9 @@
 #' \item{lfsr}{J x Q matrix of local false sign rate estimates.}
 #'
 #' @keywords internal
+#'
+#' @importFrom stats pnorm
+#' @importFrom ashr compute_lfsr
 #' 
 #' @export
 #' 
@@ -164,7 +167,7 @@ pois_mash_posterior <- function(data, s, mu, psi2, bias=NULL, wlist, Ulist, ulis
   res_post_sd <- sqrt(res_post_mean2 - res_post_mean^2)
   
   # calculate local false sign rate
-  lfsr <- ashr::compute_lfsr(res_post_neg, res_post_zero)
+  lfsr <- compute_lfsr(res_post_neg, res_post_zero)
   
   rownames(res_post_mean) <- rownames(data)
   colnames(res_post_mean) <- res.colnames
@@ -181,6 +184,7 @@ pois_mash_posterior <- function(data, s, mu, psi2, bias=NULL, wlist, Ulist, ulis
   return(list(PosteriorMean=res_post_mean, PosteriorSD=res_post_sd, ZeroProb=res_post_zero, NegativeProb=res_post_neg, lfsr=lfsr))
 }
 
+#' @importFrom stats pnorm
 pois_mash_compute_posterior_rank1 <- function(m, sigma2, u){
   R <- length(u)
   
@@ -189,7 +193,7 @@ pois_mash_compute_posterior_rank1 <- function(m, sigma2, u){
   post_neg <- rep(0, R)
   post_zero <- rep(0, R)
   
-  post_neg_v <- ifelse(sigma2==0, 0, pnorm(0, mean=m, sqrt(sigma2), lower.tail = TRUE))
+  post_neg_v <- ifelse(sigma2==0, 0, pnorm(0, mean=m,sd = sqrt(sigma2), lower.tail = TRUE))
   post_zero_v <- ifelse(sigma2==0, 1, 0)
   post_pos_v <- pmax(0, 1-post_neg_v-post_zero_v)
   

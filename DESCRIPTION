@@ -1,7 +1,7 @@
 Encoding: UTF-8
 Type: Package
 Package: poisson.mash.alpha
-Version: 0.1-28
+Version: 0.1-29
 Date: 2021-09-15
 Title: Poisson Multivariate Adaptive Shrinkage
 Authors@R: c(person("Yusha","Liu",role=c("aut","cre"),
@@ -27,9 +27,11 @@ Imports:
     Matrix,
     Rcpp (>= 1.0.7),
     poilog,
-    seqgendiff
+    seqgendiff,
+    ashr
 LinkingTo: Rcpp, RcppArmadillo
 NeedsCompilation: no
 LazyData: true
 LazyDataCompression: xz
 RoxygenNote: 7.1.1
+Remotes: stephens999/ashr
