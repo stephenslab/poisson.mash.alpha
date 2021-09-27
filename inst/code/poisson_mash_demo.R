@@ -1,7 +1,7 @@
 library(Matrix)
 library(scran)
 library(glmpca)
-library(poisson.mash.alpha)
+# library(poisson.mash.alpha)
 
 # Initialize the sequence of pseudorandom numbers.
 set.seed(1)
@@ -40,8 +40,12 @@ saveRDS(fit.glmpca,"fit_glmpca.Rds")
 # Prefit the model to initialize parameters
 # -----------------------------------------
 cat("start prefit for parameter initialization\n")
+t0 <- proc.time()
 prefit <- pois_mash_ruv_prefit(dat,Fuv,verbose = TRUE)
+t1 <- proc.time()
 cat("finish prefit for parameter initialization\n")
+print(t1 - t0)
+stop()
 
 # Estimate data-driven prior covariance matrices
 # ----------------------------------------------

@@ -68,6 +68,11 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
     tol.rho <- 1e-4
   if(is.null(tol.stop))
     tol.stop <- 1e-6
+
+  t_eta   <- proc.time()
+  t_rho   <- proc.time()
+  t_eta[] <- 0
+  t_rho[] <- 0
   
   # Initialize mu by ignoring random effects and unwanted variation.
   mu <- init$mu
@@ -122,6 +127,7 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
   A <- matrix(as.numeric(NA),J,R)
   
   # Update posterior mean and covariance of theta.
+  t0 <- proc.time()
   for(j in 1:J) {
     eta.qj <- update_q_eta_only(x = data[j,],s = s,mu = mu[j,],bias = bias[j,],
                                 c2 = rep(1,R),psi2 = psi2[j],
@@ -131,6 +137,8 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
     Sigma[j,] <- eta.qj$V
     A[j,]     <- eta.qj$m + eta.qj$V/2
   }
+  t1    <- proc.time()
+  t_eta <- t_eta + (t1 - t0)
   
   # Vector to store local ELBO for each j.
   ELBOs <- rep(as.numeric(NA),J)  
@@ -172,17 +180,21 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
      
     # Update rho and bias.
     rho.new <- matrix(as.numeric(NA),nrow(rho),ncol(rho))
+    t0 <- proc.time()
     for (r in 1:R) {
       rho.new[,r] <- update_rho(Xr = data[,r],Fuv = Fuv,sr = s[r],mu = mu[,r],
                                 Lr = exp(A[,r]),init = rho[,r], 
                                 control = list(maxiter = 100,tol = tol.rho,
                                                maxrho=100/max(abs(Fuv))))$rho 
     }
+    t1       <- proc.time()
+    t_eta    <- t_eta + (t1 - t0)
     diff.rho <- rho.new - rho
     rho      <- rho.new
     bias     <- Fuv %*% rho
     
     # Update posterior mean and covariance of theta and local ELBO F_j.
+    t0 <- proc.time()
     for (j in 1:J) {
       eta.qj <- update_q_eta_only(x = data[j,],s = s,mu = mu[j,],
                                   bias = bias[j,],c2 = rep(1,R),psi2 = psi2[j],
@@ -193,6 +205,8 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
       A[j,]     <- eta.qj$m + eta.qj$V/2
       ELBOs[j]  <- eta.qj$ELBO
     }
+    t1 <- proc.time()
+    t_eta <- t_eta + (t1 - t0)
     
     # Calculate overall ELBO at the current iteration.
     ELBO.overall  <- sum(ELBOs) + const
@@ -218,6 +232,8 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
   if(verbose)
     cat("Finish prefitting Poisson mash model to initialize model",
         "parameters.\n")
+  print(t_rho)
+  print(t_eta)
   return(list(mu = mu,psi2 = psi2,rho = rho,ELBO = ELBOs.overall,
               diff.rho = diff.rho))
 }
