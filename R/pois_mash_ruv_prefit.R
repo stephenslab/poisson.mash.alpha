@@ -92,6 +92,8 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
   
   # Use grid search to initialize psi2 by fitting a poisson-log-normal
   # model while ignoring the unwanted variation.
+  cat("Initializing psi2 via grid search.\n")
+  t0 <- proc.time()
   psi2 <- init$psi2
   if (is.null(psi2)) {
     psi2 <- rep(NA, J)
@@ -107,6 +109,8 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
       psi2[j] <- psi2_grid[which.max(logdens)]
     }
   }
+  t1 <- proc.time()
+  print(t1 - t0)
   
   # Initialize rho and bias.
   D   <- ncol(Fuv)
@@ -188,7 +192,7 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
                                                maxrho=100/max(abs(Fuv))))$rho 
     }
     t1       <- proc.time()
-    t_eta    <- t_eta + (t1 - t0)
+    t_rho    <- t_rho + (t1 - t0)
     diff.rho <- rho.new - rho
     rho      <- rho.new
     bias     <- Fuv %*% rho
@@ -205,7 +209,7 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
       A[j,]     <- eta.qj$m + eta.qj$V/2
       ELBOs[j]  <- eta.qj$ELBO
     }
-    t1 <- proc.time()
+    t1    <- proc.time()
     t_eta <- t_eta + (t1 - t0)
     
     # Calculate overall ELBO at the current iteration.

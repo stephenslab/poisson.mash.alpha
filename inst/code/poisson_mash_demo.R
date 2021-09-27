@@ -57,7 +57,7 @@ start_time <- proc.time()
 cat("start fitting ED step\n")
 fit.ed <- pois_cov_ed(dat,subset = res.pca$subset,Ulist = res.pca$Ulist,
                       ulist = res.pca$ulist,ruv = TRUE,Fuv = Fuv,
-                      verbose = TRUE,init = prefit,
+                      verbose = FALSE,init = prefit,
                       control = list(maxiter = 100))
 cat("finish fitting ED step\n")
 runtime <- proc.time() - start_time
