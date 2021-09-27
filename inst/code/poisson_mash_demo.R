@@ -41,7 +41,7 @@ saveRDS(fit.glmpca,"fit_glmpca.Rds")
 # -----------------------------------------
 cat("start prefit for parameter initialization\n")
 t0 <- proc.time()
-prefit <- pois_mash_ruv_prefit(dat,Fuv,verbose = FALSE)
+prefit <- pois_mash_ruv_prefit(dat,Fuv,version = "R",verbose = FALSE)
 t1 <- proc.time()
 cat("finish prefit for parameter initialization\n")
 print(t1 - t0)

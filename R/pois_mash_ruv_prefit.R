@@ -16,6 +16,10 @@
 #' 
 #' @param init List of initial values for model parameters which
 #'   could be empty.
+#'
+#' @param version R (slower) and C++ (faster) implementations of the
+#'   model fitting algorithm are provided; these are selected with
+#'   \code{version = "R"} and \code{version = "Rcpp"}.
 #' 
 #' @param control List of control parameters with the following
 #'   elements: \dQuote{maxiter}, maximum number of iterations;
@@ -39,6 +43,7 @@
 #' 
 pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
                                   init = list(NULL),
+                                  version = c("Rcpp","R"),
                                   control = list(maxiter   = 100,
                                                  maxiter.q = 25,
                                                  tol.q     = 0.01,
@@ -52,6 +57,7 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
   M         <- length(unique(subgroup))
   subgroup  <- as.numeric(as.factor(subgroup))
   Fuv       <- as.matrix(Fuv)
+  version   <- match.arg(version)
   maxiter   <- control$maxiter
   maxiter.q <- control$maxiter.q
   tol.q     <- control$tol.q
@@ -183,13 +189,16 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
     psi2     <- pmin(pmax(psi2.new,minpsi2),maxpsi2)
      
     # Update rho and bias.
-    rho.new <- matrix(as.numeric(NA),nrow(rho),ncol(rho))
     t0 <- proc.time()
-    for (r in 1:R) {
-      rho.new[,r] <- update_rho(Xr = data[,r],Fuv = Fuv,sr = s[r],mu = mu[,r],
-                                Lr = exp(A[,r]),init = rho[,r], 
-                                control = list(maxiter = 100,tol = tol.rho,
-                                               maxrho=100/max(abs(Fuv))))$rho 
+    if (version == "R") {
+      rho.new <- matrix(as.numeric(NA),nrow(rho),ncol(rho))
+      for (r in 1:R)
+        rho.new[,r] <- update_rho(Xr = data[,r],Fuv = Fuv,sr = s[r],
+                                  mu = mu[,r],Lr = exp(A[,r]),init = rho[,r], 
+                                  control = list(maxiter = 100,tol = tol.rho,
+                                    maxrho = 100/max(abs(Fuv))))$rho
+    } else {
+      # TO DO.
     }
     t1       <- proc.time()
     t_rho    <- t_rho + (t1 - t0)
