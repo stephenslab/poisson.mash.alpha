@@ -17,3 +17,7 @@ rcpparma_bothproducts <- function(x) {
     .Call('_poisson_mash_alpha_rcpparma_bothproducts', PACKAGE = 'poisson.mash.alpha', x)
 }
 
+update_rho_rcpp <- function(X, Fuv, s, mu, L, rho, maxiter, tol, maxrho) {
+    .Call('_poisson_mash_alpha_update_rho_rcpp', PACKAGE = 'poisson.mash.alpha', X, Fuv, s, mu, L, rho, maxiter, tol, maxrho)
+}
+
