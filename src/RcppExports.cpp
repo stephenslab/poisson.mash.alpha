@@ -55,7 +55,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // update_rho_rcpp
-arma::mat& update_rho_rcpp(const arma::mat& X, const arma::mat& Fuv, const arma::vec& s, const arma::mat& mu, const arma::mat& L, const arma::mat& rho, unsigned int maxiter, double tol, double maxrho);
+arma::mat update_rho_rcpp(const arma::mat& X, const arma::mat& Fuv, const arma::vec& s, const arma::mat& mu, const arma::mat& L, const arma::mat& rho, unsigned int maxiter, double tol, double maxrho);
 RcppExport SEXP _poisson_mash_alpha_update_rho_rcpp(SEXP XSEXP, SEXP FuvSEXP, SEXP sSEXP, SEXP muSEXP, SEXP LSEXP, SEXP rhoSEXP, SEXP maxiterSEXP, SEXP tolSEXP, SEXP maxrhoSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;

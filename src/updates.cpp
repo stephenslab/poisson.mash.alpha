@@ -12,10 +12,10 @@ void update_rho (const vec& x, const mat& Fuv, double s, const  vec& mu,
 // --------------------
 // [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::export]]
-arma::mat & update_rho_rcpp (const arma::mat& X, const arma::mat& Fuv,
-			     const arma::vec& s, const arma::mat& mu,
-			     const arma::mat& L, const arma::mat& rho,
-			     unsigned int maxiter, double tol, double maxrho) {
+arma::mat update_rho_rcpp (const arma::mat& X, const arma::mat& Fuv,
+			   const arma::vec& s, const arma::mat& mu,
+			   const arma::mat& L, const arma::mat& rho,
+			   unsigned int maxiter, double tol, double maxrho) {
   unsigned int D = rho.n_rows;
   unsigned int R = rho.n_cols;
   mat rhonew(D,R);
@@ -28,9 +28,30 @@ arma::mat & update_rho_rcpp (const arma::mat& X, const arma::mat& Fuv,
   return rhonew;
 }
 
-// TO DO: Explain here what this function does, and how to use it.
+// Update the d-vector rho for a given condition r.
 void update_rho (const vec& x, const mat& Fuv, double s, const  vec& mu,
 		 const vec& l, vec& rho, unsigned int maxiter, double tol, 
 		 double maxrho) {
+  unsigned int J = Fuv.n_rows;
+  unsigned int D = Fuv.n_cols;
+  vec rhonew(D);
+  vec bias(J);
+  vec d1F(D);
+  mat d2F(D,D);
 
+  // Repeat until we reach the maximum number of iterations, or until
+  // the convergence criterion is satisfied.
+  for (unsigned int iter = 0; iter < maxiter; iter++) {
+    bias = Fuv * rho;
+    for (unsigned int d = 0; d < D; d++)
+      d1F(d) = dot(x,Fuv.col(d)) - s * dot(Fuv.col(d),l % exp(mu + bias));
+    for (unsigned int d = 0; d < D; d++)
+      for (unsigned int t = 0; t < D; t++)
+        d2F(d,t) = -s * dot(Fuv.col(d) % Fuv.col(t),l % exp(mu + bias));
+    rhonew = rho - solve(d2F,d1F);
+    rhonew.clamp(-maxrho,maxrho);
+    if (max(abs(rhonew - rho)) < tol)
+      break;
+    rho = rhonew;
+  }
 }
