@@ -198,8 +198,8 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
                                   control = list(maxiter = 100,tol = tol.rho,
                                     maxrho = 100/max(abs(Fuv))))$rho
     } else 
-      rho.new2 <- update_rho_rcpp(data,Fuv,s,mu,exp(A),rho,maxiter = 100,
-                                  tol = tol.rho,maxrho = 100/max(abs(Fuv)))
+      rho.new <- update_rho_rcpp(data,Fuv,s,mu,exp(A),rho,maxiter = 100,
+                                 tol = tol.rho,maxrho = 100/max(abs(Fuv)))
     t1       <- proc.time()
     t_rho    <- t_rho + (t1 - t0)
     diff.rho <- rho.new - rho

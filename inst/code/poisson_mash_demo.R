@@ -40,12 +40,13 @@ saveRDS(fit.glmpca,"fit_glmpca.Rds")
 # Prefit the model to initialize parameters
 # -----------------------------------------
 cat("start prefit for parameter initialization\n")
-t0 <- proc.time()
+t0     <- proc.time()
 prefit <- pois_mash_ruv_prefit(dat,Fuv,version = "R",verbose = FALSE)
 out    <- pois_mash_ruv_prefit(dat,Fuv,version = "Rcpp",verbose = FALSE)
-t1 <- proc.time()
+t1     <- proc.time()
 cat("finish prefit for parameter initialization\n")
 print(t1 - t0)
+
 stop()
 
 # Estimate data-driven prior covariance matrices
