@@ -102,7 +102,7 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
   t0 <- proc.time()
   psi2 <- init$psi2
   if (is.null(psi2)) {
-    psi2 <- rep(NA, J)
+    psi2 <- rep(as.numeric(NA),J)
     for (j in 1:J) {
       psi2_max       <- pmax(sd(loglambda[j,])^2,1)
       log2_psi2_grid <- seq(log2(1e-4),log2(psi2_max),length.out = 25)

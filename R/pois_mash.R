@@ -52,6 +52,10 @@
 #' @param init List of initial values for model parameters, such as an
 #'   output from \code{\link{pois_mash_ruv_prefit}}).
 #' 
+#' @param version R (slower) and C++ (faster) implementations of the
+#'   model fitting algorithm are provided; these are selected with
+#'   \code{version = "R"} and \code{version = "Rcpp"}.
+#' 
 #' @param control List of control parameters with the following
 #'   elements: \dQuote{maxiter}, maximum number of outer loop
 #'   iterations; \dQuote{maxiter.q}, maximum number of inner loop
@@ -86,6 +90,7 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
                        ruv = FALSE, Fuv = NULL, rho = NULL, update.rho = TRUE,
                        verbose = FALSE, C = NULL, res.colnames = NULL,
                        init = list(NULL),
+                       version = c("Rcpp","R"),
                        control = list(maxiter = 500, maxiter.q = 25,
                                       maxpsi2 = NULL, maxbias = 10,
                                       tol.mu = 0.01, tol.psi2 = 0.02,
@@ -130,8 +135,9 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
     tol.psi2 <- 0.02
   if (is.null(tol.bias))
     tol.bias <- 0.01
-  
+
   # Initialize rho and bias.
+  t0 <- proc.time()
   if (ruv) {
     if (is.null(Fuv))
       stop("The matrix Fuv must be provided if ruv is set to TRUE")
@@ -335,7 +341,7 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
   # s.t. tmp.ruv[j,r] = sum_kl zeta[j,kl] * exp(A[j,kl,r]).
   tmp.ruv <- matrix(as.numeric(NA),J,R)
   for (r in 1:R)
-    tmp.ruv[,r] <- rowSums(zeta*exp(A[,,r]))
+    tmp.ruv[,r] <- rowSums(zeta * exp(A[,,r]))
   
   # Store the overall ELBO at each iteration.
   ELBOs.overall <- c()
@@ -413,7 +419,6 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
     # these j.
     for (j in 1:length(idx.update)) {
       j.idx <- idx.update[j]
-      
       if (H > 0) {
         hl <- 0
         for (h in 1:H) {
