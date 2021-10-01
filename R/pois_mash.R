@@ -160,12 +160,16 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
   # Initialize mu by ignoring condition-specific effects (i.e.,
   # theta) and unwanted variation.
   mu <- init$mu
+  
+  # CAN THIS BE A FUNCTION? e.g., initialize_mu
+  # (start of function)
   if (is.null(mu)) {
     mu <- matrix(as.numeric(NA),J,R)
     for (i in 1:M)
       mu[,subgroup == i] <- log(rowSums(data[,subgroup == i])) -
           log(exp(bias[,subgroup == i]) %*% s[subgroup == i])
   }
+  # (end of function)
   
   # Get a rough estimate of log lambda, which is useful for estimating
   # the range of psi2.

@@ -140,12 +140,17 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
   
   # Initialize mu by ignoring condition-specific effects (i.e.,
   # theta) and unwanted variation.
+  #
   mu <- init$mu
   if (is.null(mu)) {
+
+    # CAN THIS BE A FUNCTION? e.g., initialize_mu
+    # (start of function)
     mu <- matrix(as.numeric(NA),J,R)
     for (i in 1:M)
       mu[,subgroup == i] <- log(rowSums(data.ed[,subgroup == i])) -
                             log(sum(s[subgroup == i]))
+    # (end of function)
   }
   else
     mu <- mu[subset,]

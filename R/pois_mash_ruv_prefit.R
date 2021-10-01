@@ -83,10 +83,14 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
   # Initialize mu by ignoring random effects and unwanted variation.
   mu <- init$mu
   if(is.null(mu)) {
+
+    # CAN THIS BE A FUNCTION? e.g., initialize_mu
+    # (start of function)
     mu <- matrix(NA,J,R)
     for(i in 1:M)
       mu[,subgroup == i] <- log(rowSums(data[,subgroup == i])) -
                             log(sum(s[subgroup == i]))
+    # (end of function)
   }
     
   # Get a rough estimate of log-lambda, which is useful for estimating
