@@ -240,9 +240,13 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
   
   # Update J x K matrix zeta of posterior weights.
   ELBOs.cen <- ELBOs - apply(ELBOs,1,max)
-  zeta      <- t(t(exp(ELBOs.cen)) * pi)
-  zeta      <- zeta*(1/rowSums(zeta)) 
-  zeta      <- pmax(zeta,1e-15)
+
+  # CAN THIS BE A FUNCTION? e.g., update_zeta
+  # (start of function)
+  zeta <- t(t(exp(ELBOs.cen)) * pi)
+  zeta <- zeta*(1/rowSums(zeta)) 
+  zeta <- pmax(zeta,1e-15)
+  # (end of function)
   
   # Update J x R matrix tmp.ruv needed to update rho,
   # s.t. tmp.ruv[j,r] = sum_k zeta[j,k] * exp(A[j,k,r]).
@@ -476,9 +480,13 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
     
     # Update J x K matrix zeta of posterior weights.
     ELBOs.cen <- ELBOs - apply(ELBOs,1,max)
-    zeta      <- t(t(exp(ELBOs.cen)) * pi)
-    zeta      <- zeta * (1/rowSums(zeta)) 
-    zeta      <- pmax(zeta,1e-15)
+
+    # CAN THIS BE A FUNCTION? e.g., update_zeta
+    # (start of function)
+    zeta <- t(t(exp(ELBOs.cen)) * pi)
+    zeta <- zeta * (1/rowSums(zeta)) 
+    zeta <- pmax(zeta,1e-15)
+    # (end of function)
     
     # Update J x R matrix tmp.ruv needed to update rho,
     # s.t. tmp.ruv[j,r] = sum_k zeta[j,k] * exp(A[j,k,r])

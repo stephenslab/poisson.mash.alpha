@@ -350,9 +350,13 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
   
   # Update zeta.
   ELBOs.cen <- ELBOs - apply(ELBOs,1,max)
-  zeta      <- t(t(exp(ELBOs.cen)) * pi)
-  zeta      <- zeta*(1/rowSums(zeta))  
-  zeta      <- pmax(zeta,1e-15)
+
+  # CAN THIS BE A FUNCTION? e.g., update_zeta
+  # (start of function)
+  zeta <- t(t(exp(ELBOs.cen)) * pi)
+  zeta <- zeta*(1/rowSums(zeta))  
+  zeta <- pmax(zeta,1e-15)
+  # (end of function)
   
   # Update J x R matrix tmp.ruv needed to update rho,
   # s.t. tmp.ruv[j,r] = sum_kl zeta[j,kl] * exp(A[j,kl,r]).
@@ -397,10 +401,10 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
     
     # Calculate the new rho and bias.
     if (ruv & update.rho) {
-      rho.new <- matrix(as.numeric(NA),nrow(rho),ncol(rho))
 
       # CAN THIS BE A FUNCTION? e.g., update_rhos
       # (start of function)
+      rho.new <- matrix(as.numeric(NA),nrow(rho),ncol(rho))
       for (r in 1:R)
         rho.new[,r] <- update_rho(Xr = data[,r],Fuv = Fuv,sr = s[r],
                                   mu = mu[,r],Lr = tmp.ruv[,r],init = rho[,r],
@@ -419,7 +423,7 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
       idx.update.bias <- rep(FALSE,J)
     }
     
-    # Update the set of indices j that need update, and update mu,
+    # Update the set of indices j that need updating, and update mu,
     # psi2, bias for these j.
     idx.update <- which(idx.update.mu | idx.update.psi2 | idx.update.bias)
     mu[idx.update,]   <- mu.new[idx.update,]
@@ -525,10 +529,14 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
     }
     
     # Update zeta.
-    ELBOs.cen <- ELBOs - apply(ELBOs, 1, max)
-    zeta      <- t(t(exp(ELBOs.cen)) * pi)
-    zeta      <- zeta*(1/rowSums(zeta))  
-    zeta      <- pmax(zeta, 1e-15)
+    ELBOs.cen <- ELBOs - apply(ELBOs,1,max)
+    
+    # CAN THIS BE A FUNCTION? e.g., update_zeta
+    # (start of function)
+    zeta <- t(t(exp(ELBOs.cen)) * pi)
+    zeta <- zeta*(1/rowSums(zeta))  
+    zeta <- pmax(zeta, 1e-15)
+    # (end of function)
     
     # Update J x R matrix tmp.ruv needed to update rho,
     # s.t. tmp.ruv[j,r] = sum_kl zeta[j,kl] * exp(A[j,kl,r]).
