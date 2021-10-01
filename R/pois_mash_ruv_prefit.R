@@ -96,7 +96,7 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
   # Get a rough estimate of log-lambda, which is useful for estimating
   # the range of psi2.
   #
-  # CAN THIS BE A FUNCTION? e.g., estimate_loglambda
+  # CAN THIS BE A FUNCTION? e.g., estimate_psi2_range
   # (start of function)
   s.mat     <- rep(1,J) %*% t(s)
   loglambda <- log((data + 0.1)/s.mat)

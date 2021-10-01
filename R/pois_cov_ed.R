@@ -158,7 +158,7 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
   # Get a rough estimate of log-lambda, which is useful for estimating
   # the range of psi2, Ulist, ulist.
   #
-  # CAN THIS BE A FUNCTION? e.g., estimate_loglambda
+  # CAN THIS BE A FUNCTION? e.g., estimate_psi2_range
   # (start of function)
   s.mat     <- rep(1,J) %*% t(s)
   loglambda <- log((data.ed + 0.1)/s.mat)
@@ -239,10 +239,10 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
   }
   
   # Update J x K matrix zeta of posterior weights.
-  ELBOs.cen <- ELBOs - apply(ELBOs,1,max)
 
   # CAN THIS BE A FUNCTION? e.g., update_zeta
   # (start of function)
+  ELBOs.cen <- ELBOs - apply(ELBOs,1,max)
   zeta <- t(t(exp(ELBOs.cen)) * pi)
   zeta <- zeta*(1/rowSums(zeta)) 
   zeta <- pmax(zeta,1e-15)
@@ -413,20 +413,27 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
       }
     }
     
-    # Update mu.
+    # CAN THIS BE A FUNCTION? e.g., update_mu
+    # (start of function)
     for (i in 1:M) {
       mu.i.new <- log(rowSums(data.ed[,subgroup == i])) -
                   log(rowSums(zeta * tmp.mu[,,i]))
       mu[,subgroup == i] <- mu.i.new
     }
+    # (end of function)
     
-    # Update psi2.
+    # CAN THIS BE A FUNCTION? e.g., update_psi2
+    # (start of function)
     psi2.new <- rowSums(zeta * tmp.psi2)/R
     psi2     <- pmin(pmax(psi2.new,minpsi2),maxpsi2)
+    # (end of function)
     
-    # Update pi.
+    # CAN THIS BE A FUNCTION? e.g., update_pi
+    # (start of function)
     pi.new  <- colMeans(zeta)
     pi.new  <- pmax(pi.new,1e-6)
+    # (end of function)
+    
     diff.pi <- pi.new - pi
     pi      <- pi.new
     
@@ -479,10 +486,9 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
     }
     
     # Update J x K matrix zeta of posterior weights.
-    ELBOs.cen <- ELBOs - apply(ELBOs,1,max)
-
     # CAN THIS BE A FUNCTION? e.g., update_zeta
     # (start of function)
+    ELBOs.cen <- ELBOs - apply(ELBOs,1,max)
     zeta <- t(t(exp(ELBOs.cen)) * pi)
     zeta <- zeta * (1/rowSums(zeta)) 
     zeta <- pmax(zeta,1e-15)

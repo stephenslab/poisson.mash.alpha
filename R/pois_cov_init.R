@@ -125,7 +125,7 @@ pois_cov_init <- function (data, ruv = FALSE, Fuv = NULL, rho = NULL, prop = 1,
   
   # Avoid too large values in Ulist and ulist.
   #
-  # CAN THIS BE A FUNCTION? e.g., estimate_loglambda
+  # CAN THIS BE A FUNCTION? e.g., estimate_psi2_range
   # (start of function)
   s.mat     <- rep(1,nrow(data)) %*% t(s)
   loglambda <- log((data + 0.1)/s.mat)

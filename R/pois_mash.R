@@ -160,10 +160,10 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
   # Initialize mu by ignoring condition-specific effects (i.e.,
   # theta) and unwanted variation.
   mu <- init$mu
-  
-  # CAN THIS BE A FUNCTION? e.g., initialize_mu
-  # (start of function)
   if (is.null(mu)) {
+
+    # CAN THIS BE A FUNCTION? e.g., initialize_mu
+    # (start of function)
     mu <- matrix(as.numeric(NA),J,R)
     for (i in 1:M)
       mu[,subgroup == i] <- log(rowSums(data[,subgroup == i])) -
@@ -348,11 +348,9 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
     }
   }
   
-  # Update zeta.
-  ELBOs.cen <- ELBOs - apply(ELBOs,1,max)
-
   # CAN THIS BE A FUNCTION? e.g., update_zeta
   # (start of function)
+  ELBOs.cen <- ELBOs - apply(ELBOs,1,max)
   zeta <- t(t(exp(ELBOs.cen)) * pi)
   zeta <- zeta*(1/rowSums(zeta))  
   zeta <- pmax(zeta,1e-15)
@@ -377,25 +375,34 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
                     const
     ELBOs.overall <- c(ELBOs.overall,ELBO.overall)
     
-    # Update pi.
+    # CAN THIS BE A FUNCTION? e.g., update_pi
+    # (start of function)
     pi.new  <- colMeans(zeta)
     pi.new  <- pmax(pi.new,1e-8)
+    # (end of function)
+
     diff.pi <- pi.new - pi
     pi      <- pi.new
     
-    # Calculate the new mu.
+    # CAN THIS BE A FUNCTION? e.g., update_mu
+    # (start of function)
     mu.new <- matrix(as.numeric(NA),J,R)
     for (i in 1:M) {
       mu.i.new <- log(rowSums(data[,subgroup == i])) -
                   log(rowSums(zeta * tmp.mu[,,i]))
       mu.new[,subgroup == i] <- mu.i.new
     }
+    # (end of function)
+    
     idx.update.mu <- apply(abs(mu.new - mu),1,max) > tol.mu
     diff.mu       <- mu.new - mu
     
-    # Calculate the new psi2.
-    psi2.new        <- rowSums(zeta * tmp.psi2)/R
-    psi2.new        <- pmin(pmax(psi2.new,minpsi2),maxpsi2)
+    # CAN THIS BE A FUNCTION? e.g., update_psi2
+    # (start of function)
+    psi2.new <- rowSums(zeta * tmp.psi2)/R
+    psi2.new <- pmin(pmax(psi2.new,minpsi2),maxpsi2)
+    # (end of function)
+    
     diff.psi2       <- psi2.new/psi2
     idx.update.psi2 <- abs(diff.psi2 - 1) > tol.psi2
     
@@ -528,14 +535,12 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
       }      
     }
     
-    # Update zeta.
-    ELBOs.cen <- ELBOs - apply(ELBOs,1,max)
-    
     # CAN THIS BE A FUNCTION? e.g., update_zeta
     # (start of function)
+    ELBOs.cen <- ELBOs - apply(ELBOs,1,max)
     zeta <- t(t(exp(ELBOs.cen)) * pi)
     zeta <- zeta*(1/rowSums(zeta))  
-    zeta <- pmax(zeta, 1e-15)
+    zeta <- pmax(zeta,1e-15)
     # (end of function)
     
     # Update J x R matrix tmp.ruv needed to update rho,
