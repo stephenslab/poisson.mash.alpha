@@ -269,8 +269,11 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
   for (iter in 1:maxiter) {
       
     # Calculate overall ELBO at the current iteration.
+    # CAN THIS BE MADE A FUNCTION? e.g., compute_overall_elbo
+    # (start of function)
     ELBO.overall  <- sum(zeta*(log(rep(1,J) %*% t(pi)) + ELBOs - log(zeta))) +
                      const
+    # (end of function)
     ELBOs.overall <- c(ELBOs.overall,ELBO.overall)
     
     if (verbose) {
