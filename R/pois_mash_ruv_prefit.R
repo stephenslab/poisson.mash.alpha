@@ -194,16 +194,20 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
       tmp.psi2[j] <- sum(gamma.tmp^2 + Sigma.tmp)
     }
     
-    # Update mu.
+    # CAN THIS BE A FUNCTION? e.g., update_mu
+    # (start of function)
     for(i in 1:M){
       mu.i.new <- log(rowSums(data[,subgroup == i])) - log(tmp.mu[,i])
       mu[,subgroup == i] <- mu.i.new
     }
+    # (end of function)
     
-    # Update psi2.
+    # CAN THIS BE A FUNCTION? e.g., update_psi2
+    # (start of function)
     psi2.new <- tmp.psi2/R
     psi2     <- pmin(pmax(psi2.new,minpsi2),maxpsi2)
-     
+    # (end of function)
+    
     # Update rho and bias.
     t0 <- proc.time()
     if (version == "R") {

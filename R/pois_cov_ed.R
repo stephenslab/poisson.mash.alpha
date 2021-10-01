@@ -212,6 +212,9 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
   # Update posterior mean and covariance of theta and local ELBO.
   for (j in 1:J) {
     if (H > 0) {
+
+      # CAN THIS BE A FUNCTION? e.g., update_q_thetas_general
+      # (start of function)
       for (h in 1:H) {
         theta.qjh <- update_q_theta_general(x =  data.ed[j,],s = s,mu = mu[j,],
                                             bias = bias[j,],c2 = rep(1,R),
@@ -223,8 +226,11 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
         ELBOs[j,h]         <- theta.qjh$ELBO
         A[j,h,]            <- theta.qjh$m + diag(theta.qjh$V)/2
       }      
+      # (end of function)
     }
-    
+
+    # CAN THIS BE A FUNCTION? e.g., update_q_thetas_rank1
+    # (start of function)
     for (g in 1:G) {
       theta.qjg <- update_q_theta_rank1(x = data.ed[j,],s = s,mu = mu[j,],
                                         bias = bias[j,],c2 = rep(1,R),
@@ -236,10 +242,10 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
       ELBOs[j,H+g]         <- theta.qjg$ELBO
       A[j,H+g,]            <- theta.qjg$m + diag(theta.qjg$V)/2
     }
+    # (end of function)
   }
   
   # Update J x K matrix zeta of posterior weights.
-
   # CAN THIS BE A FUNCTION? e.g., update_zeta
   # (start of function)
   ELBOs.cen <- ELBOs - apply(ELBOs,1,max)

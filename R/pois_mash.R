@@ -274,6 +274,9 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
   
   for (j in 1:J) {
     if (H > 0) {
+        
+      # CAN THIS BE A FUNCTION? e.g., update_q_general
+      # (start of function)
       hl <- 0
       for (h in 1:H) {
         for (l in 1:L) {
@@ -296,9 +299,12 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
           gamma[j,hl,]   <- gamma.tmp
           A[j,hl,]       <- gamma.tmp + diag(Sigma.tmp)/2 
         }
-      }      
+      }
+      # (end of function)
     }
-    
+
+    # CAN THIS BE A FUNCTION? e.g., update_q_rank1
+    # (start of function)
     gl <- 0
     for (g in 1:G) {
       ug         <- ulist[[g]]
@@ -346,6 +352,7 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
         }
       }
     }
+    # (end of function)
   }
   
   # CAN THIS BE A FUNCTION? e.g., update_zeta
@@ -456,6 +463,9 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
     for (j in 1:length(idx.update)) {
       j.idx <- idx.update[j]
       if (H > 0) {
+
+        # CAN THIS BE A FUNCTION? e.g., update_q_general
+        # (start of function)
         hl <- 0
         for (h in 1:H) {
           for (l in 1:L) {
@@ -485,9 +495,12 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
             gamma[j.idx,hl,]   <- gamma.tmp
             A[j.idx,hl,]       <- gamma.tmp + diag(Sigma.tmp)/2 
           }
-        }        
+        }
+        # (end of function)
       }
-      
+
+      # CAN THIS BE A FUNCTION? e.g., update_q_rank1
+      # (start of function)
       gl <- 0
       for (g in 1:G) {
         ug         <- ulist[[g]]
@@ -535,7 +548,8 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
             tmp.psi2[j.idx,H*L+gl] <- sum(eta.qjgl)
           }
         }
-      }      
+      }
+      # (end of function)
     }
     
     # CAN THIS BE A FUNCTION? e.g., update_zeta
