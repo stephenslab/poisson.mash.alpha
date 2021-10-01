@@ -47,8 +47,8 @@ pois_mash_set_data <- function (Y, condition, si, subgroup = NULL) {
   }
 
   # Aggregate the cell-level data into condition-level data.
-  X <- matrix(NA,J,R)
-  s <- rep(NA,R)
+  X <- matrix(as.numeric(NA),J,R)
+  s <- rep(as.numeric(NA),R)
   rownames(X) <- rownames(Y)
   colnames(X) <- trts
   names(s)    <- trts

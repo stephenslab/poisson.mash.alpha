@@ -86,7 +86,7 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
 
     # CAN THIS BE A FUNCTION? e.g., initialize_mu
     # (start of function)
-    mu <- matrix(NA,J,R)
+    mu <- matrix(as.numeric(NA),J,R)
     for(i in 1:M)
       mu[,subgroup == i] <- log(rowSums(data[,subgroup == i])) -
                             log(sum(s[subgroup == i]))
@@ -167,8 +167,12 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
   
   # Overall ELBO after updating all parameters at each iteration.
   ELBOs.overall <- c()
+  
+  # CAN THIS BE A FUNCTION? e.g., compute_elbo_const
+  # (start of function)
   const <- sum(data %*% log(s)) - sum(lgamma(data + 1))
-
+  # (end of function)
+  
   if (verbose)
     cat("Start prefitting Poisson mash model to initialize model",
         "parameters.\n")
@@ -176,8 +180,8 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
       
     # Calculate or update quantities related to model parameters mu,
     # psi2, rho.
-    tmp.mu   <- matrix(NA,J,M)
-    tmp.psi2 <- rep(NA,J)
+    tmp.mu   <- matrix(as.numeric(NA),J,M)
+    tmp.psi2 <- rep(as.numeric(NA),J)
     
     for (j in 1:J) {
       gamma.tmp <- gamma[j,]
@@ -203,12 +207,16 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
     # Update rho and bias.
     t0 <- proc.time()
     if (version == "R") {
+
+      # CAN THIS BE A FUNCTION? e.g., update_rhos
+      # (start of function)
       rho.new <- matrix(as.numeric(NA),nrow(rho),ncol(rho))
       for (r in 1:R)
         rho.new[,r] <- update_rho(Xr = data[,r],Fuv = Fuv,sr = s[r],
                                   mu = mu[,r],Lr = exp(A[,r]),init = rho[,r], 
                                   control = list(maxiter = 100,tol = tol.rho,
                                     maxrho = 100/max(abs(Fuv))))$rho
+      # (end of function)
     } else 
       rho.new <- update_rho_rcpp(data,Fuv,s,mu,exp(A),rho,maxiter = 100,
                                  tol = tol.rho,maxrho = 100/max(abs(Fuv)))

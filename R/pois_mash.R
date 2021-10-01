@@ -251,7 +251,12 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
   pi <- init$pi
   if (is.null(pi))
     pi <- rep(1/K,K)
+
+  # CAN THIS BE A FUNCTION? e.g., compute_elbo_const
+  # (start of function)
   const <- sum(data %*% log(s)) - sum(lgamma(1 + data))
+  # (end of function)
+  
   if (verbose)
     cat("Start fitting Poisson mash model.\n")
   
@@ -393,11 +398,16 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
     # Calculate the new rho and bias.
     if (ruv & update.rho) {
       rho.new <- matrix(as.numeric(NA),nrow(rho),ncol(rho))
+
+      # CAN THIS BE A FUNCTION? e.g., update_rhos
+      # (start of function)
       for (r in 1:R)
         rho.new[,r] <- update_rho(Xr = data[,r],Fuv = Fuv,sr = s[r],
                                   mu = mu[,r],Lr = tmp.ruv[,r],init = rho[,r],
                                   control = list(maxiter = 100,tol = tol.rho,
-                                    maxrho = 100/max(abs(Fuv))))$rho 
+                                    maxrho = 100/max(abs(Fuv))))$rho
+      # (end of function)
+      
       diff.rho        <- rho.new - rho
       bias.new        <- Fuv %*% rho.new
       bias.new        <- scale_bias(bias.new,maxbias)

@@ -176,7 +176,7 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
 
     # CAN THIS BE A FUNCTION? e.g., initialize_psi2
     # (start of function)
-    psi2 <- rep(NA,J)
+    psi2 <- rep(as.numeric(NA),J)
     for (j in 1:J) {
       psi2_max       <- pmax(sd(loglambda[j,])^2,1)
        log2_psi2_grid <- seq(log2(1e-4),log2(psi2_max),length.out = 25)
@@ -249,7 +249,11 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
   tmp.ruv <- matrix(as.numeric(NA),J,R)
   for (r in 1:R)
     tmp.ruv[,r] <- rowSums(zeta*exp(A[,,r]))
+
+  # CAN THIS BE A FUNCTION? e.g., compute_elbo_const
+  # (start of function)
   const <- sum(data.ed %*% log(s)) - sum(lgamma(data.ed + 1))
+  # (end of function)
   
   # Overall ELBO after updating all parameters at each iteration.
   ELBOs.overall <- c()
@@ -424,13 +428,18 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
     
     # Update rho and bias if ruv = TRUE.
     if (ruv) {
+      
+      # CAN THIS BE A FUNCTION? e.g., update_rhos
+      # (start of function)
       rho.new <- matrix(as.numeric(NA),nrow(rho),ncol(rho))
       for (r in 1:R) 
         rho.new[,r] <-
           update_rho(Xr = data.ed[,r],Fuv = F.ed,sr = s[r],mu = mu[,r],
                      Lr = tmp.ruv[,r],init = rho[,r], 
                      control = list(maxiter = 100,tol = tol.rho,
-                                    maxrho=100/max(abs(F.ed))))$rho 
+                                    maxrho=100/max(abs(F.ed))))$rho
+      # (end of function)
+      
       diff.rho <- rho.new - rho
       rho      <- rho.new
       bias     <- F.ed %*% rho
