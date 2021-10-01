@@ -173,17 +173,24 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
   
   # Get a rough estimate of log lambda, which is useful for estimating
   # the range of psi2.
+  #
+  # CAN THIS BE A FUNCTION? e.g., estimate_loglambda
+  # (start of function)
   s.mat     <- rep(1,J) %*% t(s)
   loglambda <- log((data + 0.1)/s.mat)
   minpsi2   <- pmax(min(apply(loglambda,1,sd)^2)/100,1e-8)
   if (is.null(maxpsi2))
     maxpsi2 <- max(apply(loglambda,1,sd)^2)
+  # (end of function)
   
   # Use grid search to initialize psi2 by fitting a poisson-log-normal
   # model while ignoring fixed effects (i.e., beta) and unwanted
   # variation.
   psi2 <- init$psi2
   if (is.null(psi2)) {
+      
+    # CAN THIS BE A FUNCTION? e.g., initialize_psi2
+    # (start of function)
     psi2 <- rep(as.numeric(NA),J)
     for (j in 1:J) {
       psi2_max       <- pmax(sd(loglambda[j,])^2,1)
@@ -197,6 +204,7 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
                         sqrt(psi2_grid[l])))
       psi2[j] <- psi2_grid[which.max(logdens)]
     }
+    # (end of function)
   }
   else
     psi2 <- pmin(psi2,maxpsi2)

@@ -124,9 +124,13 @@ pois_cov_init <- function (data, ruv = FALSE, Fuv = NULL, rho = NULL, prop = 1,
                 Emp_cov = Z.cov)
   
   # Avoid too large values in Ulist and ulist.
+  #
+  # CAN THIS BE A FUNCTION? e.g., estimate_loglambda
+  # (start of function)
   s.mat     <- rep(1,nrow(data)) %*% t(s)
   loglambda <- log((data + 0.1)/s.mat)
   upr_bd    <- 4*max(apply(loglambda,1,sd)^2) 
+  # (end of function)
   
   for (h in 1:length(Ulist)) {
     Uh <- Ulist[[h]]

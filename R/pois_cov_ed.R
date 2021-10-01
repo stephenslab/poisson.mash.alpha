@@ -157,18 +157,25 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
   
   # Get a rough estimate of log-lambda, which is useful for estimating
   # the range of psi2, Ulist, ulist.
+  #
+  # CAN THIS BE A FUNCTION? e.g., estimate_loglambda
+  # (start of function)
   s.mat     <- rep(1,J) %*% t(s)
   loglambda <- log((data.ed + 0.1)/s.mat)
   upr_bd    <- 4*max(apply(loglambda,1,sd)^2) 
   minpsi2   <- pmax(min(apply(loglambda,1,sd)^2)/100,1e-8)
   if (is.null(maxpsi2))
     maxpsi2 <- max(apply(loglambda,1,sd)^2)
+  # (end of function)
   
   # Use grid search to initialize psi^2 by fitting a
   # poisson-log-normal model while ignoring fixed effects (i.e.,
   # beta_j) and unwanted variation.
   psi2 <- init$psi2
   if (is.null(psi2)) {
+
+    # CAN THIS BE A FUNCTION? e.g., initialize_psi2
+    # (start of function)
     psi2 <- rep(NA,J)
     for (j in 1:J) {
       psi2_max       <- pmax(sd(loglambda[j,])^2,1)
@@ -181,6 +188,7 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
             log(dpoilog(data.ed[j,r],mu[j,r] + log(s[r]),sqrt(psi2_grid[l])))
       psi2[j] <- psi2_grid[which.max(logdens)]
     }
+    # (end of function)
   }
   else
     psi2 <- pmin(psi2[subset], maxpsi2)
