@@ -126,11 +126,8 @@ pois_cov_init <- function (data, ruv = FALSE, Fuv = NULL, rho = NULL, prop = 1,
   # Avoid too large values in Ulist and ulist.
   #
   # CAN THIS BE A FUNCTION? e.g., estimate_psi2_range
-  # (start of function)
-  s.mat     <- rep(1,nrow(data)) %*% t(s)
-  loglambda <- log((data + 0.1)/s.mat)
-  upr_bd    <- 4*max(apply(loglambda,1,sd)^2) 
-  # (end of function)
+  psi2_range <- estimate_psi2_range(X=data, s=s)
+  upr_bd <- psi2_range$upr_bd
   
   for (h in 1:length(Ulist)) {
     Uh <- Ulist[[h]]

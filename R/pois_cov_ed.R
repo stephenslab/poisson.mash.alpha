@@ -140,66 +140,37 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
   
   # Initialize mu by ignoring condition-specific effects (i.e.,
   # theta) and unwanted variation.
-  #
   mu <- init$mu
-  if (is.null(mu)) {
-
-    # CAN THIS BE A FUNCTION? e.g., initialize_mu
-    # (start of function)
-    mu <- matrix(as.numeric(NA),J,R)
-    for (i in 1:M)
-      mu[,subgroup == i] <- log(rowSums(data.ed[,subgroup == i])) -
-                            log(sum(s[subgroup == i]))
-    # (end of function)
-  }
+  if (is.null(mu))
+    # CAN THIS BE A FUNCTION? e.g., initialize_mu.
+    mu <- initialize_mu(X=data.ed, s=s, subgroup=subgroup)
   else
     mu <- mu[subset,]
   
   # Get a rough estimate of log-lambda, which is useful for estimating
   # the range of psi2, Ulist, ulist.
-  #
-  # CAN THIS BE A FUNCTION? e.g., estimate_psi2_range
-  # (start of function)
-  s.mat     <- rep(1,J) %*% t(s)
-  loglambda <- log((data.ed + 0.1)/s.mat)
-  upr_bd    <- 4*max(apply(loglambda,1,sd)^2) 
-  minpsi2   <- pmax(min(apply(loglambda,1,sd)^2)/100,1e-8)
-  if (is.null(maxpsi2))
-    maxpsi2 <- max(apply(loglambda,1,sd)^2)
-  # (end of function)
+  # CAN THIS BE A FUNCTION? e.g., estimate_psi2_range.
+  psi2_range <- estimate_psi2_range(X=data.ed, s=s, maxpsi2=maxpsi2)
+  minpsi2 <- psi2_range$minpsi2
+  maxpsi2 <- psi2_range$maxpsi2
+  upr_bd <- psi2_range$upr_bd
   
   # Use grid search to initialize psi^2 by fitting a
   # poisson-log-normal model while ignoring fixed effects (i.e.,
   # beta_j) and unwanted variation.
   psi2 <- init$psi2
-  if (is.null(psi2)) {
-
-    # CAN THIS BE A FUNCTION? e.g., initialize_psi2
-    # (start of function)
-    psi2 <- rep(as.numeric(NA),J)
-    for (j in 1:J) {
-      psi2_max       <- pmax(sd(loglambda[j,])^2,1)
-       log2_psi2_grid <- seq(log2(1e-4),log2(psi2_max),length.out = 25)
-      psi2_grid      <- 2^log2_psi2_grid
-      logdens        <- rep(0,length(psi2_grid))
-      for (l in 1:length(psi2_grid)) 
-        for (r in 1:R) 
-          logdens[l] <- logdens[l] +
-            log(dpoilog(data.ed[j,r],mu[j,r] + log(s[r]),sqrt(psi2_grid[l])))
-      psi2[j] <- psi2_grid[which.max(logdens)]
-    }
-    # (end of function)
-  }
+  if (is.null(psi2))
+    # CAN THIS BE A FUNCTION? e.g., initialize_psi2.
+    psi2 <- initialize_psi2(X=data.ed, s=s, mu=mu)
   else
     psi2 <- pmin(psi2[subset], maxpsi2)
   
   # Create matrices and arrays to store the posterior mean and
   # covariance of theta, i.e., gamma_jk, Sigma_jk.
-  gamma_jk <- list(NULL)
+  gamma_jk <- array(as.numeric(NA), c(J,K,R))
   Sigma_jk <- list(NULL)
-  for (k in 1:K) {
-    gamma_jk[[k]] <- matrix(as.numeric(NA),J,R)
-    Sigma_jk[[k]] <- array(as.numeric(NA),c(J,R,R))
+  for (j in 1:J) {
+    Sigma_jk[[j]] <- array(as.numeric(NA), c(K,R,R))
   }
   
   # Create a J x K x R array to store the quantities related to
@@ -211,59 +182,27 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
   
   # Update posterior mean and covariance of theta and local ELBO.
   for (j in 1:J) {
-    if (H > 0) {
-
-      # CAN THIS BE A FUNCTION? e.g., update_q_thetas_general
-      # (start of function)
-      for (h in 1:H) {
-        theta.qjh <- update_q_theta_general(x =  data.ed[j,],s = s,mu = mu[j,],
-                                            bias = bias[j,],c2 = rep(1,R),
-                                            psi2 = psi2[j],U = Ulist[[h]],
-                                            control = list(maxiter = maxiter.q,
-                                                           tol = tol.q))
-        gamma_jk[[h]][j,]  <- theta.qjh$m
-        Sigma_jk[[h]][j,,] <- theta.qjh$V
-        ELBOs[j,h]         <- theta.qjh$ELBO
-        A[j,h,]            <- theta.qjh$m + diag(theta.qjh$V)/2
-      }      
-      # (end of function)
-    }
-
-    # CAN THIS BE A FUNCTION? e.g., update_q_thetas_rank1
-    # (start of function)
-    for (g in 1:G) {
-      theta.qjg <- update_q_theta_rank1(x = data.ed[j,],s = s,mu = mu[j,],
-                                        bias = bias[j,],c2 = rep(1,R),
-                                        psi2 = psi2[j],u = ulist[[g]],
-                                        control = list(maxiter = maxiter.q,
-                                                       tol = tol.q))
-      gamma_jk[[H+g]][j,]  <- theta.qjg$m
-      Sigma_jk[[H+g]][j,,] <- theta.qjg$V
-      ELBOs[j,H+g]         <- theta.qjg$ELBO
-      A[j,H+g,]            <- theta.qjg$m + diag(theta.qjg$V)/2
-    }
-    # (end of function)
+    # CAN THIS BE A FUNCTION? e.g., update_q_theta_all.
+    theta.q.all <- update_q_theta_all(x=data.ed[j,], s=s, mu=mu[j,], bias=bias[j,], c2=rep(1,R), psi2=psi2[j], 
+                                      wlist=1, Ulist=Ulist, ulist=ulist, maxiter.q=maxiter.q, tol.q=tol.q)
+    gamma_jk[j,,] <- theta.q.all$gamma
+    Sigma_jk[[j]] <- theta.q.all$Sigma
+    A[j,,] <- theta.q.all$A
+    ELBOs[j,] <- theta.q.all$ELBOs
   }
   
   # Update J x K matrix zeta of posterior weights.
-  # CAN THIS BE A FUNCTION? e.g., update_zeta
-  # (start of function)
-  ELBOs.cen <- ELBOs - apply(ELBOs,1,max)
-  zeta <- t(t(exp(ELBOs.cen)) * pi)
-  zeta <- zeta*(1/rowSums(zeta)) 
-  zeta <- pmax(zeta,1e-15)
-  # (end of function)
+  # CAN THIS BE A FUNCTION? e.g., update_zeta.
+  zeta <- update_zeta(ELBOs=ELBOs, pi=pi)
   
   # Update J x R matrix tmp.ruv needed to update rho,
   # s.t. tmp.ruv[j,r] = sum_k zeta[j,k] * exp(A[j,k,r]).
   tmp.ruv <- matrix(as.numeric(NA),J,R)
   for (r in 1:R)
     tmp.ruv[,r] <- rowSums(zeta*exp(A[,,r]))
-
-  # CAN THIS BE A FUNCTION? e.g., compute_elbo_const
-  # (start of function)
-  const <- sum(data.ed %*% log(s)) - sum(lgamma(data.ed + 1))
-  # (end of function)
+  
+  # CAN THIS BE A FUNCTION? e.g., compute_elbo_const.
+  const <- compute_elbo_const(X=data.ed, s=s)
   
   # Overall ELBO after updating all parameters at each iteration.
   ELBOs.overall <- c()
@@ -275,11 +214,8 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
   for (iter in 1:maxiter) {
       
     # Calculate overall ELBO at the current iteration.
-    # CAN THIS BE MADE A FUNCTION? e.g., compute_overall_elbo
-    # (start of function)
-    ELBO.overall  <- sum(zeta*(log(rep(1,J) %*% t(pi)) + ELBOs - log(zeta))) +
-                     const
-    # (end of function)
+    # CAN THIS BE MADE A FUNCTION? e.g., compute_overall_elbo.
+    ELBO.overall  <- compute_overall_elbo(ELBOs=ELBOs, pi=pi, zeta=zeta, const=const)
     ELBOs.overall <- c(ELBOs.overall,ELBO.overall)
     
     if (verbose) {
@@ -303,8 +239,8 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
       for (h in 1:H) {
         tmp.U <- matrix(0,R,R)
         for (j in 1:J) {
-          gamma.tmp <- gamma_jk[[h]][j,]
-          Sigma.tmp <- Sigma_jk[[h]][j,,]
+          gamma.tmp <- gamma_jk[j,h,]
+          Sigma.tmp <- Sigma_jk[[j]][h,,]
           beta.qjh  <- update_q_beta_general(theta_m = gamma.tmp,
                                              theta_V = Sigma.tmp,
                                              c2 = rep(1,R),psi2 = psi2[j],
@@ -338,8 +274,8 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
       # If u is zero vector.
       if (sum(ulist[[g]] != 0) == 0) {
         for (j in 1:J) {
-          gamma.tmp <- gamma_jk[[H+g]][j,]
-          Sigma.tmp <- Sigma_jk[[H+g]][j,,]
+          gamma.tmp <- gamma_jk[j,H+g,]
+          Sigma.tmp <- Sigma_jk[[j]][H+g,,]
           for (i in 1:M) {
             tmp.mu[j,H+g,i] <- sum(s[subgroup == i] *
                                    exp(bias[j,subgroup == i] +
@@ -356,8 +292,8 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
         tmp1.u <- 0
         tmp2.u <- rep(0, R)
         for (j in 1:J) {
-          gamma.tmp <- gamma_jk[[H+g]][j,]
-          Sigma.tmp <- Sigma_jk[[H+g]][j,,]
+          gamma.tmp <- gamma_jk[j,H+g,]
+          Sigma.tmp <- Sigma_jk[[j]][H+g,,]
           beta.qjg  <- update_q_beta_rank1(theta_m = gamma.tmp,
                                            theta_V = Sigma.tmp,
                                            c2 = rep(1,R),psi2 = psi2[j],
@@ -394,8 +330,8 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
         tmp1.u <- 0
         tmp2.u <- 0
         for (j in 1:J) {
-          gamma.tmp <- gamma_jk[[H+g]][j,]
-          Sigma.tmp <- Sigma_jk[[H+g]][j,,]
+          gamma.tmp <- gamma_jk[j,H+g,]
+          Sigma.tmp <- Sigma_jk[[j]][H+g,,]
           beta.qjg  <- update_q_beta_rank1(theta_m = gamma.tmp,
                                            theta_V = Sigma.tmp,
                                            c2 = rep(1,R),psi2 = psi2[j],
@@ -422,44 +358,21 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
       }
     }
     
-    # CAN THIS BE A FUNCTION? e.g., update_mu
-    # (start of function)
-    for (i in 1:M) {
-      mu.i.new <- log(rowSums(data.ed[,subgroup == i])) -
-                  log(rowSums(zeta * tmp.mu[,,i]))
-      mu[,subgroup == i] <- mu.i.new
-    }
-    # (end of function)
+    # CAN THIS BE A FUNCTION? e.g., update_mu.
+    mu <- update_mu(X=data.ed, subgroup=subgroup, zeta=zeta, tmp.mu=tmp.mu)
     
-    # CAN THIS BE A FUNCTION? e.g., update_psi2
-    # (start of function)
-    psi2.new <- rowSums(zeta * tmp.psi2)/R
-    psi2     <- pmin(pmax(psi2.new,minpsi2),maxpsi2)
-    # (end of function)
+    # CAN THIS BE A FUNCTION? e.g., update_psi2.
+    psi2 <- update_psi2(zeta=zeta, tmp.psi2=tmp.psi2, R=R, minpsi2=minpsi2, maxpsi2=maxpsi2)
     
-    # CAN THIS BE A FUNCTION? e.g., update_pi
-    # (start of function)
-    pi.new  <- colMeans(zeta)
-    pi.new  <- pmax(pi.new,1e-6)
-    # (end of function)
-    
+    # CAN THIS BE A FUNCTION? e.g., update_pi.
+    pi.new <- update_pi(zeta)
     diff.pi <- pi.new - pi
     pi      <- pi.new
     
     # Update rho and bias if ruv = TRUE.
     if (ruv) {
-      
-      # CAN THIS BE A FUNCTION? e.g., update_rhos
-      # (start of function)
-      rho.new <- matrix(as.numeric(NA),nrow(rho),ncol(rho))
-      for (r in 1:R) 
-        rho.new[,r] <-
-          update_rho(Xr = data.ed[,r],Fuv = F.ed,sr = s[r],mu = mu[,r],
-                     Lr = tmp.ruv[,r],init = rho[,r], 
-                     control = list(maxiter = 100,tol = tol.rho,
-                                    maxrho=100/max(abs(F.ed))))$rho
-      # (end of function)
-      
+      # CAN THIS BE A FUNCTION? e.g., update_rho_all.
+      rho.new <- update_rho_all(X=data.ed, s=s, mu=mu, Fuv=F.ed, rho=rho, tmp.ruv=tmp.ruv, tol.rho=tol.rho)
       diff.rho <- rho.new - rho
       rho      <- rho.new
       bias     <- F.ed %*% rho
@@ -468,40 +381,18 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
     
     # Update posterior mean and covariance of theta and local ELBO F_jk.
     for (j in 1:J) {
-      if (H > 0) {
-        for (h in 1:H) {
-          theta.qjh <- update_q_theta_general(x = data.ed[j,],s = s,
-            mu = mu[j,],bias = bias[j,],c2 = rep(1,R),psi2 = psi2[j],
-            U = Ulist[[h]],
-            init = list(m = gamma_jk[[h]][j,],V = Sigma_jk[[h]][j,,]),
-            control = list(maxiter = maxiter.q,tol = tol.q))
-          gamma_jk[[h]][j,]  <- theta.qjh$m
-          Sigma_jk[[h]][j,,] <- theta.qjh$V
-          ELBOs[j,h]         <- theta.qjh$ELBO
-          A[j,h,]            <- theta.qjh$m + diag(theta.qjh$V)/2
-        }
-      }
-      
-      for (g in 1:G) {
-        theta.qjg <- update_q_theta_rank1(x = data.ed[j,],s = s,mu = mu[j,],
-          bias = bias[j,],c2 = rep(1,R),psi2 = psi2[j],u = ulist[[g]],
-          init = list(m = gamma_jk[[H+g]][j,],V = Sigma_jk[[H+g]][j,,]),
-          control = list(maxiter = maxiter.q,tol = tol.q))
-        gamma_jk[[H+g]][j,]  <- theta.qjg$m
-        Sigma_jk[[H+g]][j,,] <- theta.qjg$V
-        ELBOs[j,H+g]         <- theta.qjg$ELBO
-        A[j,H+g,]            <- theta.qjg$m + diag(theta.qjg$V)/2
-      }
+      # CAN THIS BE A FUNCTION? e.g., update_q_theta_all.
+      theta.q.all <- update_q_theta_all(x=data.ed[j,], s=s, mu=mu[j,], bias=bias[j,], c2=rep(1,R), psi2=psi2[j], wlist=1, Ulist=Ulist, ulist=ulist,
+                                        init=list(gamma=gamma_jk[j,,], Sigma=Sigma_jk[[j]]), maxiter.q=maxiter.q, tol.q=tol.q)
+      gamma_jk[j,,] <- theta.q.all$gamma
+      Sigma_jk[[j]] <- theta.q.all$Sigma
+      A[j,,] <- theta.q.all$A
+      ELBOs[j,] <- theta.q.all$ELBOs
     }
     
     # Update J x K matrix zeta of posterior weights.
-    # CAN THIS BE A FUNCTION? e.g., update_zeta
-    # (start of function)
-    ELBOs.cen <- ELBOs - apply(ELBOs,1,max)
-    zeta <- t(t(exp(ELBOs.cen)) * pi)
-    zeta <- zeta * (1/rowSums(zeta)) 
-    zeta <- pmax(zeta,1e-15)
-    # (end of function)
+    # CAN THIS BE A FUNCTION? e.g., update_zeta.
+    zeta <- update_zeta(ELBOs=ELBOs, pi=pi)
     
     # Update J x R matrix tmp.ruv needed to update rho,
     # s.t. tmp.ruv[j,r] = sum_k zeta[j,k] * exp(A[j,k,r])

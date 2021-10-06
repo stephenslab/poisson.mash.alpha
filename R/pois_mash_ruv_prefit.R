@@ -82,51 +82,26 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
   
   # Initialize mu by ignoring random effects and unwanted variation.
   mu <- init$mu
-  if(is.null(mu)) {
-
+  if(is.null(mu))
     # CAN THIS BE A FUNCTION? e.g., initialize_mu
-    # (start of function)
-    mu <- matrix(as.numeric(NA),J,R)
-    for(i in 1:M)
-      mu[,subgroup == i] <- log(rowSums(data[,subgroup == i])) -
-                            log(sum(s[subgroup == i]))
-    # (end of function)
-  }
+    mu <- initialize_mu(X=data, s=s, subgroup=subgroup)
     
   # Get a rough estimate of log-lambda, which is useful for estimating
   # the range of psi2.
   #
   # CAN THIS BE A FUNCTION? e.g., estimate_psi2_range
-  # (start of function)
-  s.mat     <- rep(1,J) %*% t(s)
-  loglambda <- log((data + 0.1)/s.mat)
-  minpsi2   <- pmax(min(apply(loglambda,1,sd)^2)/100,1e-4)
-  maxpsi2   <- max(apply(loglambda,1,sd)^2) 
-  # (end of function)
+  psi2_range <- estimate_psi2_range(X=data, s=s, epsilon=1e-4)
+  minpsi2 <- psi2_range$minpsi2
+  maxpsi2 <- psi2_range$maxpsi2
   
   # Use grid search to initialize psi2 by fitting a poisson-log-normal
   # model while ignoring the unwanted variation.
   cat("Initializing psi2 via grid search.\n")
   t0 <- proc.time()
   psi2 <- init$psi2
-  if (is.null(psi2)) {
-      
+  if (is.null(psi2))
     # CAN THIS BE A FUNCTION? e.g., initialize_psi2
-    # (start of function)
-    psi2 <- rep(as.numeric(NA),J)
-    for (j in 1:J) {
-      psi2_max       <- pmax(sd(loglambda[j,])^2,1)
-      log2_psi2_grid <- seq(log2(1e-4),log2(psi2_max),length.out = 25)
-      psi2_grid      <- 2^log2_psi2_grid
-      logdens        <- rep(0,length(psi2_grid))
-      for(l in 1:length(psi2_grid))
-        for(r in 1:R)
-          logdens[l] <- logdens[l] + log(dpoilog(data[j,r],mu[j,r] + log(s[r]),
-                                                 sqrt(psi2_grid[l])))
-      psi2[j] <- psi2_grid[which.max(logdens)]
-    }
-    # (end of function)
-  }
+    psi2 <- initialize_psi2(X=data, s=s, mu=mu)
   t1 <- proc.time()
   print(t1 - t0)
   
@@ -169,9 +144,7 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
   ELBOs.overall <- c()
   
   # CAN THIS BE A FUNCTION? e.g., compute_elbo_const
-  # (start of function)
-  const <- sum(data %*% log(s)) - sum(lgamma(data + 1))
-  # (end of function)
+  const <- compute_elbo_const(X=data, s=s)
   
   if (verbose)
     cat("Start prefitting Poisson mash model to initialize model",
@@ -210,18 +183,10 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
     
     # Update rho and bias.
     t0 <- proc.time()
-    if (version == "R") {
-
-      # CAN THIS BE A FUNCTION? e.g., update_rhos
-      # (start of function)
-      rho.new <- matrix(as.numeric(NA),nrow(rho),ncol(rho))
-      for (r in 1:R)
-        rho.new[,r] <- update_rho(Xr = data[,r],Fuv = Fuv,sr = s[r],
-                                  mu = mu[,r],Lr = exp(A[,r]),init = rho[,r], 
-                                  control = list(maxiter = 100,tol = tol.rho,
-                                    maxrho = 100/max(abs(Fuv))))$rho
-      # (end of function)
-    } else 
+    if (version == "R")
+      # CAN THIS BE A FUNCTION? e.g., update_rho_all
+      rho.new <- update_rho_all(X=data, s=s, mu=mu, Fuv=Fuv, rho=rho, tmp.ruv=exp(A), tol.rho=tol.rho)
+    else 
       rho.new <- update_rho_rcpp(data,Fuv,s,mu,exp(A),rho,maxiter = 100,
                                  tol = tol.rho,maxrho = 100/max(abs(Fuv)))
     t1       <- proc.time()
