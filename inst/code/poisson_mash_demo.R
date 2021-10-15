@@ -15,7 +15,7 @@ scdata$condition <- scdata$condition[j]
 
 # Compute cell-specific size factors using scran.
 clusters <- quickCluster(scdata$Y)
-si <- calculateSumFactors(scdata$Y, clusters=clusters)
+si <- calculateSumFactors(scdata$Y,clusters = clusters)
 
 # Create a data object for poisson mash analysis.
 dat <- pois_mash_set_data(scdata$Y,scdata$condition,si)

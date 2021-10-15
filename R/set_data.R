@@ -28,12 +28,13 @@
 #' @export
 #' 
 pois_mash_set_data <- function (Y, condition, si, subgroup = NULL) {
-  if (ncol(Y) != length(condition))
+  J <- nrow(Y)
+  N <- ncol(Y)
+  if (N != length(condition))
     stop("The number of columns of Y and the length of condition do not ",
          "match!")
-  if (ncol(Y) != length(si))
+  if (N != length(si))
     stop("The number of columns of Y and the length of si do not match!")
-  J    <- nrow(Y)
   trts <- sort(unique(condition))
   R    <- length(trts)
   
@@ -54,9 +55,9 @@ pois_mash_set_data <- function (Y, condition, si, subgroup = NULL) {
   names(s)    <- trts
   
   for (r in 1:R) {
-    Ytmp  <- Y[,condition == trts[r]]
-    X[,r] <- rowSums(Ytmp)
-    s[r]  <- sum(si[condition == trts[r]])
+    i     <- which(condition == trts[r])
+    X[,r] <- rowSums(Y[,i])
+    s[r]  <- sum(si[i])
   }
   
   data <- list(X = X,s = s/min(s),subgroup = subgroup)
