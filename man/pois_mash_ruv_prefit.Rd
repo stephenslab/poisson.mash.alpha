@@ -2,6 +2,7 @@
 % Please edit documentation in R/pois_mash_ruv_prefit.R
 \name{pois_mash_ruv_prefit}
 \alias{pois_mash_ruv_prefit}
+\alias{pois_mash_ruv_prefit_control_default}
 \title{Prefit Poisson MASH Model Accounting for Unwanted Variation}
 \usage{
 pois_mash_ruv_prefit(
@@ -10,9 +11,10 @@ pois_mash_ruv_prefit(
   verbose = FALSE,
   init = list(NULL),
   version = c("Rcpp", "R"),
-  control = list(maxiter = 100, maxiter.q = 25, tol.q = 0.01, tol.rho = 0.0001,
-    tol.stop = 1e-06)
+  control = list()
 )
+
+pois_mash_ruv_prefit_control_default()
 }
 \arguments{
 \item{data}{\dQuote{pois.mash} data object, typically created by
@@ -31,15 +33,17 @@ could be empty.}
 model fitting algorithm are provided; these are selected with
 \code{version = "R"} and \code{version = "Rcpp"}.}
 
-\item{control}{List of control parameters with the following
-elements: \dQuote{maxiter}, maximum number of iterations;
+\item{control}{List of control parameters with one or more of the
+following elements: \dQuote{maxiter}, maximum number of iterations;
 \dQuote{maxiter.q}, maximum number of inner-loop iterations to
 update variational parameters at each iteration; \dQuote{tol.stop},
 tolerance for assessing convergence of prefit, as measured by
 relative change in ELBO; \dQuote{tol.q}, relative tolerance for
 assessing convergence of variational parameters at each iteration;
 \dQuote{tol.rho}, tolerance for assessing convergence of effects
-corresponding to unwanted variation.}
+corresponding to unwanted variation. Any named components will
+override the default optimization algorithm settings (as they are
+defined by \code{pois_mash_ruv_prefit_control_default})}
 }
 \value{
 A list containing initial estimates of model parameters.

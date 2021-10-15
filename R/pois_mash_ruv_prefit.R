@@ -1,3 +1,5 @@
+#' @rdname pois_mash_ruv_prefit
+#' 
 #' @title Prefit Poisson MASH Model Accounting for Unwanted Variation
 #' 
 #' @description Prefit the poisson mash model to get an initial
@@ -21,18 +23,21 @@
 #'   model fitting algorithm are provided; these are selected with
 #'   \code{version = "R"} and \code{version = "Rcpp"}.
 #' 
-#' @param control List of control parameters with the following
-#'   elements: \dQuote{maxiter}, maximum number of iterations;
-#'   \dQuote{maxiter.q}, maximum number of inner-loop iterations to
-#'   update variational parameters at each iteration; \dQuote{tol.stop},
-#'   tolerance for assessing convergence of prefit, as measured by
-#'   relative change in ELBO; \dQuote{tol.q}, relative tolerance for
-#'   assessing convergence of variational parameters at each iteration;
-#'   \dQuote{tol.rho}, tolerance for assessing convergence of effects
-#'   corresponding to unwanted variation.
+#' @param control List of control parameters with one or more of the
+#' following elements: \dQuote{maxiter}, maximum number of iterations;
+#' \dQuote{maxiter.q}, maximum number of inner-loop iterations to
+#' update variational parameters at each iteration; \dQuote{tol.stop},
+#' tolerance for assessing convergence of prefit, as measured by
+#' relative change in ELBO; \dQuote{tol.q}, relative tolerance for
+#' assessing convergence of variational parameters at each iteration;
+#' \dQuote{tol.rho}, tolerance for assessing convergence of effects
+#' corresponding to unwanted variation. Any named components will
+#' override the default optimization algorithm settings (as they are
+#' defined by \code{pois_mash_ruv_prefit_control_default})
 #' 
 #' @return A list containing initial estimates of model parameters.
 #'
+#' @importFrom utils modifyList
 #' @importFrom stats sd
 #' @importFrom poilog dpoilog
 #' @importFrom Rcpp evalCpp
@@ -44,11 +49,8 @@
 pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
                                   init = list(NULL),
                                   version = c("Rcpp","R"),
-                                  control = list(maxiter   = 100,
-                                                 maxiter.q = 25,
-                                                 tol.q     = 0.01,
-                                                 tol.rho   = 1e-4,
-                                                 tol.stop  = 1e-6)) {
+                                  control = list()) {
+
   s         <- data$s
   subgroup  <- data$subgroup
   data      <- as.matrix(data$X)
@@ -58,31 +60,19 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
   subgroup  <- as.numeric(as.factor(subgroup))
   Fuv       <- as.matrix(Fuv)
   version   <- match.arg(version)
+  control   <- modifyList(pois_mash_ruv_prefit_control_default(),control,
+                          keep.null = TRUE)
+
+  # Get the optimization settings.
   maxiter   <- control$maxiter
   maxiter.q <- control$maxiter.q
   tol.q     <- control$tol.q
   tol.rho   <- control$tol.rho
   tol.stop  <- control$tol.stop
-  
-  if (is.null(maxiter))
-    maxiter <- 100
-  if(is.null(maxiter.q))
-    maxiter.q <- 25
-  if(is.null(tol.q))
-    tol.q <- 0.01
-  if(is.null(tol.rho))
-    tol.rho <- 1e-4
-  if(is.null(tol.stop))
-    tol.stop <- 1e-6
 
-  t_eta   <- proc.time()
-  t_rho   <- proc.time()
-  t_eta[] <- 0
-  t_rho[] <- 0
-  
   # Initialize mu by ignoring random effects and unwanted variation.
   mu <- init$mu
-  if(is.null(mu))
+  if (is.null(mu))
     mu <- initialize_mu(data,s,subgroup)
     
   # Get a rough estimate of log-lambda, which is useful for estimating
@@ -94,12 +84,9 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
   # Use grid search to initialize psi2 by fitting a poisson-log-normal
   # model while ignoring the unwanted variation.
   cat("Initializing psi2 via grid search.\n")
-  t0 <- proc.time()
   psi2 <- init$psi2
   if (is.null(psi2))
     psi2 <- initialize_psi2(data,s,mu)
-  t1 <- proc.time()
-  print(t1 - t0)
   
   # Initialize rho and bias.
   D   <- ncol(Fuv)
@@ -110,28 +97,24 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
     rho <- as.matrix(rho)
   bias <- Fuv %*% rho
     
-  # matrices to store the posterior mean and covariance of theta_j
+  # Matrices to store the posterior mean and covariance of theta_j
   # (equal to eta_j in this case), i.e., gamma_j, diag(Sigma_j).
   gamma <- matrix(as.numeric(NA),J,R)
   Sigma <- matrix(as.numeric(NA),J,R)
   
-  # Matrix to store the quantities related to q_j, s.t. A[j,r] =
-  # gamma_jr + 0.5*Sigma_j,rr.
+  # Matrix to store the quantities related to q_j,
+  # s.t. A[j,r] = gamma_jr + 0.5 * Sigma_j,rr.
   A <- matrix(as.numeric(NA),J,R)
   
   # Update posterior mean and covariance of theta.
-  t0 <- proc.time()
-  for(j in 1:J) {
-    eta.qj <- update_q_eta_only(x = data[j,],s = s,mu = mu[j,],bias = bias[j,],
+  for (j in 1:J) {
+    out <- update_q_eta_only(x = data[j,],s = s,mu = mu[j,],bias = bias[j,],
                                 c2 = rep(1,R),psi2 = psi2[j],
-                                control = list(maxiter = maxiter.q,
-                                               tol = tol.q))
-    gamma[j,] <- eta.qj$m
-    Sigma[j,] <- eta.qj$V
-    A[j,]     <- eta.qj$m + eta.qj$V/2
+                                control = list(maxiter=maxiter.q,tol=tol.q))
+    gamma[j,] <- out$m
+    Sigma[j,] <- out$V
+    A[j,]     <- out$m + out$V/2
   }
-  t1    <- proc.time()
-  t_eta <- t_eta + (t1 - t0)
   
   # Vector to store local ELBO for each j.
   ELBOs <- rep(as.numeric(NA),J)  
@@ -150,85 +133,88 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
     # psi2, rho.
     tmp.mu   <- matrix(as.numeric(NA),J,M)
     tmp.psi2 <- rep(as.numeric(NA),J)
-    
     for (j in 1:J) {
       gamma.tmp <- gamma[j,]
       Sigma.tmp <- Sigma[j,]
       for (i in 1:M) {
-        tmp.mu[j,i] <- sum(s[subgroup == i] * exp(bias[j,subgroup == i] +
-                           gamma.tmp[subgroup == i] +
-                           Sigma.tmp[subgroup == i]/2))
+        k <- which(subgroup == i)
+        tmp.mu[j,i] <-
+          sum(s[k] * exp(bias[j,k] + gamma.tmp[k] + Sigma.tmp[k]/2))
       }
       tmp.psi2[j] <- sum(gamma.tmp^2 + Sigma.tmp)
     }
     
-    # CAN THIS BE A FUNCTION? e.g., update_mu
-    # (start of function)
-    for(i in 1:M){
-      mu.i.new <- log(rowSums(data[,subgroup == i])) - log(tmp.mu[,i])
-      mu[,subgroup == i] <- mu.i.new
+    # Update mu.
+    for (i in 1:M) {
+      k        <- which(subgroup == i)
+      mu.i.new <- log(rowSums(data[,k])) - log(tmp.mu[,i])
+      mu[,k]   <- mu.i.new
     }
-    # (end of function)
     
     # Update the dispersion parameter psi2.
     psi2.new <- tmp.psi2/R
     psi2     <- pmin(pmax(psi2.new,minpsi2),maxpsi2)
     
     # Update rho and bias.
-    t0 <- proc.time()
     if (version == "R")
-      # CAN THIS BE A FUNCTION? e.g., update_rho_all
-      rho.new <- update_rho_all(X=data, s=s, mu=mu, Fuv=Fuv, rho=rho, tmp.ruv=exp(A), tol.rho=tol.rho)
+      rho.new <- update_rho_all(data,s,mu,Fuv,rho,exp(A),tol.rho)
     else 
       rho.new <- update_rho_rcpp(data,Fuv,s,mu,exp(A),rho,maxiter = 100,
                                  tol = tol.rho,maxrho = 100/max(abs(Fuv)))
-    t1       <- proc.time()
-    t_rho    <- t_rho + (t1 - t0)
     diff.rho <- rho.new - rho
     rho      <- rho.new
     bias     <- Fuv %*% rho
     
     # Update posterior mean and covariance of theta and local ELBO F_j.
-    t0 <- proc.time()
     for (j in 1:J) {
-      eta.qj <- update_q_eta_only(x = data[j,],s = s,mu = mu[j,],
-                                  bias = bias[j,],c2 = rep(1,R),psi2 = psi2[j],
-                                  init = list(m = gamma[j,],V = Sigma[j,]),
-                                  control = list(maxiter=maxiter.q,tol=tol.q))
-      gamma[j,] <- eta.qj$m
-      Sigma[j,] <- eta.qj$V
-      A[j,]     <- eta.qj$m + eta.qj$V/2
-      ELBOs[j]  <- eta.qj$ELBO
+      out <- update_q_eta_only(data[j,],s,mu[j,],bias[j,],rep(1,R),psi2[j],
+                               init = list(m = gamma[j,],V = Sigma[j,]),
+                               control = list(maxiter = maxiter.q,tol = tol.q))
+      gamma[j,] <- out$m
+      Sigma[j,] <- out$V
+      A[j,]     <- out$m + out$V/2
+      ELBOs[j]  <- out$ELBO
     }
-    t1    <- proc.time()
-    t_eta <- t_eta + (t1 - t0)
     
     # Calculate overall ELBO at the current iteration.
     ELBO.overall  <- sum(ELBOs) + const
-    ELBOs.overall <- c(ELBOs.overall, ELBO.overall)
+    ELBOs.overall <- c(ELBOs.overall,ELBO.overall)
     
     if (verbose) {
       print("iter         ELBO")
-      print(sprintf("%d:    %f", iter, ELBO.overall))
+      print(sprintf("%d:    %f",iter,ELBO.overall))
     }
     if (iter >= 50)
-      if (is.finite(ELBOs.overall[iter]) & is.finite(ELBOs.overall[iter - 1]))
+      if (is.finite(ELBOs.overall[iter]) & is.finite(ELBOs.overall[iter-1]))
         if (abs(ELBOs.overall[iter] -
                 ELBOs.overall[iter-1])/abs(ELBOs.overall[iter-1]) < tol.stop)
           break
   }
   
-  # Name the model paramter estimates.
+  # Add names to the parameter estimates.
   rownames(mu)  <- rownames(data)
   colnames(mu)  <- names(s)
   names(psi2)   <- rownames(data)
   colnames(rho) <- colnames(data)
   
-  if(verbose)
+  if (verbose)
     cat("Finish prefitting Poisson mash model to initialize model",
         "parameters.\n")
-  print(t_rho)
-  print(t_eta)
-  return(list(mu = mu,psi2 = psi2,rho = rho,ELBO = ELBOs.overall,
+  return(list(mu       = mu,
+              psi2     = psi2,
+              rho      = rho,
+              ELBO     = ELBOs.overall,
               diff.rho = diff.rho))
 }
+
+#' @rdname pois_mash_ruv_prefit
+#'
+#' @export
+#' 
+pois_mash_ruv_prefit_control_default <- function()
+  list(maxiter   = 100,
+       maxiter.q = 25,
+       tol.q     = 0.01,
+       tol.rho   = 1e-4,
+       tol.stop  = 1e-6)
+
