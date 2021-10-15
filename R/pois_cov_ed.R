@@ -160,10 +160,9 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
   # beta_j) and unwanted variation.
   psi2 <- init$psi2
   if (is.null(psi2))
-    # CAN THIS BE A FUNCTION? e.g., initialize_psi2.
-    psi2 <- initialize_psi2(X=data.ed, s=s, mu=mu)
+    psi2 <- initialize_psi2(data.ed,s,mu)
   else
-    psi2 <- pmin(psi2[subset], maxpsi2)
+    psi2 <- pmin(psi2[subset],maxpsi2)
   
   # Create matrices and arrays to store the posterior mean and
   # covariance of theta, i.e., gamma_jk, Sigma_jk.

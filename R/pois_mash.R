@@ -155,24 +155,21 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
   # theta) and unwanted variation.
   mu <- init$mu
   if (is.null(mu))
-    # CAN THIS BE A FUNCTION? e.g., initialize_mu.
     mu <- initialize_mu(X=data, s=s, subgroup=subgroup, bias=bias)
   
   # Get a rough estimate of log lambda, which is useful for estimating
   # the range of psi2.
-  # CAN THIS BE A FUNCTION? e.g., estimate_psi2_range.
   psi2_range <- estimate_psi2_range(X=data, s=s, maxpsi2=maxpsi2)
-  loglambda <- psi2_range$loglambda
-  minpsi2 <- psi2_range$minpsi2
-  maxpsi2 <- psi2_range$maxpsi2
+  loglambda  <- psi2_range$loglambda
+  minpsi2    <- psi2_range$minpsi2
+  maxpsi2    <- psi2_range$maxpsi2
   
   # Use grid search to initialize psi2 by fitting a poisson-log-normal
   # model while ignoring fixed effects (i.e., beta) and unwanted
   # variation.
   psi2 <- init$psi2
   if (is.null(psi2))
-    # CAN THIS BE A FUNCTION? e.g., initialize_psi2.
-    psi2 <- initialize_psi2(X=data, s=s, mu=mu, bias=bias)
+    psi2 <- initialize_psi2(data,s,mu,bias)
   else
     psi2 <- pmin(psi2,maxpsi2)
   

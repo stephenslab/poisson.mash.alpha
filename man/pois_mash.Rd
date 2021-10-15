@@ -20,7 +20,6 @@ pois_mash(
   C = NULL,
   res.colnames = NULL,
   init = list(NULL),
-  version = c("Rcpp", "R"),
   control = list(maxiter = 500, maxiter.q = 25, maxpsi2 = NULL, maxbias = 10, tol.mu =
     0.01, tol.psi2 = 0.02, tol.bias = 0.01, tol.q = 0.01, tol.rho = 1e-06)
 )
@@ -77,10 +76,6 @@ of the contrasts.}
 
 \item{init}{List of initial values for model parameters, such as an
 output from \code{\link{pois_mash_ruv_prefit}}).}
-
-\item{version}{R (slower) and C++ (faster) implementations of the
-model fitting algorithm are provided; these are selected with
-\code{version = "R"} and \code{version = "Rcpp"}.}
 
 \item{control}{List of control parameters with the following
 elements: \dQuote{maxiter}, maximum number of outer loop

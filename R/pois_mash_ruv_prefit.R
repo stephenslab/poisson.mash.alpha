@@ -100,8 +100,7 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
   t0 <- proc.time()
   psi2 <- init$psi2
   if (is.null(psi2))
-    # CAN THIS BE A FUNCTION? e.g., initialize_psi2
-    psi2 <- initialize_psi2(X=data, s=s, mu=mu)
+    psi2 <- initialize_psi2(data,s,mu)
   t1 <- proc.time()
   print(t1 - t0)
   
