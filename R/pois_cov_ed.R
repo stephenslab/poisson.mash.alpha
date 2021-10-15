@@ -357,9 +357,9 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
     
     # CAN THIS BE A FUNCTION? e.g., update_mu.
     mu <- update_mu(X=data.ed, subgroup=subgroup, zeta=zeta, tmp.mu=tmp.mu)
-    
-    # CAN THIS BE A FUNCTION? e.g., update_psi2.
-    psi2 <- update_psi2(zeta=zeta, tmp.psi2=tmp.psi2, R=R, minpsi2=minpsi2, maxpsi2=maxpsi2)
+
+    # Update the dispersion parameter psi2.s
+    psi2 <- update_psi2(zeta,tmp.psi2,R,minpsi2,maxpsi2)
     
     pi.new  <- update_pi(zeta)
     diff.pi <- pi.new - pi

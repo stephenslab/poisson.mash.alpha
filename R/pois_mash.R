@@ -278,8 +278,7 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
     diff.mu       <- mu.new - mu
     
     # Calculate the new psi2.
-    # CAN THIS BE A FUNCTION? e.g., update_psi2.
-    psi2.new <- update_psi2(zeta=zeta, tmp.psi2=tmp.psi2, R=R, minpsi2=minpsi2, maxpsi2=maxpsi2)
+    psi2.new        <- update_psi2(zeta,tmp.psi2,R,minpsi2,maxpsi2)
     diff.psi2       <- psi2.new/psi2
     idx.update.psi2 <- abs(diff.psi2 - 1) > tol.psi2
     

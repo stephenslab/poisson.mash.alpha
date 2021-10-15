@@ -173,11 +173,9 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
     }
     # (end of function)
     
-    # CAN THIS BE A FUNCTION? e.g., update_psi2
-    # (start of function)
+    # Update the dispersion parameter psi2.
     psi2.new <- tmp.psi2/R
     psi2     <- pmin(pmax(psi2.new,minpsi2),maxpsi2)
-    # (end of function)
     
     # Update rho and bias.
     t0 <- proc.time()

@@ -324,10 +324,11 @@ update_mu <- function(X, subgroup, zeta, tmp.mu){
   return(mu)
 }
 
-
-# Update the J x 1 vector of dispersion parameter psi2, where zeta is J x K matrix of posterior weights, tmp.psi2 is J x K matrix,
-# R is the number of conditions, minpsi2 and maxpsi2 are respectively positive scalars giving the lower and upper bound of psi2.
-update_psi2 <- function (zeta, tmp.psi2, R, minpsi2, maxpsi2){
+# Update the J x 1 vector of dispersion parameter psi2, where zeta is
+# J x K matrix of posterior weights, tmp.psi2 is J x K matrix, R is
+# the number of conditions, minpsi2 and maxpsi2 are respectively
+# positive scalars giving the lower and upper bound of psi2.
+update_psi2 <- function (zeta, tmp.psi2, R, minpsi2, maxpsi2) {
   psi2.new <- rowSums(zeta * tmp.psi2)/R
   return(pmin(pmax(psi2.new,minpsi2),maxpsi2))
 }
