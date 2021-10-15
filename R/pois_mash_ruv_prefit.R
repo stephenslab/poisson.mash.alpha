@@ -87,11 +87,9 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
     
   # Get a rough estimate of log-lambda, which is useful for estimating
   # the range of psi2.
-  #
-  # CAN THIS BE A FUNCTION? e.g., estimate_psi2_range
-  psi2_range <- estimate_psi2_range(X=data, s=s, epsilon=1e-4)
-  minpsi2 <- psi2_range$minpsi2
-  maxpsi2 <- psi2_range$maxpsi2
+  out     <- estimate_psi2_range(data,s,epsilon = 1e-4)
+  minpsi2 <- out$minpsi2
+  maxpsi2 <- out$maxpsi2
   
   # Use grid search to initialize psi2 by fitting a poisson-log-normal
   # model while ignoring the unwanted variation.

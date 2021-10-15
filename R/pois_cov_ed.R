@@ -148,11 +148,10 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
   
   # Get a rough estimate of log-lambda, which is useful for estimating
   # the range of psi2, Ulist, ulist.
-  # CAN THIS BE A FUNCTION? e.g., estimate_psi2_range.
-  psi2_range <- estimate_psi2_range(X=data.ed, s=s, maxpsi2=maxpsi2)
-  minpsi2 <- psi2_range$minpsi2
-  maxpsi2 <- psi2_range$maxpsi2
-  upr_bd <- psi2_range$upr_bd
+  out     <- estimate_psi2_range(data.ed,s,maxpsi2)
+  minpsi2 <- out$minpsi2
+  maxpsi2 <- out$maxpsi2
+  upr_bd  <- out$upr_bd
   
   # Use grid search to initialize psi^2 by fitting a
   # poisson-log-normal model while ignoring fixed effects (i.e.,

@@ -159,10 +159,10 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
   
   # Get a rough estimate of log lambda, which is useful for estimating
   # the range of psi2.
-  psi2_range <- estimate_psi2_range(X=data, s=s, maxpsi2=maxpsi2)
-  loglambda  <- psi2_range$loglambda
-  minpsi2    <- psi2_range$minpsi2
-  maxpsi2    <- psi2_range$maxpsi2
+  out       <- estimate_psi2_range(data,s,maxpsi2)
+  loglambda <- out$loglambda
+  minpsi2   <- out$minpsi2
+  maxpsi2   <- out$maxpsi2
   
   # Use grid search to initialize psi2 by fitting a poisson-log-normal
   # model while ignoring fixed effects (i.e., beta) and unwanted
@@ -216,7 +216,7 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
   if (is.null(pi))
     pi <- rep(1/K,K)
   
-<  const <- compute_elbo_const(data,s)
+  const <- compute_elbo_const(data,s)
   
   if (verbose)
     cat("Start fitting Poisson mash model.\n")
