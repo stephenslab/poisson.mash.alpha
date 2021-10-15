@@ -216,8 +216,7 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
   if (is.null(pi))
     pi <- rep(1/K,K)
   
-  # CAN THIS BE A FUNCTION? e.g., compute_elbo_const.
-  const <- compute_elbo_const(X=data, s=s)
+<  const <- compute_elbo_const(data,s)
   
   if (verbose)
     cat("Start fitting Poisson mash model.\n")
@@ -264,13 +263,11 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
   for (iter in 1:maxiter) {
       
     # Calculate overall ELBO at the current iteration.
-    # CAN THIS BE MADE A FUNCTION? e.g., compute_overall_elbo.
-    ELBO.overall <- compute_overall_elbo(ELBOs=ELBOs, pi=pi, zeta=zeta, const=const)
+    ELBO.overall  <- compute_overall_elbo(ELBOs,pi,zeta,const)
     ELBOs.overall <- c(ELBOs.overall,ELBO.overall)
     
     # Update pi.
-    # CAN THIS BE A FUNCTION? e.g., update_pi.
-    pi.new <- update_pi(zeta)
+    pi.new  <- update_pi(zeta)
     diff.pi <- pi.new - pi
     pi      <- pi.new
     

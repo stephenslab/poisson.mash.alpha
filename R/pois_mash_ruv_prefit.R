@@ -142,8 +142,7 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
   # Overall ELBO after updating all parameters at each iteration.
   ELBOs.overall <- c()
   
-  # CAN THIS BE A FUNCTION? e.g., compute_elbo_const
-  const <- compute_elbo_const(X=data, s=s)
+  const <- compute_elbo_const(data,s)
   
   if (verbose)
     cat("Start prefitting Poisson mash model to initialize model",
