@@ -22,10 +22,11 @@ scale_bias <- function (bias, maxbias) {
 # unwanted variation.
 initialize_mu <- function (X, s, subgroup, bias = matrix(0,nrow(X),ncol(X))) {
   M  <- length(unique(subgroup))
-  mu <- matrix(as.numeric(NA), nrow(X), ncol(X))
-  for (i in 1:M)
-    mu[,subgroup == i] <- log(rowSums(X[,subgroup == i])) -
-      log(exp(bias[,subgroup == i]) %*% s[subgroup == i])
+  mu <- matrix(as.numeric(NA),nrow(X),ncol(X))
+  for (i in 1:M) {
+    cols <- which(subgroup == i)
+    mu[,cols] <- log(rowSums(X[,cols])) - log(exp(bias[,cols]) %*% s[cols])
+  }
   return(mu)
 }
 

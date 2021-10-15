@@ -155,7 +155,7 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
   # theta) and unwanted variation.
   mu <- init$mu
   if (is.null(mu))
-    mu <- initialize_mu(X=data, s=s, subgroup=subgroup, bias=bias)
+    mu <- initialize_mu(data,s,subgroup,bias)
   
   # Get a rough estimate of log lambda, which is useful for estimating
   # the range of psi2.

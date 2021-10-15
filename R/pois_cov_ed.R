@@ -142,8 +142,7 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
   # theta) and unwanted variation.
   mu <- init$mu
   if (is.null(mu))
-    # CAN THIS BE A FUNCTION? e.g., initialize_mu.
-    mu <- initialize_mu(X=data.ed, s=s, subgroup=subgroup)
+    mu <- initialize_mu(data.ed,s,subgroup)
   else
     mu <- mu[subset,]
   
@@ -358,7 +357,7 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
     # CAN THIS BE A FUNCTION? e.g., update_mu.
     mu <- update_mu(X=data.ed, subgroup=subgroup, zeta=zeta, tmp.mu=tmp.mu)
 
-    # Update the dispersion parameter psi2.s
+    # Update the dispersion parameter psi2.
     psi2 <- update_psi2(zeta,tmp.psi2,R,minpsi2,maxpsi2)
     
     pi.new  <- update_pi(zeta)
