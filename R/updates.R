@@ -258,45 +258,6 @@ update_q_eta_rank1_robust <- function (theta_m, theta_V, c2, psi2, w = 1,
   return(eta2_m)
 }
 
-# Update the D x 1 vector rho for a given condition r.
-update_rho <- function (Xr, Fuv, sr, mu, Lr, init,
-                        control = list(maxiter = 100, tol = 1e-8,
-                                       maxrho = 100)) {
-  maxiter <- control$maxiter
-  tol     <- control$tol
-  maxrho  <- control$maxrho
-  
-  if (is.null(maxiter))
-    maxiter <- 100
-  if (is.null(tol))
-    tol <- 1e-8
-  if (is.null(maxrho))
-    maxrho <- 100
-  
-  rho <- init
-  Fr  <- rep(as.numeric(NA),maxiter)
-  D   <- length(rho)
-  d1F <- rep(as.numeric(NA),D)
-  d2F <- matrix(as.numeric(NA),D,D)
-  
-  for (iter in 1:maxiter) {
-    bias <- Fuv %*% rho
-    Fr[iter] <- sum(Xr*bias) - sr*sum(exp(mu + bias)*Lr)
-    for (d in 1:D)
-      d1F[d] <- sum(Xr*Fuv[,d]) - sr*sum(Fuv[,d]*Lr*exp(mu + bias))
-    for (d in 1:D)
-      for (t in 1:D)
-        d2F[d,t] <- -sr*sum(Fuv[,d]*Fuv[,t]*Lr*exp(mu + bias))
-    rho_new <- rho - solve(d2F,d1F)
-    rho_new <- pmin(pmax(rho_new,-maxrho),maxrho)
-    if (max(abs(rho_new - rho)) < tol)
-      break
-    rho <- rho_new
-  }
-  
-  return(list(rho = rho,Fr = Fr))
-}
-
 # Update q(beta), for a given unit and prior covariance w*U, where
 # U = u*u'+epsilon2
 update_q_beta_rank1_robust <- function (theta_m, theta_V, c2, psi2, w = 1, u,
@@ -339,18 +300,6 @@ update_pi <- function (zeta) {
   pi <- colMeans(zeta)
   return(pmax(pi,1e-8))
 }
-
-# Update the D x R matrix of rho for all conditions given current rho, where X is J x R matrix of counts, s is R x 1 vector of sequencing depths, 
-# mu is J x R matrix of means, Fuv is J x D matrix of latent factors causing unwanted variation, rho is D x R matrix of current rho,
-# tmp.ruv is J x R matrix, tol.rho is a small positive number to assess convergence. 
-update_rho_all <- function(X, s, mu, Fuv, rho, tmp.ruv, tol.rho=1e-6){
-  rho.new <- matrix(as.numeric(NA),nrow(rho),ncol(rho))
-  for (r in 1:ncol(X)) 
-    rho.new[,r] <- update_rho(Xr = X[,r], Fuv = Fuv, sr = s[r], mu = mu[,r], Lr = tmp.ruv[,r], init = rho[,r], 
-                              control = list(maxiter = 100, tol = tol.rho, maxrho=100/max(abs(Fuv))))$rho
-  return(rho.new)
-}
-
 
 # Update the J x K matrix of posterior weights zeta, where ELBOs is J x K matrix of local ELBO, pi is K x 1 vector of prior weights.
 update_zeta <- function(ELBOs, pi){

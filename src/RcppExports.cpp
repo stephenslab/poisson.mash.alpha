@@ -54,9 +54,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// update_rho_rcpp
-arma::mat update_rho_rcpp(const arma::mat& X, const arma::mat& Fuv, const arma::vec& s, const arma::mat& mu, const arma::mat& L, const arma::mat& rho, unsigned int maxiter, double tol, double maxrho);
-RcppExport SEXP _poisson_mash_alpha_update_rho_rcpp(SEXP XSEXP, SEXP FuvSEXP, SEXP sSEXP, SEXP muSEXP, SEXP LSEXP, SEXP rhoSEXP, SEXP maxiterSEXP, SEXP tolSEXP, SEXP maxrhoSEXP) {
+// update_rho_all_rcpp
+arma::mat update_rho_all_rcpp(const arma::mat& X, const arma::mat& Fuv, const arma::vec& s, const arma::mat& mu, const arma::mat& L, const arma::mat& rho, unsigned int maxiter, double tol, double maxrho);
+RcppExport SEXP _poisson_mash_alpha_update_rho_all_rcpp(SEXP XSEXP, SEXP FuvSEXP, SEXP sSEXP, SEXP muSEXP, SEXP LSEXP, SEXP rhoSEXP, SEXP maxiterSEXP, SEXP tolSEXP, SEXP maxrhoSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -69,7 +69,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< unsigned int >::type maxiter(maxiterSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
     Rcpp::traits::input_parameter< double >::type maxrho(maxrhoSEXP);
-    rcpp_result_gen = Rcpp::wrap(update_rho_rcpp(X, Fuv, s, mu, L, rho, maxiter, tol, maxrho));
+    rcpp_result_gen = Rcpp::wrap(update_rho_all_rcpp(X, Fuv, s, mu, L, rho, maxiter, tol, maxrho));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -79,7 +79,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_poisson_mash_alpha_rcpparma_outerproduct", (DL_FUNC) &_poisson_mash_alpha_rcpparma_outerproduct, 1},
     {"_poisson_mash_alpha_rcpparma_innerproduct", (DL_FUNC) &_poisson_mash_alpha_rcpparma_innerproduct, 1},
     {"_poisson_mash_alpha_rcpparma_bothproducts", (DL_FUNC) &_poisson_mash_alpha_rcpparma_bothproducts, 1},
-    {"_poisson_mash_alpha_update_rho_rcpp", (DL_FUNC) &_poisson_mash_alpha_update_rho_rcpp, 9},
+    {"_poisson_mash_alpha_update_rho_all_rcpp", (DL_FUNC) &_poisson_mash_alpha_update_rho_all_rcpp, 9},
     {NULL, NULL, 0}
 };
 

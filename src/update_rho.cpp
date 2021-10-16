@@ -12,10 +12,11 @@ void update_rho (const vec& x, const mat& Fuv, double s, const  vec& mu,
 // --------------------
 // [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::export]]
-arma::mat update_rho_rcpp (const arma::mat& X, const arma::mat& Fuv,
-			   const arma::vec& s, const arma::mat& mu,
-			   const arma::mat& L, const arma::mat& rho,
-			   unsigned int maxiter, double tol, double maxrho) {
+arma::mat update_rho_all_rcpp (const arma::mat& X, const arma::mat& Fuv,
+			       const arma::vec& s, const arma::mat& mu,
+			       const arma::mat& L, const arma::mat& rho,
+			       unsigned int maxiter, double tol, 
+			       double maxrho) {
   unsigned int D = rho.n_rows;
   unsigned int R = rho.n_cols;
   mat rhonew(D,R);

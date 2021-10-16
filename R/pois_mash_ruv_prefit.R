@@ -156,11 +156,8 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
     psi2     <- pmin(pmax(psi2.new,minpsi2),maxpsi2)
     
     # Update rho and bias.
-    if (version == "R")
-      rho.new <- update_rho_all(data,s,mu,Fuv,rho,exp(A),tol.rho)
-    else 
-      rho.new <- update_rho_rcpp(data,Fuv,s,mu,exp(A),rho,maxiter = 100,
-                                 tol = tol.rho,maxrho = 100/max(abs(Fuv)))
+    rho.new  <- update_rho_all(data,s,mu,Fuv,rho,exp(A),tol = tol.rho,
+                               version = version)
     diff.rho <- rho.new - rho
     rho      <- rho.new
     bias     <- Fuv %*% rho
