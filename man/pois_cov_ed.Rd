@@ -2,6 +2,7 @@
 % Please edit documentation in R/pois_cov_ed.R
 \name{pois_cov_ed}
 \alias{pois_cov_ed}
+\alias{pois_cov_ed_control_default}
 \title{Estimate Prior Covariance Matrices using Extreme Deconvolution}
 \usage{
 pois_cov_ed(
@@ -13,10 +14,12 @@ pois_cov_ed(
   ruv = FALSE,
   Fuv = NULL,
   verbose = FALSE,
-  init = list(NULL),
-  control = list(maxiter = 500, maxiter.q = 25, maxpsi2 = NULL, maxbias = 10, tol.stop
-    = 1e-06, tol.q = 0.01, tol.rho = 1e-06)
+  init = list(),
+  version = c("Rcpp", "R"),
+  control = list()
 )
+
+pois_cov_ed_control_default()
 }
 \arguments{
 \item{data}{\dQuote{pois.mash} data object, typically created by
@@ -49,6 +52,10 @@ each iteration.}
 \item{init}{Optional list of initial values for model parameters
 (e.g., returned by \code{pois_mash_ruv_prefit}).}
 
+\item{version}{R (slower) and C++ (faster) implementations of the
+model fitting algorithm are provided; these are selected with
+\code{version = "R"} and \code{version = "Rcpp"}.}
+
 \item{control}{A list of control parameters with the following
 elements: \dQuote{maxiter}, maximum number of ED iterations;
 \dQuote{maxiter.q}, maximum number of inner loop iterations to
@@ -59,9 +66,11 @@ gene-specific range of bias caused by unwanted variation;
 \dQuote{tol.stop}, tolerance for assessing convergence of ED, as
 measured by relative change in ELBO; \dQuote{tol.q}, relative
 tolerance for assessing convergence of variational parameters at
-each ED iteration; and \dQuote{tol.rho}{tolerance for
-assessing convergence of effects corresponding to unwanted
-variation.}}
+each ED iteration; and \dQuote{tol.rho}{tolerance for assessing
+convergence of effects corresponding to unwanted variation.} Any
+named components will override the default optimization algorithm
+settings (as they are defined by
+\code{pois_cov_ed_control_default}).}
 }
 \value{
 A list including the following elements:

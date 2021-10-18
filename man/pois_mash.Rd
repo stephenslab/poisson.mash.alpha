@@ -19,7 +19,7 @@ pois_mash(
   verbose = FALSE,
   C = NULL,
   res.colnames = NULL,
-  init = list(NULL),
+  init = list(),
   control = list(maxiter = 500, maxiter.q = 25, maxpsi2 = NULL, maxbias = 10, tol.mu =
     0.01, tol.psi2 = 0.02, tol.bias = 0.01, tol.q = 0.01, tol.rho = 1e-06)
 )

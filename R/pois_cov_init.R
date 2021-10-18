@@ -124,15 +124,13 @@ pois_cov_init <- function (data, ruv = FALSE, Fuv = NULL, rho = NULL, prop = 1,
                 Emp_cov = Z.cov)
   
   # Avoid too large values in Ulist and ulist.
-  upr_bd<- estimate_psi2_range(data,s)$upr_bd
-  
+  upr_bd <- estimate_psi2_range(data,s)$upr_bd
   for (h in 1:length(Ulist)) {
     Uh <- Ulist[[h]]
     if (max(diag(Uh)) > upr_bd)
       Uh <- upr_bd * Uh / max(diag(Uh))
     Ulist[[h]] <- Uh
   }
-  
   for (g in 1:length(ulist)) {
     ug <- ulist[[g]]
     if(max(abs(ug)) > sqrt(upr_bd))
@@ -148,5 +146,7 @@ pois_cov_init <- function (data, ruv = FALSE, Fuv = NULL, rho = NULL, prop = 1,
   # Get the index of the genes used to compute data-driven covariances
   # in the original dataset.
   idx <- which(rownames(data) %in% rownames(Z.sig))
-  return(list(ulist = ulist,Ulist = Ulist,subset = idx))
+  return(list(ulist  = ulist,
+              Ulist  = Ulist,
+              subset = idx))
 }

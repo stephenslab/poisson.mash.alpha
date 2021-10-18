@@ -9,7 +9,7 @@ pois_mash_ruv_prefit(
   data,
   Fuv,
   verbose = FALSE,
-  init = list(NULL),
+  init = list(),
   version = c("Rcpp", "R"),
   control = list()
 )
@@ -43,7 +43,7 @@ assessing convergence of variational parameters at each iteration;
 \dQuote{tol.rho}, tolerance for assessing convergence of effects
 corresponding to unwanted variation. Any named components will
 override the default optimization algorithm settings (as they are
-defined by \code{pois_mash_ruv_prefit_control_default})}
+defined by \code{pois_mash_ruv_prefit_control_default}).}
 }
 \value{
 A list containing initial estimates of model parameters.

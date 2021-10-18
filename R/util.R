@@ -2,6 +2,10 @@
 tr <- function (m)
   sum(diag(m),na.rm = TRUE)
 
+# Compute log(det(x)).
+logdet <- function (x)
+  determinant(x,logarithm = TRUE)$modulus
+
 # Take inverse of the matrix diag(v1) + v2 %*% t(v3), where
 # v1, v2, v3 are vectors.
 mat_inv_rank1 <- function (v1, v2, v3)

@@ -24,16 +24,16 @@
 #'   \code{version = "R"} and \code{version = "Rcpp"}.
 #' 
 #' @param control List of control parameters with one or more of the
-#' following elements: \dQuote{maxiter}, maximum number of iterations;
-#' \dQuote{maxiter.q}, maximum number of inner-loop iterations to
-#' update variational parameters at each iteration; \dQuote{tol.stop},
-#' tolerance for assessing convergence of prefit, as measured by
-#' relative change in ELBO; \dQuote{tol.q}, relative tolerance for
-#' assessing convergence of variational parameters at each iteration;
-#' \dQuote{tol.rho}, tolerance for assessing convergence of effects
-#' corresponding to unwanted variation. Any named components will
-#' override the default optimization algorithm settings (as they are
-#' defined by \code{pois_mash_ruv_prefit_control_default})
+#'   following elements: \dQuote{maxiter}, maximum number of iterations;
+#'   \dQuote{maxiter.q}, maximum number of inner-loop iterations to
+#'   update variational parameters at each iteration; \dQuote{tol.stop},
+#'   tolerance for assessing convergence of prefit, as measured by
+#'   relative change in ELBO; \dQuote{tol.q}, relative tolerance for
+#'   assessing convergence of variational parameters at each iteration;
+#'   \dQuote{tol.rho}, tolerance for assessing convergence of effects
+#'   corresponding to unwanted variation. Any named components will
+#'   override the default optimization algorithm settings (as they are
+#'   defined by \code{pois_mash_ruv_prefit_control_default}).
 #' 
 #' @return A list containing initial estimates of model parameters.
 #'
@@ -47,7 +47,7 @@
 #' @export
 #' 
 pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
-                                  init = list(NULL),
+                                  init = list(),
                                   version = c("Rcpp","R"),
                                   control = list()) {
 
@@ -214,4 +214,3 @@ pois_mash_ruv_prefit_control_default <- function()
        tol.q     = 0.01,
        tol.rho   = 1e-4,
        tol.stop  = 1e-6)
-

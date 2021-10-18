@@ -1,3 +1,5 @@
+#' @rdname pois_cov_ed
+#' 
 #' @title Estimate Prior Covariance Matrices using Extreme Deconvolution
 #'
 #' @description Perform extreme deconvolution (ED) to estimate
@@ -33,6 +35,10 @@
 #' @param init Optional list of initial values for model parameters
 #'   (e.g., returned by \code{pois_mash_ruv_prefit}).
 #' 
+#' @param version R (slower) and C++ (faster) implementations of the
+#'   model fitting algorithm are provided; these are selected with
+#'   \code{version = "R"} and \code{version = "Rcpp"}.
+#' 
 #' @param control A list of control parameters with the following
 #'   elements: \dQuote{maxiter}, maximum number of ED iterations;
 #'   \dQuote{maxiter.q}, maximum number of inner loop iterations to
@@ -43,9 +49,11 @@
 #'   \dQuote{tol.stop}, tolerance for assessing convergence of ED, as
 #'   measured by relative change in ELBO; \dQuote{tol.q}, relative
 #'   tolerance for assessing convergence of variational parameters at
-#'   each ED iteration; and \dQuote{tol.rho}{tolerance for
-#'   assessing convergence of effects corresponding to unwanted
-#'   variation.}
+#'   each ED iteration; and \dQuote{tol.rho}{tolerance for assessing
+#'   convergence of effects corresponding to unwanted variation.} Any
+#'   named components will override the default optimization algorithm
+#'   settings (as they are defined by
+#'   \code{pois_cov_ed_control_default}).
 #' 
 #' @return A list including the following elements:
 #' 
@@ -57,6 +65,7 @@
 #' \item{pi}{Numeric vector of length H + G containing the mixture
 #'   proportions for Ulist and ulist.}
 #'
+#' @importFrom utils modifyList
 #' @importFrom stats sd
 #' @importFrom poilog dpoilog
 #' 
@@ -64,11 +73,8 @@
 #' 
 pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
                          ruv = FALSE, Fuv = NULL, verbose = FALSE,
-                         init = list(NULL),  
-                         control = list(maxiter = 500, maxiter.q = 25,
-                                        maxpsi2 = NULL, maxbias = 10,
-                                        tol.stop = 1e-6, tol.q = 0.01,
-                                        tol.rho=1e-6)) {
+                         init = list(),  version = c("Rcpp","R"),
+                         control = list()) {
   X        <- data$X
   s        <- data$s
   subgroup <- data$subgroup
@@ -80,7 +86,15 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
   J         <- nrow(data.ed)
   R         <- ncol(data.ed)
   M         <- length(unique(subgroup))
+  H         <- length(Ulist)
+  G         <- length(ulist)
+  K         <- H + G
   subgroup  <- as.numeric(as.factor(subgroup))
+  version   <- match.arg(version)
+  control   <- modifyList(pois_cov_ed_control_default(),control,
+                          keep.null = TRUE)
+  
+  # Get the optimization settings.
   maxiter   <- control$maxiter
   maxiter.q <- control$maxiter.q
   maxpsi2   <- control$maxpsi2
@@ -89,29 +103,10 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
   tol.q     <- control$tol.q
   tol.rho   <- control$tol.rho
   
-  if (is.null(maxiter))
-    maxiter <- 500
-  if (is.null(maxiter.q))
-    maxiter.q <- 25
-  if (is.null(maxbias))
-    maxbias <- 10
-  if (is.null(tol.stop))
-    tol.stop <- 1e-6
-  if (is.null(tol.q))
-    tol.q <- 0.01
-  if (is.null(tol.rho))
-    tol.rho <- 1e-6
-  
-  H <- length(Ulist)
-  G <- length(ulist)
-  K <- H + G
-  
   if (is.null(ulist.dd)) {
     ulist.dd <- rep(TRUE,G)
-    
-    # Set to FALSE if zero vector.
     for (g in 1:G) 
-      if (sum(ulist[[g]]!=0)==0)
+      if (sum(ulist[[g]] != 0) == 0)
         ulist.dd[g] <- FALSE
   }
   
@@ -164,11 +159,10 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
   
   # Create matrices and arrays to store the posterior mean and
   # covariance of theta, i.e., gamma_jk, Sigma_jk.
-  gamma_jk <- array(as.numeric(NA), c(J,K,R))
+  gamma_jk <- array(as.numeric(NA),c(J,K,R))
   Sigma_jk <- list(NULL)
-  for (j in 1:J) {
-    Sigma_jk[[j]] <- array(as.numeric(NA), c(K,R,R))
-  }
+  for (j in 1:J)
+    Sigma_jk[[j]] <- array(as.numeric(NA),c(K,R,R))
   
   # Create a J x K x R array to store the quantities related to
   # q_jk, s.t. A[j,k,r] = gamma_jkr + 0.5*Sigma_jk,rr
@@ -177,19 +171,17 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
   # Matrix to store "local" ELBOs F_jk.
   ELBOs <- matrix(0,J,K)
   
-  # Update posterior mean and covariance of theta and local ELBO.
+  # Update posterior mean and covariance of theta, and the "local" ELBO.
   for (j in 1:J) {
-    # CAN THIS BE A FUNCTION? e.g., update_q_theta_all.
-    theta.q.all <- update_q_theta_all(x=data.ed[j,], s=s, mu=mu[j,], bias=bias[j,], c2=rep(1,R), psi2=psi2[j], 
-                                      wlist=1, Ulist=Ulist, ulist=ulist, maxiter.q=maxiter.q, tol.q=tol.q)
-    gamma_jk[j,,] <- theta.q.all$gamma
-    Sigma_jk[[j]] <- theta.q.all$Sigma
-    A[j,,] <- theta.q.all$A
-    ELBOs[j,] <- theta.q.all$ELBOs
+    out <- update_q_theta_all(data.ed[j,],s,mu[j,],bias[j,],rep(1,R),
+                              psi2[j],1,Ulist,ulist,list(),maxiter.q,tol.q)
+    gamma_jk[j,,] <- out$gamma
+    Sigma_jk[[j]] <- out$Sigma
+    A[j,,]        <- out$A
+    ELBOs[j,]     <- out$ELBOs
   }
-  
+
   # Update J x K matrix zeta of posterior weights.
-  # CAN THIS BE A FUNCTION? e.g., update_zeta.
   zeta <- update_zeta(ELBOs=ELBOs, pi=pi)
   
   # Update J x R matrix tmp.ruv needed to update rho,
@@ -365,8 +357,8 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
     
     # Update rho and bias if ruv = TRUE.
     if (ruv) {
-      # CAN THIS BE A FUNCTION? e.g., update_rho_all.
-      rho.new <- update_rho_all(X=data.ed, s=s, mu=mu, Fuv=F.ed, rho=rho, tmp.ruv=tmp.ruv, tol.rho=tol.rho)
+      rho.new  <- update_rho_all(data.ed,s,mu,F.ed,rho,tmp.ruv,tol = tol.rho,
+                                 version = version)
       diff.rho <- rho.new - rho
       rho      <- rho.new
       bias     <- F.ed %*% rho
@@ -411,3 +403,16 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
               ELBO = ELBOs.overall,iff.U = diff.U,diff.pi = diff.pi,
               diff.rho = diff.rho))
 }
+
+#' @rdname pois_cov_ed
+#'
+#' @export
+#' 
+pois_cov_ed_control_default <- function()
+  list(maxiter   = 500,
+       maxiter.q = 25,
+       maxbias   = 10,
+       maxpsi2   = NULL,
+       tol.q     = 0.01,
+       tol.rho   = 1e-6,
+       tol.stop  = 1e-6)
