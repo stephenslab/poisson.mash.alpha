@@ -168,14 +168,14 @@ update_pi <- function (zeta) {
   return(pmax(pi,1e-8))
 }
 
-# Update the J x K matrix of posterior weights zeta, where ELBOs is J x K matrix of local ELBO, pi is K x 1 vector of prior weights.
-update_zeta <- function(ELBOs, pi){
+# Update the J x K matrix of posterior weights zeta, where ELBOs is J
+# x K matrix of local ELBO, pi is the vector of prior weights of length K.
+update_zeta <- function (ELBOs, pi) {
   ELBOs.cen <- ELBOs - apply(ELBOs,1,max)
-  zeta <- t(t(exp(ELBOs.cen)) * pi)
-  zeta <- zeta*(1/rowSums(zeta)) 
-  zeta <- pmax(zeta, 1e-15)
+  zeta <- scale.cols(exp(ELBOs.cen),pi)
+  zeta <- normalize.rows(zeta)
+  return(pmax(zeta,1e-15))
 }
-
 
 # Update posterior distribution of theta, beta and eta and accompanying quantities (ELBOs, gamma, A, tmp.mu, tmp.psi2) for selected units.
 update_q_by_j <- function(X, s, subgroup, idx.update, mu, bias, psi2, wlist=1, Ulist, ulist, ulist.epsilon2,
