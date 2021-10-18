@@ -188,7 +188,7 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
   # s.t. tmp.ruv[j,r] = sum_k zeta[j,k] * exp(A[j,k,r]).
   tmp.ruv <- matrix(as.numeric(NA),J,R)
   for (r in 1:R)
-    tmp.ruv[,r] <- rowSums(zeta*exp(A[,,r]))
+    tmp.ruv[,r] <- rowSums(zeta * exp(A[,,r]))
 
   const <- compute_elbo_const(data.ed,s)
   
@@ -221,7 +221,6 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
     tmp.mu   <- array(0,c(J,K,M))
     tmp.psi2 <- matrix(0,J,K)
     diff.U   <- rep(0,K)
-    
     if (H > 0) {
       for (h in 1:H) {
         tmp.U <- matrix(0,R,R)
@@ -233,10 +232,11 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
                                              c2 = rep(1,R),psi2 = psi2[j],
                                              U = Ulist[[h]])$beta2_m
           tmp.U <- tmp.U + zeta[j,h] * beta.qjh
-          for (i in 1:M)
+          for (i in 1:M) {
+            k <- which(subgroup == i)
             tmp.mu[j,h,i] <-
-              sum(s[subgroup == i] * exp(bias[j,subgroup == i] +
-              gamma.tmp[subgroup == i] + diag(Sigma.tmp)[subgroup == i]/2))
+              sum(s[k] * exp(bias[j,k] + gamma.tmp[k] + diag(Sigma.tmp)[k]/2))
+          }
           eta.qjh <- update_q_eta_general(theta_m = gamma.tmp,
                                           theta_V = Sigma.tmp,
                                           c2 = rep(1,R),psi2 = psi2[j],
@@ -264,10 +264,9 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
           gamma.tmp <- gamma_jk[j,H+g,]
           Sigma.tmp <- Sigma_jk[[j]][H+g,,]
           for (i in 1:M) {
-            tmp.mu[j,H+g,i] <- sum(s[subgroup == i] *
-                                   exp(bias[j,subgroup == i] +
-                                       gamma.tmp[subgroup == i] +
-                                       diag(Sigma.tmp)[subgroup == i]/2))
+            k <- which(subgroup == i)
+            tmp.mu[j,H+g,i] <- sum(s[k] * exp(bias[j,k] + gamma.tmp[k] +
+                                              diag(Sigma.tmp)[k]/2))
           }
           eta.qjg <- gamma.tmp^2 + diag(Sigma.tmp) 
           tmp.psi2[j,H+g] <- sum(eta.qjg)
@@ -287,11 +286,11 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
                                            u = ulist[[g]])
           tmp1.u    <- tmp1.u + zeta[j,H+g] * beta.qjg$a2_m/psi2[j]
           tmp2.u    <- tmp2.u + zeta[j,H+g] * beta.qjg$a_theta_m/psi2[j]
-          for (i in 1:M)
-            tmp.mu[j,H+g,i] <- sum(s[subgroup == i] *
-                                   exp(bias[j,subgroup == i] +
-                                       gamma.tmp[subgroup == i] +
-                                       diag(Sigma.tmp)[subgroup == i]/2))
+          for (i in 1:M) {
+            k <- which(subgroup == i)
+            tmp.mu[j,H+g,i] <- sum(s[k] * exp(bias[j,k] + gamma.tmp[k] +
+                                              diag(Sigma.tmp)[k]/2))
+          }
           eta.qjg <- update_q_eta_rank1(theta_m = gamma.tmp,
                                         theta_V = Sigma.tmp,
                                         a2_m = beta.qjg$a2_m,
@@ -325,11 +324,11 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
                                            u = ulist[[g]])
           tmp1.u <- tmp1.u + zeta[j,H+g] * sum(ug^2) * beta.qjg$a2_m/psi2[j]
           tmp2.u <- tmp2.u + zeta[j,H+g] * sum(ug * beta.qjg$a_theta_m)/psi2[j]
-          for (i in 1:M)
-            tmp.mu[j,H+g,i] <- sum(s[subgroup == i] *
-                                   exp(bias[j,subgroup == i] +
-                                       gamma.tmp[subgroup == i] +
-                                       diag(Sigma.tmp)[subgroup == i]/2))
+          for (i in 1:M) {
+            k <- which(subgroup == i)
+            tmp.mu[j,H+g,i] <- sum(s[k] * exp(bias[j,k] + gamma.tmp[k] +
+                                              diag(Sigma.tmp)[k]/2))
+          }
           eta.qjg <- update_q_eta_rank1(theta_m = gamma.tmp,
                                         theta_V = Sigma.tmp,
                                         a2_m = beta.qjg$a2_m,
@@ -377,8 +376,7 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
     }
     
     # Update J x K matrix zeta of posterior weights.
-    # CAN THIS BE A FUNCTION? e.g., update_zeta.
-    zeta <- update_zeta(ELBOs=ELBOs, pi=pi)
+    zeta <- update_zeta(ELBOs,pi)
     
     # Update J x R matrix tmp.ruv needed to update rho,
     # s.t. tmp.ruv[j,r] = sum_k zeta[j,k] * exp(A[j,k,r])

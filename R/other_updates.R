@@ -1,3 +1,40 @@
+# Update the J x R matrix of means mu, where X is J x R matrix of counts, subgroup is R x 1 factor vector with M levels, 
+# zeta is J x K matrix of posterior weights, tmp.mu is J x K x M array.
+update_mu <- function(X, subgroup, zeta, tmp.mu){    
+  M <- length(unique(subgroup))
+  mu <- matrix(as.numeric(NA), nrow(X), ncol(X))
+  for (i in 1:M) {
+    mu.i.new <- log(rowSums(X[,subgroup == i])) - log(rowSums(zeta * tmp.mu[,,i]))
+    mu[,subgroup == i] <- mu.i.new
+  }
+  return(mu)
+}
+
+# Update the J x 1 vector of dispersion parameter psi2, where zeta is
+# J x K matrix of posterior weights, tmp.psi2 is J x K matrix, R is
+# the number of conditions, minpsi2 and maxpsi2 are respectively
+# positive scalars giving the lower and upper bound of psi2.
+update_psi2 <- function (zeta, tmp.psi2, R, minpsi2, maxpsi2) {
+  psi2.new <- rowSums(zeta * tmp.psi2)/R
+  return(pmin(pmax(psi2.new,minpsi2),maxpsi2))
+}
+
+# Update the K x 1 vector of prior weights pi, where zeta is J x K
+# matrix of posterior weights.
+update_pi <- function (zeta) {
+  pi <- colMeans(zeta)
+  return(pmax(pi,1e-8))
+}
+
+# Update the J x K matrix of posterior weights zeta, where ELBOs is J
+# x K matrix of local ELBO, pi is the vector of prior weights of length K.
+update_zeta <- function (ELBOs, pi) {
+  ELBOs.cen <- ELBOs - apply(ELBOs,1,max)
+  zeta <- scale.cols(exp(ELBOs.cen),pi)
+  zeta <- normalize.rows(zeta)
+  return(pmax(zeta,1e-15))
+}
+
 # Update q(theta) = q(eta) for a given unit without fixed effects,
 # i.e., with prior covariance U = 0.
 update_q_eta_only <- function (x, s, mu, bias, c2, psi2, init = list(),
@@ -62,122 +99,9 @@ update_q_eta_only <- function (x, s, mu, bias, c2, psi2, init = list(),
   return(list(m = m,V = V,a = a,ELBO = ELBO))
 }
 
-# Update q(beta) for a given unit and prior covariance w*U, where U
-# has full rank.
-update_q_beta_general <- function (theta_m, theta_V, c2, psi2, w = 1, U) {
-    
-  # Make sure eigenvalues of U are all strictly positive.
-  U       <- w*U
-  eig.U   <- eigen(U)
-  eig.val <- pmax(eig.U$values,1e-8)
-  U       <- tcrossprod(eig.U$vectors %*% diag(sqrt(eig.val)))
-  S_inv   <- 1/(psi2*c2)
-  tmp     <- solve(solve(U) + diag(S_inv))
-  beta_m  <- tmp %*% (theta_m * S_inv)
-  beta_V  <- tmp + tmp %*% t(t(theta_V*S_inv)*S_inv) %*% tmp
-  beta2_m <- beta_m %*% t(beta_m) + beta_V
-  return(list(beta_m = beta_m,beta_V = beta_V,beta2_m = beta2_m))
-}
-
-# Update q(a,theta) for a given unit and prior covariance w*U, where
-# U = u*u'
-update_q_beta_rank1 <- function (theta_m, theta_V, c2, psi2, w = 1, u) {
-  S_inv     <- 1/(psi2*c2)
-  tmp       <- (u*S_inv)/(sum(u^2*S_inv) + 1/w)
-  a_m       <- sum(tmp*theta_m)
-  a_sigma2  <- 1/(sum(u^2*S_inv)+1/w) + as.numeric(t(tmp) %*% theta_V %*% tmp)
-  a2_m      <- a_m^2 + a_sigma2
-  a_theta_m <- (theta_m%*%t(theta_m) + theta_V) %*% tmp
-  return(list(a_m = a_m,a_sigma2 = a_sigma2,a2_m = a2_m,a_theta_m = a_theta_m))
-}
-
-# Update q(eta) for a given unit and prior covariance w*U, where U has
-# full rank.
-update_q_eta_general <- function (theta_m, theta_V, c2, psi2, w=1, U) {
-    
-  # Make sure eigenvalues of U are all strictly positive..
-  U       <- w*U
-  eig.U   <- eigen(U)
-  eig.val <- pmax(eig.U$values,1e-8)
-  U       <- tcrossprod(eig.U$vectors %*% diag(sqrt(eig.val)))
-  R       <- length(theta_m)
-  S_inv   <- 1/(psi2*c2)
-  tmp1    <- solve(solve(U) + diag(S_inv))
-  tmp2    <- solve(diag(R) + t(t(U)*S_inv))
-  eta2_m  <- diag(tmp1 + tmp2 %*% (theta_m %*% t(theta_m) + theta_V) %*%
-                  t(tmp2))
-  return(eta2_m)
-}
-
-# Update q(eta) for a given unit and prior covariance w*U, where U = u*u'.
-update_q_eta_rank1 <- function (theta_m, theta_V, a2_m, a_theta_m, u)
-  diag(theta_V) + theta_m^2 + a2_m*u^2 - 2*u*a_theta_m
-
-# Uupdate q(eta) for a given unit and prior covariance w*U, where
-# U = u*u' + epsilon2
-update_q_eta_rank1_robust <- function (theta_m, theta_V, c2, psi2, w = 1,
-                                       u, epsilon2) {
-  tmp1   <- mat_inv_rank1(1/(w*epsilon2) + 1/(psi2*c2),-u/w/epsilon2,
-                          u/epsilon2/(1 + sum(u^2)/epsilon2))
-  tmp2   <- mat_inv_rank1(1 + w*epsilon2/(psi2*c2),w*u,u/(psi2*c2))
-  eta2_m <- diag(tmp1 + tmp2 %*% (theta_m %*% t(theta_m) + theta_V) %*%
-              t(tmp2))
-  return(eta2_m)
-}
-
-# Update q(beta), for a given unit and prior covariance w*U, where
-# U = u*u'+epsilon2
-update_q_beta_rank1_robust <- function (theta_m, theta_V, c2, psi2, w = 1, u,
-                                        epsilon2) {
-  tmp1    <- mat_inv_rank1(1/(w*epsilon2) + 1/(psi2*c2),-u/w/epsilon2,
-                           u/epsilon2/(1 + sum(u^2)/epsilon2))
-  tmp2    <- mat_inv_rank1(1 + psi2*c2/(w*epsilon2),-psi2*c2*u/w/epsilon2,
-                           u/epsilon2/(1 + sum(u^2)/epsilon2))
-  beta_m  <- tmp2 %*% theta_m
-  beta_V  <- tmp1 + tmp2 %*% theta_V %*% tmp2
-  beta2_m <- beta_m %*% t(beta_m) + beta_V
-  return(list(beta_m = beta_m,beta_V = beta_V,beta2_m = beta2_m))
-}
-
-
-# Update the J x R matrix of means mu, where X is J x R matrix of counts, subgroup is R x 1 factor vector with M levels, 
-# zeta is J x K matrix of posterior weights, tmp.mu is J x K x M array.
-update_mu <- function(X, subgroup, zeta, tmp.mu){    
-  M <- length(unique(subgroup))
-  mu <- matrix(as.numeric(NA), nrow(X), ncol(X))
-  for (i in 1:M) {
-    mu.i.new <- log(rowSums(X[,subgroup == i])) - log(rowSums(zeta * tmp.mu[,,i]))
-    mu[,subgroup == i] <- mu.i.new
-  }
-  return(mu)
-}
-
-# Update the J x 1 vector of dispersion parameter psi2, where zeta is
-# J x K matrix of posterior weights, tmp.psi2 is J x K matrix, R is
-# the number of conditions, minpsi2 and maxpsi2 are respectively
-# positive scalars giving the lower and upper bound of psi2.
-update_psi2 <- function (zeta, tmp.psi2, R, minpsi2, maxpsi2) {
-  psi2.new <- rowSums(zeta * tmp.psi2)/R
-  return(pmin(pmax(psi2.new,minpsi2),maxpsi2))
-}
-
-# Update the K x 1 vector of prior weights pi, where zeta is J x K
-# matrix of posterior weights.
-update_pi <- function (zeta) {
-  pi <- colMeans(zeta)
-  return(pmax(pi,1e-8))
-}
-
-# Update the J x K matrix of posterior weights zeta, where ELBOs is J
-# x K matrix of local ELBO, pi is the vector of prior weights of length K.
-update_zeta <- function (ELBOs, pi) {
-  ELBOs.cen <- ELBOs - apply(ELBOs,1,max)
-  zeta <- scale.cols(exp(ELBOs.cen),pi)
-  zeta <- normalize.rows(zeta)
-  return(pmax(zeta,1e-15))
-}
-
-# Update posterior distribution of theta, beta and eta and accompanying quantities (ELBOs, gamma, A, tmp.mu, tmp.psi2) for selected units.
+# Update posterior distribution of theta, beta and eta and
+# accompanying quantities (ELBOs, gamma, A, tmp.mu, tmp.psi2) for
+# selected units.
 update_q_by_j <- function(X, s, subgroup, idx.update, mu, bias, psi2, wlist=1, Ulist, ulist, ulist.epsilon2,
                           gamma, A, ELBOs, tmp.mu, tmp.psi2, maxiter.q=25, tol.q=1e-2){
   J <- nrow(X)
