@@ -19,8 +19,8 @@ normalize.rows <- function (A)
 mat_inv_rank1 <- function (v1, v2, v3)
   diag(1/v1) - (v2/v1) %*% t(v3/v1) / (1 + sum(v2*v3/v1))
 
-# Compute the expected Poisson rates (under the variational
-# approximation) from the parameters of the Poisson mash model.
+# Compute the expected Poisson rates under the variational
+# approximation of the Poisson mash parameters.
 compute_poisson_rates <- function (s, mu, bias, gamma, V) {
   return(s*exp(mu + bias + gamma + V/2))
 }
