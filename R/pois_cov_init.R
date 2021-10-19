@@ -50,8 +50,7 @@ pois_cov_init <- function (data, ruv = FALSE, Fuv = NULL, rho = NULL, prop = 1,
   
   # Take a random subset of genes.
   set.seed(seed)
-  idx.select <- sort(sample(1:nrow(data),round(nrow(data)*prop),
-                            replace = FALSE))
+  idx.select <- sort(sample(nrow(data),round(nrow(data) * prop)))
   data.test  <- data[idx.select,]
   J          <- nrow(data.test)
   R          <- ncol(data.test)
