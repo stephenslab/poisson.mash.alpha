@@ -161,6 +161,7 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
     # Update posterior mean and covariance of theta and local ELBO F_j.
     for (j in 1:J) {
       out <- update_q_eta_only(data[j,],s,mu[j,],bias[j,],rep(1,R),psi2[j],
+                               init = list(m = gamma[j,],V = Sigma[j,]),
                                maxiter = maxiter.q,tol = tol.q)
       gamma[j,] <- out$m
       Sigma[j,] <- out$V
@@ -179,7 +180,7 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
     # Check the convergence criteria.
     #
     # NOTE: Consider fixing this to (1) check for increases in ELBO;
-    # and (2) compare absolute channge (not relative change).
+    # and (2) compare absolute change (not relative change).
     # 
     if (iter >= 50)
       if (is.finite(ELBOs.overall[iter]) & is.finite(ELBOs.overall[iter-1]))
