@@ -19,6 +19,12 @@ normalize.rows <- function (A)
 mat_inv_rank1 <- function (v1, v2, v3)
   diag(1/v1) - (v2/v1) %*% t(v3/v1) / (1 + sum(v2*v3/v1))
 
+# Compute the expected Poisson rates (under the variational
+# approximation) from the parameters of the Poisson mash model.
+compute_poisson_rates <- function (s, mu, bias, gamma, V) {
+  return(s*exp(mu + bias + gamma + V/2))
+}
+
 # Scale the J x R matrix of bias to avoid too large values in bias.
 scale_bias <- function (bias, maxbias) {
   range.bias <- apply(bias,1,function (x) max(x) - min(x))

@@ -108,21 +108,19 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
   
   # Update posterior mean and covariance of theta.
   for (j in 1:J) {
+    # *** UPDATE THIS ***
     out <- update_q_eta_only(x = data[j,],s = s,mu = mu[j,],bias = bias[j,],
-                                c2 = rep(1,R),psi2 = psi2[j],
-                                control = list(maxiter=maxiter.q,tol=tol.q))
+                             c2 = rep(1,R),psi2 = psi2[j],
+                             control = list(maxiter=maxiter.q,tol=tol.q))
     gamma[j,] <- out$m
     Sigma[j,] <- out$V
     A[j,]     <- out$m + out$V/2
   }
   
   # Vector to store local ELBO for each j.
-  ELBOs <- rep(as.numeric(NA),J)  
-  
-  # Overall ELBO after updating all parameters at each iteration.
-  ELBOs.overall <- c()
-  
-  const <- compute_elbo_const(data,s)
+  ELBOs         <- rep(as.numeric(NA),J)  
+  const         <- compute_elbo_const(data,s)
+  ELBOs.overall <- rep(0,maxiter)
   
   if (verbose)
     cat("Start prefitting Poisson mash model to initialize model",
@@ -138,8 +136,8 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
       Sigma.tmp <- Sigma[j,]
       for (i in 1:M) {
         k <- which(subgroup == i)
-        tmp.mu[j,i] <-
-          sum(s[k] * exp(bias[j,k] + gamma.tmp[k] + Sigma.tmp[k]/2))
+        tmp.mu[j,i] <- sum(compute_poisson_rates(s[k],0,bias[j,k],gamma.tmp[k],
+                                                 Sigma.tmp[k]))
       }
       tmp.psi2[j] <- sum(gamma.tmp^2 + Sigma.tmp)
     }
@@ -174,13 +172,18 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
     }
     
     # Calculate overall ELBO at the current iteration.
-    ELBO.overall  <- sum(ELBOs) + const
-    ELBOs.overall <- c(ELBOs.overall,ELBO.overall)
+    ELBOs.overall[iter] <- sum(ELBOs) + const
     
     if (verbose) {
       print("iter         ELBO")
-      print(sprintf("%d:    %f",iter,ELBO.overall))
+      print(sprintf("%d:    %f",iter,ELBOs.overall[iter]))
     }
+
+    # Check the convergence criteria.
+    #
+    # NOTE: Consider fixing this to (1) check for increases in ELBO;
+    # and (2) compare absolute channge (not relative change).
+    # 
     if (iter >= 50)
       if (is.finite(ELBOs.overall[iter]) & is.finite(ELBOs.overall[iter-1]))
         if (abs(ELBOs.overall[iter] -
@@ -200,7 +203,7 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
   return(list(mu       = mu,
               psi2     = psi2,
               rho      = rho,
-              ELBO     = ELBOs.overall,
+              ELBO     = ELBOs.overall[1:iter],
               diff.rho = diff.rho))
 }
 

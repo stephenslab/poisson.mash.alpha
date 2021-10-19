@@ -37,12 +37,13 @@ update_rho <- function (Xr, Fuv, sr, mu, Lr, init, maxiter, tol, maxrho) {
   
   for (iter in 1:maxiter) {
     bias <- Fuv %*% rho
-    Fr[iter] <- sum(Xr * bias) - sr * sum(exp(mu + bias) * Lr)
+    u    <- Lr * exp(mu + bias)
+    Fr[iter] <- sum(Xr * bias) - sr * sum(u)
     for (d in 1:D)
-      d1F[d] <- sum(Xr * Fuv[,d]) - sr * sum(Fuv[,d] * Lr * exp(mu + bias))
+      d1F[d] <- sum(Xr * Fuv[,d]) - sr * sum(Fuv[,d] * u)
     for (d in 1:D)
       for (t in 1:D)
-        d2F[d,t] <- -sr * sum(Fuv[,d] * Fuv[,t] *  Lr * exp(mu + bias))
+        d2F[d,t] <- -sr * sum(Fuv[,d] * Fuv[,t] * u)
     rho_new <- rho - solve(d2F,d1F)
     rho_new <- pmin(pmax(rho_new,-maxrho),maxrho)
     if (max(abs(rho_new - rho)) < tol)
