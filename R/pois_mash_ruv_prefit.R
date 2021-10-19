@@ -108,10 +108,8 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
   
   # Update posterior mean and covariance of theta.
   for (j in 1:J) {
-    # *** UPDATE THIS ***
-    out <- update_q_eta_only(x = data[j,],s = s,mu = mu[j,],bias = bias[j,],
-                             c2 = rep(1,R),psi2 = psi2[j],
-                             control = list(maxiter=maxiter.q,tol=tol.q))
+    out <- update_q_eta_only(data[j,],s,mu[j,],bias[j,],rep(1,R),psi2[j],
+                             maxiter = maxiter.q,tol = tol.q)
     gamma[j,] <- out$m
     Sigma[j,] <- out$V
     A[j,]     <- out$m + out$V/2
@@ -163,8 +161,7 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
     # Update posterior mean and covariance of theta and local ELBO F_j.
     for (j in 1:J) {
       out <- update_q_eta_only(data[j,],s,mu[j,],bias[j,],rep(1,R),psi2[j],
-                               init = list(m = gamma[j,],V = Sigma[j,]),
-                               control = list(maxiter = maxiter.q,tol = tol.q))
+                               maxiter = maxiter.q,tol = tol.q)
       gamma[j,] <- out$m
       Sigma[j,] <- out$V
       A[j,]     <- out$m + out$V/2

@@ -1,3 +1,52 @@
+# Update q(theta) = q(eta) for a given unit without fixed effects,
+# i.e., with prior covariance U = 0.
+update_q_eta_only <- function (x, s, mu, bias, c2, psi2, init = list(),
+                               maxiter = 25, tol = 0.01, lwr = -10, upr = 10) {
+  R <- length(x)
+  m <- init$m
+  V <- init$V
+  Utilde <- psi2 * c2
+  if (is.null(m))
+    m <- rep(0, R)
+  if(is.null(V))
+    V <- Utilde
+  
+  bias <- drop(bias)
+  a    <- compute_poisson_rates(s,mu,bias,m,V)
+
+  for (iter in 1:maxiter) {
+    V_new <- 1/(1/Utilde + a)
+    a     <- compute_poisson_rates(s,mu,bias,m,V_new)
+    m_new <- m - V_new*(a - x + m/Utilde)
+    
+    # Make sure the updated posterior mean is not unreasonably large
+    # or small.
+    m_new[m_new < lwr] <- lwr
+    m_new[m_new > upr] <- upr
+    
+    # Decide whether to stop based on change in mu and V.
+    m_tmp <- m
+    m_tmp[abs(m_tmp) < 1e-15] <- 1e-15
+    V_tmp <- V
+    V_tmp[abs(V_tmp) < 1e-15] <- 1e-15
+    idx.mu <- (max(abs(m_new-m)) < tol/100 | max(abs(m_new/m_tmp-1)) < tol)
+    idx.V  <- (max(abs(V_new-V)) < tol/100 | max(abs(V_new/V_tmp-1)) < tol)
+    
+    if (idx.mu & idx.V)
+      break
+    
+    m <- m_new
+    V <- V_new
+    a <- compute_poisson_rates(s,mu,bias,m,V)
+  }
+  
+  # Calculate "local" ELBO F_j.
+  ELBO <- sum(x*(mu + bias + m)) - sum(a) -
+          0.5*(sum(V/Utilde) + sum(m^2/Utilde) - R
+               + sum(log(Utilde)) - sum(log(V)))
+  return(list(m = m,V = V,a = a,ELBO = ELBO))
+}
+
 # Update q(eta) for a given unit and prior covariance w*U, where U has
 # full rank.
 update_q_eta_general <- function (theta_m, theta_V, c2, psi2, w=1, U) {

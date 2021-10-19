@@ -79,11 +79,11 @@ update_q_theta_general <- function (x, s, mu, bias, c2, psi2, w = 1, U,
     V <- Utilde
   
   bias <- as.numeric(bias)
-  a    <- s*exp(mu + bias + m + diag(V)/2)
+  a    <- compute_poisson_rates(s,mu,bias,m,diag(V))
   
   for (iter in 1:maxiter) {
     V_new <- solve(solve(Utilde) + diag(a),tol = 1e-50)
-    a     <- s*exp(mu + bias + m + diag(V_new)/2)
+    a     <- compute_poisson_rates(s,mu,bias,m,diag(V_new))
     m_new <- drop(m - V_new %*% (a - x + solve(Utilde,m)))
     
     # Make sure the updated posterior mean is not unreasonably large
@@ -103,7 +103,7 @@ update_q_theta_general <- function (x, s, mu, bias, c2, psi2, w = 1, U,
     
     m <- m_new
     V <- V_new
-    a <- s*exp(mu + bias + m + diag(V)/2)
+    a <- compute_poisson_rates(s,mu,bias,m,diag(V))
   }
   
   # Calculate "local" ELBO F_jhl.
@@ -130,11 +130,11 @@ update_q_theta_rank1 <- function (x, s, mu, bias, c2, psi2, w = 1, u,
     V <- Utilde
   
   bias <- as.numeric(bias)
-  a    <- s*exp(mu + bias + m + diag(V)/2)
+  a    <- compute_poisson_rates(s,mu,bias,m,diag(V))
   
   for (iter in 1:maxiter) {
     V_new <- mat_inv_rank1(a+S_inv,-w*u*S_inv,(u*S_inv)/(1+w*sum(u^2*S_inv)))
-    a            <- s*exp(mu + bias + m + diag(V_new)/2)
+    a     <- compute_poisson_rates(s,mu,bias,m,diag(V_new))
     Utilde_inv_m <- m*S_inv - w*u*S_inv*sum(u*m*S_inv)/(1 + w*sum(u^2*S_inv))
     m_new        <- as.numeric(m - V_new %*% (a - x + Utilde_inv_m))
     
@@ -156,7 +156,7 @@ update_q_theta_rank1 <- function (x, s, mu, bias, c2, psi2, w = 1, u,
     
     m <- m_new
     V <- V_new
-    a <- s*exp(mu + bias + m + diag(V)/2)
+    a <- compute_poisson_rates(s,mu,bias,m,diag(V))
   }
   
   # Calculate "local" ELBO F_jhl
