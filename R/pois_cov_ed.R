@@ -184,16 +184,13 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
   # Update J x K matrix zeta of posterior weights.
   zeta <- update_zeta(ELBOs,pi)
   
-  # Update J x R matrix tmp.ruv needed to update rho,
-  # s.t. tmp.ruv[j,r] = sum_k zeta[j,k] * exp(A[j,k,r]).
-  tmp.ruv <- matrix(as.numeric(NA),J,R)
-  for (r in 1:R)
-    tmp.ruv[,r] <- rowSums(zeta * exp(A[,,r]))
+  # Update J x R matrix tmp.ruv needed to update rho.
+  tmp.ruv <- update_ruv(zeta,A)
 
   const <- compute_elbo_const(data.ed,s)
   
   # Overall ELBO after updating all parameters at each iteration.
-  ELBOs.overall <- c()
+  ELBOs.overall <- rep(0,maxiter)
   
   if (verbose)
     cat("Start running extreme deconvolution to estimate prior covariance",
@@ -202,12 +199,10 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
   for (iter in 1:maxiter) {
       
     # Calculate overall ELBO at the current iteration.
-    ELBO.overall  <- compute_overall_elbo(ELBOs,pi,zeta,const)
-    ELBOs.overall <- c(ELBOs.overall,ELBO.overall)
-    
+    ELBOs.overall[iter] <- compute_overall_elbo(ELBOs,pi,zeta,const)
     if (verbose) {
       print("iter         ELBO")
-      print(sprintf("%d:    %f",iter,ELBO.overall))
+      print(sprintf("%d:    %f",iter,ELBOs.overall[iter]))
     }
     
     if (iter >= 50) 
@@ -344,8 +339,8 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
       }
     }
     
-    # CAN THIS BE A FUNCTION? e.g., update_mu.
-    mu <- update_mu(X=data.ed, subgroup=subgroup, zeta=zeta, tmp.mu=tmp.mu)
+    # Update the matrix of means mu.
+    mu <- update_mu(data.ed,subgroup,zeta,tmp.mu)
 
     # Update the dispersion parameter psi2.
     psi2 <- update_psi2(zeta,tmp.psi2,R,minpsi2,maxpsi2)
@@ -366,22 +361,22 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
     
     # Update posterior mean and covariance of theta and local ELBO F_jk.
     for (j in 1:J) {
-      # CAN THIS BE A FUNCTION? e.g., update_q_theta_all.
-      theta.q.all <- update_q_theta_all(x=data.ed[j,], s=s, mu=mu[j,], bias=bias[j,], c2=rep(1,R), psi2=psi2[j], wlist=1, Ulist=Ulist, ulist=ulist,
-                                        init=list(gamma=gamma_jk[j,,], Sigma=Sigma_jk[[j]]), maxiter.q=maxiter.q, tol.q=tol.q)
-      gamma_jk[j,,] <- theta.q.all$gamma
-      Sigma_jk[[j]] <- theta.q.all$Sigma
-      A[j,,] <- theta.q.all$A
-      ELBOs[j,] <- theta.q.all$ELBOs
+      out <- update_q_theta_all(data.ed[j,],s,mu[j,],bias[j,],rep(1,R),
+                                psi2[j],1,Ulist,ulist,
+                                list(gamma = gamma_jk[j,,],
+                                     Sigma = Sigma_jk[[j]]),
+                                maxiter.q,tol.q)
+      gamma_jk[j,,] <- out$gamma
+      Sigma_jk[[j]] <- out$Sigma
+      A[j,,]        <- out$A
+      ELBOs[j,]     <- out$ELBOs
     }
     
     # Update J x K matrix zeta of posterior weights.
     zeta <- update_zeta(ELBOs,pi)
     
     # Update J x R matrix tmp.ruv needed to update rho,
-    # s.t. tmp.ruv[j,r] = sum_k zeta[j,k] * exp(A[j,k,r])
-    for (r in 1:R)
-      tmp.ruv[,r] <- rowSums(zeta * exp(A[,,r]))
+    tmp.ruv <- update_ruv(zeta,A)
   }
   
   # Name the model paramter estimates.
@@ -398,8 +393,8 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
   
   return(list(subset = subset,mu = mu,psi2 = psi2,rho = rho,Ulist = Ulist,
               ulist = ulist,ulist.dd = ulist.dd,pi = pi,zeta = zeta,
-              ELBO = ELBOs.overall,iff.U = diff.U,diff.pi = diff.pi,
-              diff.rho = diff.rho))
+              ELBO = ELBOs.overall[1:iter],iff.U = diff.U,
+              diff.pi = diff.pi,diff.rho = diff.rho))
 }
 
 #' @rdname pois_cov_ed
