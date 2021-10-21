@@ -54,6 +54,10 @@
 #' @param init List of initial values for model parameters, such as an
 #'   output from \code{\link{pois_mash_ruv_prefit}}).
 #' 
+#' @param version R (slower) and C++ (faster) implementations of the
+#'   model fitting algorithm are provided; these are selected with
+#'   \code{version = "R"} and \code{version = "Rcpp"}.
+#' 
 #' @param control List of control parameters with the following
 #'   elements: \dQuote{maxiter}, maximum number of outer loop
 #'   iterations; \dQuote{maxiter.q}, maximum number of inner loop
@@ -69,7 +73,9 @@
 #'   \dQuote{tol.q}, relative tolerance for assessing convergence of
 #'   variational parameters at each iteration; \dQuote{tol.rho},
 #'   tolerance for assessing convergence of effects corresponding to
-#'   unwanted variation.
+#'   unwanted variation. Any named components will override the
+#'   default optimization algorithm settings (as they are defined by
+#'   \code{pois_mash_control_default}).
 #' 
 #' @return List with the following elements:
 #'
@@ -87,7 +93,8 @@ pois_mash <- function (data, Ulist, ulist,
                        ulist.epsilon2 = rep(1e-8,length(ulist)),
                        normalizeU = TRUE, gridmult = 2, wlist, ruv = FALSE,
                        Fuv, rho, update.rho = TRUE, verbose = FALSE, C,
-                       res.colnames, init = list(), control = list()) {
+                       res.colnames, init = list(), version = c("Rcpp","R"),
+                       control = list()) {
   
   s        <- data$s
   subgroup <- data$subgroup
@@ -96,6 +103,8 @@ pois_mash <- function (data, Ulist, ulist,
   R        <- ncol(data)
   M        <- length(unique(subgroup))
   subgroup <- as.numeric(as.factor(subgroup))
+  version   <- match.arg(version)
+  control   <- modifyList(pois_mash_control_default(),control,keep.null = TRUE)
   
   maxiter   <- control$maxiter
   maxiter.q <- control$maxiter.q
@@ -162,9 +171,6 @@ pois_mash <- function (data, Ulist, ulist,
   L <- length(wlist)
   K <- (H + G)*L
   
-  # Specify ulist.epsilon2 if not provided.
-  ulist.epsilon2 <- 
-  
   # Normalize prior covariance matrices if normalizeU = TRUE.
   if (normalizeU) {
     if (H > 0) {
@@ -201,34 +207,31 @@ pois_mash <- function (data, Ulist, ulist,
   # s.t. A[j,kl,r] = gamma_jklr + 0.5 * Sigma_jkl,rr.
   A <- array(as.numeric(NA),c(J,K,R))
   
-  # J x K matrix of local ELBO and temporary quantities needed to update mu and psi2.
+  # J x K matrix of local ELBO and temporary quantities needed to
+  # update mu and psi2.
   ELBOs    <- matrix(0,J,K)
   tmp.mu   <- array(0,c(J,K,M))
   tmp.psi2 <- matrix(0,J,K)
   
   # Update posterior mean and covariance of theta and local ELBO.
-  # CAN THIS BE A FUNCTION? e.g., update_q_by_j.
-  res.update.by.j <- update_q_by_j(X=data, s=s, subgroup=subgroup, idx.update=1:J, mu=mu, bias=bias, psi2=psi2,
+  out <- update_q_by_j(X=data, s=s, subgroup=subgroup, idx.update=1:J, mu=mu, bias=bias, psi2=psi2,
                                    wlist=wlist, Ulist=Ulist, ulist=ulist, ulist.epsilon2=ulist.epsilon2,
                                    gamma=gamma, A=A, ELBOs=ELBOs, tmp.mu=tmp.mu, tmp.psi2=tmp.psi2, maxiter.q=maxiter.q, tol.q=tol.q)
-  gamma <- res.update.by.j$gamma
-  A <- res.update.by.j$A
-  ELBOs <- res.update.by.j$ELBOs
-  tmp.mu <- res.update.by.j$tmp.mu
-  tmp.psi2 <- res.update.by.j$tmp.psi2
+  gamma    <- out$gamma
+  A        <- out$A
+  ELBOs    <- out$ELBOs
+  tmp.mu   <- out$tmp.mu
+  tmp.psi2 <- out$tmp.psi2
   
   # Update zeta.
-  # CAN THIS BE A FUNCTION? e.g., update_zeta.
-  zeta <- update_zeta(ELBOs=ELBOs, pi=pi)
+  zeta <- update_zeta(ELBOs,pi)
   
   # Update J x R matrix tmp.ruv needed to update rho,
   # s.t. tmp.ruv[j,r] = sum_kl zeta[j,kl] * exp(A[j,kl,r]).
-  tmp.ruv <- matrix(as.numeric(NA),J,R)
-  for (r in 1:R)
-    tmp.ruv[,r] <- rowSums(zeta*exp(A[,,r]))
+  tmp.ruv <- update_ruv(zeta,A)
   
   # Store the overall ELBO at each iteration.
-  ELBOs.overall <- c()
+  ELBOs.overall <- rep(0,maxiter)
   
   # Store the number of j to be updated at each iteration.
   j.update <- c()
@@ -236,8 +239,7 @@ pois_mash <- function (data, Ulist, ulist,
   for (iter in 1:maxiter) {
       
     # Calculate overall ELBO at the current iteration.
-    ELBO.overall  <- compute_overall_elbo(ELBOs,pi,zeta,const)
-    ELBOs.overall <- c(ELBOs.overall,ELBO.overall)
+    ELBOs.overall[iter] <- compute_overall_elbo(ELBOs,pi,zeta,const)
     
     # Update pi.
     pi.new  <- update_pi(zeta)
@@ -245,8 +247,7 @@ pois_mash <- function (data, Ulist, ulist,
     pi      <- pi.new
     
     # Calculate the new mu.
-    # CAN THIS BE A FUNCTION? e.g., update_mu.
-    mu.new <- update_mu(X=data, subgroup=subgroup, zeta=zeta, tmp.mu=tmp.mu)
+    mu.new        <- update_mu(data,subgroup,zeta,tmp.mu)
     idx.update.mu <- apply(abs(mu.new - mu),1,max) > tol.mu
     diff.mu       <- mu.new - mu
     
@@ -280,7 +281,7 @@ pois_mash <- function (data, Ulist, ulist,
     
     if (verbose) {
       print("iter         ELBO")
-      print(sprintf("%d:    %f", iter, ELBO.overall))
+      print(sprintf("%d:    %f", iter, ELBOs.overall[iter]))
       print("iter         number_of_j_to_update")
       print(sprintf("%d:    %d", iter, length(idx.update)))
     }
@@ -290,24 +291,21 @@ pois_mash <- function (data, Ulist, ulist,
     
     # Update posterior mean and covariance of theta and local ELBO for
     # these j.
-    # CAN THIS BE A FUNCTION? e.g., update_q_by_j.
-    res.update.by.j <- update_q_by_j(X=data, s=s, subgroup=subgroup, idx.update=idx.update, mu=mu, bias=bias, psi2=psi2,
+    out <- update_q_by_j(X=data, s=s, subgroup=subgroup, idx.update=idx.update, mu=mu, bias=bias, psi2=psi2,
                                      wlist=wlist, Ulist=Ulist, ulist=ulist, ulist.epsilon2=ulist.epsilon2,
                                      gamma=gamma, A=A, ELBOs=ELBOs, tmp.mu=tmp.mu, tmp.psi2=tmp.psi2, maxiter.q=maxiter.q, tol.q=tol.q)
-    gamma <- res.update.by.j$gamma
-    A <- res.update.by.j$A
-    ELBOs <- res.update.by.j$ELBOs
-    tmp.mu <- res.update.by.j$tmp.mu
-    tmp.psi2 <- res.update.by.j$tmp.psi2    
+    gamma    <- out$gamma
+    A        <- out$A
+    ELBOs    <- out$ELBOs
+    tmp.mu   <- out$tmp.mu
+    tmp.psi2 <- out$tmp.psi2    
     
     # Update zeta.
-    # CAN THIS BE A FUNCTION? e.g., update_zeta.
-    zeta <- update_zeta(ELBOs=ELBOs, pi=pi)
+    zeta <- update_zeta(ELBOs,pi)
     
     # Update J x R matrix tmp.ruv needed to update rho,
     # s.t. tmp.ruv[j,r] = sum_kl zeta[j,kl] * exp(A[j,kl,r]).
-    for (r in 1:R)
-      tmp.ruv[,r] <- rowSums(zeta*exp(A[,,r]))
+    tmp.ruv <- update_ruv(zeta,A)
   }
   
   # Name the model paramter estimates.

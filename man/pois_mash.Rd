@@ -21,6 +21,7 @@ pois_mash(
   C,
   res.colnames,
   init = list(),
+  version = c("Rcpp", "R"),
   control = list()
 )
 
@@ -79,6 +80,10 @@ of the contrasts.}
 \item{init}{List of initial values for model parameters, such as an
 output from \code{\link{pois_mash_ruv_prefit}}).}
 
+\item{version}{R (slower) and C++ (faster) implementations of the
+model fitting algorithm are provided; these are selected with
+\code{version = "R"} and \code{version = "Rcpp"}.}
+
 \item{control}{List of control parameters with the following
 elements: \dQuote{maxiter}, maximum number of outer loop
 iterations; \dQuote{maxiter.q}, maximum number of inner loop
@@ -94,7 +99,9 @@ for bias caused by unwanted variation to skip update;
 \dQuote{tol.q}, relative tolerance for assessing convergence of
 variational parameters at each iteration; \dQuote{tol.rho},
 tolerance for assessing convergence of effects corresponding to
-unwanted variation.}
+unwanted variation. Any named components will override the
+default optimization algorithm settings (as they are defined by
+\code{pois_mash_control_default}).}
 }
 \value{
 List with the following elements:

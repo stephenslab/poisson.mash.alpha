@@ -73,7 +73,7 @@
 #' 
 pois_cov_ed <- function (data, subset, Ulist, ulist, ulist.dd,
                          ruv = FALSE, Fuv, verbose = FALSE,
-                         init = list(),  version = c("Rcpp","R"),
+                         init = list(), version = c("Rcpp","R"),
                          control = list()) {
   X        <- data$X
   s        <- data$s
