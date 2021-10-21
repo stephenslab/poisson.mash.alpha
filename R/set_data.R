@@ -38,7 +38,7 @@ pois_mash_set_data <- function (Y, condition, si, subgroup) {
   trts <- sort(unique(condition))
   R    <- length(trts)
   
-  if (!is.missing(subgroup)) {
+  if (!missing(subgroup)) {
     subgroup <- subgroup[order(names(subgroup))]
     if (sum(trts != names(subgroup)) > 0)
       stop("The levels of condition and the names of subgroup do not match!")

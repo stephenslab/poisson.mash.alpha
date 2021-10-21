@@ -46,7 +46,7 @@ pois_mash_sim_data <- function (J = 1000, R = 5, effects, seed = 1) {
     Y <- sim_raw[sample(n,J,replace = TRUE),]
   condition <- as.factor(sample(R,ncol(Y),replace = TRUE))
   
-  if (is.missing(effects)) {
+  if (missing(effects)) {
       
     # Return null data if "effects" is not specified.
     return(list(Y = Y,condition = condition))

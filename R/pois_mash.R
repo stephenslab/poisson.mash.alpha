@@ -109,11 +109,11 @@ pois_mash <- function (data, Ulist, ulist,
   
   # Initialize rho and bias.
   if (ruv) {
-    if (is.missing(Fuv))
+    if (missing(Fuv))
       stop("The matrix Fuv must be provided if ruv is set to TRUE")
     Fuv <- as.matrix(Fuv)
     D   <- ncol(Fuv)
-    if (is.missing(rho))
+    if (missing(rho))
       rho <- matrix(0,D,R)
     else
       rho <- as.matrix(rho)
@@ -150,7 +150,7 @@ pois_mash <- function (data, Ulist, ulist,
     psi2 <- pmin(psi2,maxpsi2)
   
   # Calculate wlist if not provided.
-  if (is.missing(wlist)) {
+  if (missing(wlist)) {
     w_max      <- 4*max(apply(loglambda,1,sd)^2) 
     w_min      <- pmax(min(apply(loglambda,1,sd)^2)/100,1e-8)
     log2_wlist <- seq(log2(w_min),log2(w_max),by = log2(gridmult))

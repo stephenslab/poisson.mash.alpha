@@ -78,7 +78,7 @@ pois_cov_ed <- function (data, subset, Ulist, ulist, ulist.dd,
   X        <- data$X
   s        <- data$s
   subgroup <- data$subgroup
-  if (is.missing(subset))
+  if (missing(subset))
     subset <- 1:nrow(X)
   data.ed   <- as.matrix(X[subset,])
   J         <- nrow(data.ed)
@@ -101,7 +101,7 @@ pois_cov_ed <- function (data, subset, Ulist, ulist, ulist.dd,
   tol.q     <- control$tol.q
   tol.rho   <- control$tol.rho
   
-  if (is.missing(ulist.dd)) {
+  if (missing(ulist.dd)) {
     ulist.dd <- rep(TRUE,G)
     for (g in 1:G) 
       if (sum(ulist[[g]] != 0) == 0)
@@ -119,7 +119,7 @@ pois_cov_ed <- function (data, subset, Ulist, ulist, ulist.dd,
   bias     <- matrix(0,J,R)
   
   if (ruv) {
-    if (is.missing(Fuv))
+    if (missing(Fuv))
       stop("The matrix Fuv must be provided if ruv is set to TRUE")
     F.ed <- as.matrix(Fuv[subset,])
     D    <- ncol(F.ed)
