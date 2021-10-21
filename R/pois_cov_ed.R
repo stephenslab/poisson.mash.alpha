@@ -195,7 +195,7 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
   if (verbose)
     cat("Start running extreme deconvolution to estimate prior covariance",
         "matrices.\n")
-  
+
   for (iter in 1:maxiter) {
       
     # Calculate overall ELBO at the current iteration.
@@ -204,13 +204,13 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
       print("iter         ELBO")
       print(sprintf("%d:    %f",iter,ELBOs.overall[iter]))
     }
-    
+
     if (iter >= 50) 
       if (is.finite(ELBOs.overall[iter]) & is.finite(ELBOs.overall[iter - 1]))
         if (abs(ELBOs.overall[iter] -
                ELBOs.overall[iter-1])/abs(ELBOs.overall[iter-1]) < tol.stop)
           break
-    
+
     # Calculate or update quantities related to model parameters mu,
     # psi2, U_h, u_g and, rho.
     tmp.mu   <- array(0,c(J,K,M))

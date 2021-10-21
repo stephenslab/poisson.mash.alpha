@@ -78,7 +78,7 @@ update_q_theta_general <- function (x, s, mu, bias, c2, psi2, w = 1, U,
   if (is.null(V))
     V <- Utilde
   
-  bias <- as.numeric(bias)
+  bias <- drop(bias)
   a    <- compute_poisson_rates(s,mu,bias,m,diag(V))
   
   for (iter in 1:maxiter) {
@@ -129,14 +129,14 @@ update_q_theta_rank1 <- function (x, s, mu, bias, c2, psi2, w = 1, u,
   if (is.null(V))
     V <- Utilde
   
-  bias <- as.numeric(bias)
+  bias <- drop(bias)
   a    <- compute_poisson_rates(s,mu,bias,m,diag(V))
   
   for (iter in 1:maxiter) {
     V_new <- mat_inv_rank1(a+S_inv,-w*u*S_inv,(u*S_inv)/(1+w*sum(u^2*S_inv)))
     a     <- compute_poisson_rates(s,mu,bias,m,diag(V_new))
     Utilde_inv_m <- m*S_inv - w*u*S_inv*sum(u*m*S_inv)/(1 + w*sum(u^2*S_inv))
-    m_new        <- as.numeric(m - V_new %*% (a - x + Utilde_inv_m))
+    m_new        <- drop(m - V_new %*% (a - x + Utilde_inv_m))
     
     # Make sure the updated posterior mean is not unreasonably large
     # or small.
@@ -162,7 +162,8 @@ update_q_theta_rank1 <- function (x, s, mu, bias, c2, psi2, w = 1, u,
   # Calculate "local" ELBO F_jhl
   ELBO <- sum(x*(mu + bias + m)) - sum(a) -
           0.5*(tr(solve(Utilde, V)) + drop(t(m) %*% solve(Utilde,m))
-               - R + det(Utilde) - det(V))
+               - R + logdet(Utilde) - logdet(V))
+  
   return(list(Utilde = Utilde,m = m,V = V,a = a,ELBO = ELBO))
 }
 

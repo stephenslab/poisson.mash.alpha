@@ -16,7 +16,7 @@ pois_cov_canonical <- function (data) {
   IR <- diag(R)
   ulist <- vector("list",R)
   for (r in 1:R)
-    ulist[[r]] <- as.numeric(IR[,r])
+    ulist[[r]] <- drop(IR[,r])
   names(ulist) <- paste0("e_",c(1:R))
   return(ulist)
 }
