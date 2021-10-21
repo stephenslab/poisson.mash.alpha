@@ -4,7 +4,7 @@
 \alias{pois_mash_sim_data}
 \title{Simulate Data Based on a Real Single-cell Dataset}
 \usage{
-pois_mash_sim_data(J = 1000, R = 5, effects = NULL, seed = 1)
+pois_mash_sim_data(J = 1000, R = 5, effects, seed = 1)
 }
 \arguments{
 \item{J}{Number of features to simulate (should be 2 or greater).}

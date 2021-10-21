@@ -2,27 +2,29 @@
 % Please edit documentation in R/pois_mash.R
 \name{pois_mash}
 \alias{pois_mash}
+\alias{pois_mash_control_default}
 \title{Fit poisson mash to data}
 \usage{
 pois_mash(
   data,
   Ulist,
   ulist,
-  ulist.epsilon2 = NULL,
+  ulist.epsilon2 = rep(1e-08, length(ulist)),
   normalizeU = TRUE,
   gridmult = 2,
-  wlist = NULL,
+  wlist,
   ruv = FALSE,
-  Fuv = NULL,
-  rho = NULL,
+  Fuv,
+  rho,
   update.rho = TRUE,
   verbose = FALSE,
-  C = NULL,
-  res.colnames = NULL,
+  C,
+  res.colnames,
   init = list(),
-  control = list(maxiter = 500, maxiter.q = 25, maxpsi2 = NULL, maxbias = 10, tol.mu =
-    0.01, tol.psi2 = 0.02, tol.bias = 0.01, tol.q = 0.01, tol.rho = 1e-06)
+  control = list()
 )
+
+pois_mash_control_default()
 }
 \arguments{
 \item{data}{\dQuote{pois.mash} data object, typically created by

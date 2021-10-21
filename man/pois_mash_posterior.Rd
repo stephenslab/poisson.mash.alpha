@@ -9,15 +9,15 @@ pois_mash_posterior(
   s,
   mu,
   psi2,
-  bias = NULL,
+  bias = matrix(0, nrow(data), ncol(data)),
   wlist,
   Ulist,
   ulist,
-  ulist.epsilon2 = NULL,
+  ulist.epsilon2 = rep(1e-08, length(ulist)),
   zeta,
-  thresh = NULL,
-  C = NULL,
-  res.colnames = NULL
+  thresh = 1/(500 * ncol(zeta)),
+  C = diag(ncol(data)) - 1/ncol(data),
+  res.colnames = paste0(colnames(data), "-mean")
 )
 }
 \arguments{

@@ -27,7 +27,7 @@
 #'
 #' @export
 #' 
-pois_mash_set_data <- function (Y, condition, si, subgroup = NULL) {
+pois_mash_set_data <- function (Y, condition, si, subgroup) {
   J <- nrow(Y)
   N <- ncol(Y)
   if (N != length(condition))
@@ -38,12 +38,12 @@ pois_mash_set_data <- function (Y, condition, si, subgroup = NULL) {
   trts <- sort(unique(condition))
   R    <- length(trts)
   
-  if (!is.null(subgroup)) {
+  if (!is.missing(subgroup)) {
     subgroup <- subgroup[order(names(subgroup))]
     if (sum(trts != names(subgroup)) > 0)
       stop("The levels of condition and the names of subgroup do not match!")
   } else {
-    subgroup <- rep(1,R)
+    subgroup        <- rep(1,R)
     names(subgroup) <- trts
   }
 

@@ -1,3 +1,5 @@
+#' @rdname pois_mash
+#' 
 #' @title Fit poisson mash to data
 #' 
 #' @param data \dQuote{pois.mash} data object, typically created by
@@ -81,16 +83,11 @@
 #' 
 #' @export
 #' 
-pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
-                       normalizeU = TRUE, gridmult = 2, wlist = NULL, 
-                       ruv = FALSE, Fuv = NULL, rho = NULL, update.rho = TRUE,
-                       verbose = FALSE, C = NULL, res.colnames = NULL,
-                       init = list(),
-                       control = list(maxiter = 500, maxiter.q = 25,
-                                      maxpsi2 = NULL, maxbias = 10,
-                                      tol.mu = 0.01, tol.psi2 = 0.02,
-                                      tol.bias = 0.01, tol.q = 0.01,
-                                      tol.rho = 1e-6)) {
+pois_mash <- function (data, Ulist, ulist,
+                       ulist.epsilon2 = rep(1e-8,length(ulist)),
+                       normalizeU = TRUE, gridmult = 2, wlist, ruv = FALSE,
+                       Fuv, rho, update.rho = TRUE, verbose = FALSE, C,
+                       res.colnames, init = list(), control = list()) {
   
   s        <- data$s
   subgroup <- data$subgroup
@@ -99,10 +96,6 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
   R        <- ncol(data)
   M        <- length(unique(subgroup))
   subgroup <- as.numeric(as.factor(subgroup))
-  
-  # Check if ulist is empty.
-  if (is.null(ulist))
-    stop("ulist cannot be empty!")
   
   maxiter   <- control$maxiter
   maxiter.q <- control$maxiter.q
@@ -114,30 +107,13 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
   tol.psi2  <- control$tol.psi2
   tol.bias  <- control$tol.bias
   
-  if (is.null(maxiter))
-    maxiter <- 500
-  if (is.null(maxiter.q))
-    maxiter.q <- 25
-  if (is.null(maxbias))
-    maxbias <- 10
-  if (is.null(tol.q))
-    tol.q <- 0.01
-  if (is.null(tol.rho))
-    tol.rho <- 1e-6
-   if (is.null(tol.mu))
-    tol.mu <- 0.01
-  if (is.null(tol.psi2))
-    tol.psi2 <- 0.02
-  if (is.null(tol.bias))
-    tol.bias <- 0.01
-  
   # Initialize rho and bias.
   if (ruv) {
-    if (is.null(Fuv))
+    if (is.missing(Fuv))
       stop("The matrix Fuv must be provided if ruv is set to TRUE")
     Fuv <- as.matrix(Fuv)
     D   <- ncol(Fuv)
-    if (is.null(rho))
+    if (is.missing(rho))
       rho <- matrix(0,D,R)
     else
       rho <- as.matrix(rho)
@@ -174,9 +150,7 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
     psi2 <- pmin(psi2,maxpsi2)
   
   # Calculate wlist if not provided.
-  if (is.null(wlist)) {
-    if (is.null(gridmult))
-      gridmult <- 2
+  if (is.missing(wlist)) {
     w_max      <- 4*max(apply(loglambda,1,sd)^2) 
     w_min      <- pmax(min(apply(loglambda,1,sd)^2)/100,1e-8)
     log2_wlist <- seq(log2(w_min),log2(w_max),by = log2(gridmult))
@@ -189,8 +163,7 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
   K <- (H + G)*L
   
   # Specify ulist.epsilon2 if not provided.
-  if (is.null(ulist.epsilon2))
-    ulist.epsilon2 <- rep(1e-8,G)
+  ulist.epsilon2 <- 
   
   # Normalize prior covariance matrices if normalizeU = TRUE.
   if (normalizeU) {
@@ -364,3 +337,18 @@ pois_mash <- function (data, Ulist, ulist, ulist.epsilon2 = NULL,
     cat("Finish calculating posterior summary.\n")
   return(list(pois.mash.fit = pois.mash.fit,result = result))
 }
+
+#' @rdname pois_mash
+#'
+#' @export
+#' 
+pois_mash_control_default <- function()
+  list(maxiter   = 500,
+       maxiter.q = 25,
+       maxbias   = 10,
+       maxpsi2   = NULL,
+       tol.mu    = 0.01,
+       tol.psi2  = 0.02,
+       tol.bias  = 0.01,
+       tol.q     = 0.01,
+       tol.rho   = 1e-6)

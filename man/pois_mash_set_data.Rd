@@ -4,7 +4,7 @@
 \alias{pois_mash_set_data}
 \title{Create Data Object for Poisson MASH Analysis}
 \usage{
-pois_mash_set_data(Y, condition, si, subgroup = NULL)
+pois_mash_set_data(Y, condition, si, subgroup)
 }
 \arguments{
 \item{Y}{J x N matrix of counts with features (e.g., genes) as

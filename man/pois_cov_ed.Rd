@@ -7,12 +7,12 @@
 \usage{
 pois_cov_ed(
   data,
-  subset = NULL,
+  subset,
   Ulist,
   ulist,
-  ulist.dd = NULL,
+  ulist.dd,
   ruv = FALSE,
-  Fuv = NULL,
+  Fuv,
   verbose = FALSE,
   init = list(),
   version = c("Rcpp", "R"),

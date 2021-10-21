@@ -67,10 +67,13 @@
 #' 
 #' @export
 #' 
-pois_mash_posterior <- function (data, s, mu, psi2, bias = NULL, wlist,
-                                 Ulist, ulist, ulist.epsilon2 = NULL,
-                                 zeta, thresh = NULL, C = NULL,
-                                 res.colnames = NULL) {
+pois_mash_posterior <- function (data, s, mu, psi2,
+                                 bias = matrix(0,nrow(data),ncol(data)),
+                                 wlist, Ulist, ulist,
+                                 ulist.epsilon2 = rep(1e-8,length(ulist)),
+                                 zeta, thresh = 1/(500*ncol(zeta)),
+                                 C = diag(ncol(data)) - 1/ncol(data),
+                                 res.colnames=paste0(colnames(data),"-mean")) {
   data <- as.matrix(data)
   J    <- nrow(data)
   R    <- ncol(data)
@@ -79,26 +82,6 @@ pois_mash_posterior <- function (data, s, mu, psi2, bias = NULL, wlist,
   G    <- length(ulist)
   K    <- ncol(zeta)
 
-  # Calculate bias caused by unwanted variation.
-  if (is.null(bias))
-    bias <- matrix(0,J,R)
-  
-  # specify ulist.epsilon2 if not provided
-  if (is.null(ulist.epsilon2))
-    ulist.epsilon2 <- rep(1e-8,G)
-  
-  # specify the threshold for posterior weights to ignore mixture components
-  if (is.null(thresh))
-    thresh <- 1/K/500
-  
-  # Specify the default contrast matrix.
-  if (is.null(C))
-    C <- diag(R) - 1/R
-
-  # Specify the colnames of the contrasts.
-  if (is.null(res.colnames))
-    res.colnames <- paste0(colnames(data),"-mean")
-  
   # Matrices to store returned results
   Q <- nrow(C)
   res_post_mean  <- matrix(as.numeric(NA),J,Q)

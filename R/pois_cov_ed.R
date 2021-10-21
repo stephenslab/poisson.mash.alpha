@@ -71,16 +71,14 @@
 #' 
 #' @export
 #' 
-pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
-                         ruv = FALSE, Fuv = NULL, verbose = FALSE,
+pois_cov_ed <- function (data, subset, Ulist, ulist, ulist.dd,
+                         ruv = FALSE, Fuv, verbose = FALSE,
                          init = list(),  version = c("Rcpp","R"),
                          control = list()) {
   X        <- data$X
   s        <- data$s
   subgroup <- data$subgroup
-  if (is.null(ulist))
-    stop("ulist cannot be empty!")
-  if (is.null(subset))
+  if (is.missing(subset))
     subset <- 1:nrow(X)
   data.ed   <- as.matrix(X[subset,])
   J         <- nrow(data.ed)
@@ -103,7 +101,7 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
   tol.q     <- control$tol.q
   tol.rho   <- control$tol.rho
   
-  if (is.null(ulist.dd)) {
+  if (is.missing(ulist.dd)) {
     ulist.dd <- rep(TRUE,G)
     for (g in 1:G) 
       if (sum(ulist[[g]] != 0) == 0)
@@ -121,7 +119,7 @@ pois_cov_ed <- function (data, subset = NULL, Ulist, ulist, ulist.dd = NULL,
   bias     <- matrix(0,J,R)
   
   if (ruv) {
-    if (is.null(Fuv))
+    if (is.missing(Fuv))
       stop("The matrix Fuv must be provided if ruv is set to TRUE")
     F.ed <- as.matrix(Fuv[subset,])
     D    <- ncol(F.ed)
