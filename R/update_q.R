@@ -19,11 +19,11 @@ update_q_by_j <- function (X, s, subgroup, idx.update, mu, bias, psi2,
       for (h in 1:H) {
         for (l in 1:L) {
           hl <- hl + 1
-          if(any(is.na(gamma[j.idx,hl,])) | any(is.na(A[j.idx,hl,]))){
+          if(any(is.na(gamma[j.idx,hl,])) | any(is.na(A[j.idx,hl,]))) {
             init.m <- NULL
             init.V <- NULL
           }
-          else{
+          else {
             init.m <- gamma[j.idx,hl,]
             Utilde <- wlist[l] * Ulist[[h]] + psi2[j.idx] * diag(R)
             a.tmp  <- compute_poisson_rates(s,mu[j.idx,],ias[j.idx,],
@@ -44,10 +44,10 @@ update_q_by_j <- function (X, s, subgroup, idx.update, mu, bias, psi2,
                                         gamma = gamma.tmp[k],
                                         V = diag(Sigma.tmp)[k]))
           }
-          out <- update_q_eta_general(theta_m = gamma.tmp,theta_V = Sigma.tmp,
-                                      c2 = rep(1,R),psi2 = psi2[j.idx],
-                                      w = wlist[l],U = Ulist[[h]])
-          tmp.psi2[j.idx,hl] <- sum(out)
+          tmp.psi2[j.idx,hl] <-
+            sum(update_q_eta_general(theta_m = gamma.tmp,theta_V = Sigma.tmp,
+                                     c2 = rep(1,R),psi2 = psi2[j.idx],
+                                     w = wlist[l],U = Ulist[[h]]))
           gamma[j.idx,hl,]   <- gamma.tmp
           A[j.idx,hl,]       <- gamma.tmp + diag(Sigma.tmp)/2 
         }
@@ -60,23 +60,25 @@ update_q_by_j <- function (X, s, subgroup, idx.update, mu, bias, psi2,
       epsilon2.g <- ulist.epsilon2[g]
       for (l in 1:L) {
         gl <- gl + 1
-        if(any(is.na(gamma[j.idx,H*L+gl,])) | any(is.na(A[j.idx,H*L+gl,]))){
+        if (any(is.na(gamma[j.idx,H*L+gl,])) | any(is.na(A[j.idx,H*L+gl,]))) {
           init.m <- NULL
           init.V <- NULL
         }
-        else{
-          init.m   <- gamma[j.idx,H*L+gl,]
-          a.tmp    <- compute_poisson_rates(s,mu[j.idx,],bias[j.idx,],
-                                            A[j.idx,H*L+gl,])
-          S_inv    <- 1/(psi2[j.idx] * rep(1,R) + wlist[l] * epsilon2.g)
-          init.V   <- mat_inv_rank1(a.tmp + S_inv,-wlist[l] * ug * S_inv, (ug*S_inv)/(1 + wlist[l]*sum(ug^2*S_inv)))      
+        else {
+          init.m <- gamma[j.idx,H*L+gl,]
+          a.tmp  <- compute_poisson_rates(s,mu[j.idx,],bias[j.idx,],
+                                          A[j.idx,H*L+gl,])
+          S_inv  <- 1/(psi2[j.idx] * rep(1,R) + wlist[l] * epsilon2.g)
+          init.V <- mat_inv_rank1(a.tmp + S_inv,-wlist[l] * ug * S_inv,
+                                  (ug*S_inv)/(1 + wlist[l]*sum(ug^2*S_inv)))
         }
-        out <- update_q_theta_rank1(x = X[j.idx,], s = s, mu = mu[j.idx,], bias = bias[j.idx,], c2 = rep(1,R),
-                                           psi2 = psi2[j.idx] + wlist[l] * epsilon2.g, w = wlist[l], u = ug,
-                                           init = list(m = init.m,V = init.V), control = list(maxiter = maxiter.q,tol = tol.q))
+        out <- update_q_theta_rank1(X[j.idx,],s, mu[j.idx,],bias[j.idx,],
+                                    rep(1,R),psi2[j.idx]+wlist[l]*epsilon2.g,
+                                    wlist[l],ug,list(m = init.m,V = init.V),
+                                    maxiter = maxiter.q,tol = tol.q)
         ELBOs[j.idx,H*L+gl] <- out$ELBO
-        gamma.tmp <- out$m
-        Sigma.tmp <- out$V
+        gamma.tmp           <- out$m
+        Sigma.tmp           <- out$V
         for (i in 1:M) {
           k <- which(subgroup == i)
           tmp.mu[j.idx,H*L+gl,i] <-
@@ -90,15 +92,20 @@ update_q_by_j <- function (X, s, subgroup, idx.update, mu, bias, psi2,
         # If ug is zero vector.
         if (sum(ug != 0) == 0)
           tmp.psi2[j.idx,H*L+gl] <- sum(gamma.tmp^2 + diag(Sigma.tmp))
-        else if (epsilon2.g > 1e-4) {
-          out <- update_q_eta_rank1_robust(theta_m = gamma.tmp, theta_V = Sigma.tmp, c2 = rep(1,R), psi2 = psi2[j.idx],
-                                                w = wlist[l], u = ug, epsilon2 = epsilon2.g)
-          tmp.psi2[j.idx,H*L+gl] <- sum(out)
-        }
+        else if (epsilon2.g > 1e-4)
+          tmp.psi2[j.idx,H*L+gl] <-
+            sum(update_q_eta_rank1_robust(theta_m = gamma.tmp,
+                                          theta_V = Sigma.tmp,c2 = rep(1,R),
+                                          psi2 = psi2[j.idx],w = wlist[l],
+                                          u = ug,epsilon2 = epsilon2.g))
         else {
-          out <- update_q_beta_rank1(theta_m = gamma.tmp, theta_V = Sigma.tmp, c2 = rep(1,R), psi2 = psi2[j.idx], w = wlist[l], u = ug)
-          out <- update_q_eta_rank1(theta_m = gamma.tmp, theta_V = Sigma.tmp, a2_m = out$a2_m, a_theta_m = out$a_theta_m, u = ug)
-          tmp.psi2[j.idx,H*L+gl] <- sum(out)
+          out <- update_q_beta_rank1(theta_m = gamma.tmp,theta_V = Sigma.tmp,
+                                     c2 = rep(1,R),psi2 = psi2[j.idx],
+                                     w = wlist[l],u = ug)
+          tmp.psi2[j.idx,H*L+gl] <-
+            sum(update_q_eta_rank1(theta_m = gamma.tmp,theta_V = Sigma.tmp,
+                                   a2_m = out$a2_m,a_theta_m = out$a_theta_m,
+                                   u = ug))
         }
       }
     }

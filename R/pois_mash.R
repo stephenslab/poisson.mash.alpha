@@ -96,13 +96,13 @@ pois_mash <- function (data, Ulist, ulist,
                        res.colnames, init = list(), version = c("Rcpp","R"),
                        control = list()) {
   
-  s        <- data$s
-  subgroup <- data$subgroup
-  data     <- as.matrix(data$X)
-  J        <- nrow(data)
-  R        <- ncol(data)
-  M        <- length(unique(subgroup))
-  subgroup <- as.numeric(as.factor(subgroup))
+  s         <- data$s
+  subgroup  <- data$subgroup
+  data      <- as.matrix(data$X)
+  J         <- nrow(data)
+  R         <- ncol(data)
+  M         <- length(unique(subgroup))
+  subgroup  <- as.numeric(as.factor(subgroup))
   version   <- match.arg(version)
   control   <- modifyList(pois_mash_control_default(),control,keep.null = TRUE)
   maxiter   <- control$maxiter
