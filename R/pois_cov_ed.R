@@ -228,7 +228,9 @@ pois_cov_ed <- function (data, subset, Ulist, ulist, ulist.dd,
           for (i in 1:M) {
             k <- which(subgroup == i)
             tmp.mu[j,h,i] <-
-              sum(s[k] * exp(bias[j,k] + gamma.tmp[k] + diag(Sigma.tmp)[k]/2))
+              sum(compute_poisson_rates(s[k],bias = bias[j,k],
+                                        gamma = gamma.tmp[k],
+                                        V = diag(Sigma.tmp)[k]))
           }
           eta.qjh <- update_q_eta_general(theta_m = gamma.tmp,
                                           theta_V = Sigma.tmp,
@@ -257,9 +259,11 @@ pois_cov_ed <- function (data, subset, Ulist, ulist, ulist.dd,
           gamma.tmp <- gamma_jk[j,H+g,]
           Sigma.tmp <- Sigma_jk[[j]][H+g,,]
           for (i in 1:M) {
-            k <- which(subgroup == i)
-            tmp.mu[j,H+g,i] <- sum(s[k] * exp(bias[j,k] + gamma.tmp[k] +
-                                              diag(Sigma.tmp)[k]/2))
+              k <- which(subgroup == i)
+              tmp.mu[j,H+g,i] <-
+                  sum(compute_poisson_rates(s[k],bias = bias[j,k],
+                                            gamma = gamma.tmp[k],
+                                            V = diag(Sigma.tmp)[k]))
           }
           eta.qjg <- gamma.tmp^2 + diag(Sigma.tmp) 
           tmp.psi2[j,H+g] <- sum(eta.qjg)
@@ -281,8 +285,10 @@ pois_cov_ed <- function (data, subset, Ulist, ulist, ulist.dd,
           tmp2.u    <- tmp2.u + zeta[j,H+g] * beta.qjg$a_theta_m/psi2[j]
           for (i in 1:M) {
             k <- which(subgroup == i)
-            tmp.mu[j,H+g,i] <- sum(s[k] * exp(bias[j,k] + gamma.tmp[k] +
-                                              diag(Sigma.tmp)[k]/2))
+            tmp.mu[j,H+g,i] <-
+              sum(compute_poisson_rates(s[k],bias = bias[j,k],
+                                        gamma = gamma.tmp[k] +
+                                        V = diag(Sigma.tmp)[k]))
           }
           eta.qjg <- update_q_eta_rank1(theta_m = gamma.tmp,
                                         theta_V = Sigma.tmp,
@@ -319,8 +325,10 @@ pois_cov_ed <- function (data, subset, Ulist, ulist, ulist.dd,
           tmp2.u <- tmp2.u + zeta[j,H+g] * sum(ug * beta.qjg$a_theta_m)/psi2[j]
           for (i in 1:M) {
             k <- which(subgroup == i)
-            tmp.mu[j,H+g,i] <- sum(s[k] * exp(bias[j,k] + gamma.tmp[k] +
-                                              diag(Sigma.tmp)[k]/2))
+            tmp.mu[j,H+g,i] <-
+              sum(compute_poisson_rates(s[k],bias = bias[j,k],
+                                        gamma = gamma.tmp[k],
+                                        V = diag(Sigma.tmp)[k]))
           }
           eta.qjg <- update_q_eta_rank1(theta_m = gamma.tmp,
                                         theta_V = Sigma.tmp,

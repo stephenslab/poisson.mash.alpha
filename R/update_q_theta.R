@@ -82,9 +82,9 @@ update_q_theta_general <- function (x, s, mu, bias, c2, psi2, w = 1, U,
   a    <- compute_poisson_rates(s,mu,bias,m,diag(V))
   
   for (iter in 1:maxiter) {
-    V_new <- solve(solve(Utilde) + diag(a),tol = 1e-50)
+    V_new <- update_V(Utilde,a)
     a     <- compute_poisson_rates(s,mu,bias,m,diag(V_new))
-    m_new <- drop(m - V_new %*% (a - x + solve(Utilde,m)))
+    m_new <- update_m(Utilde,V_new,a,x,m)
     
     # Make sure the updated posterior mean is not unreasonably large
     # or small.

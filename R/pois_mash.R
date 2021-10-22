@@ -258,8 +258,7 @@ pois_mash <- function (data, Ulist, ulist,
     
     # Calculate the new rho and bias.
     if (ruv & update.rho) {
-      # CAN THIS BE A FUNCTION? e.g., update_rho_all.
-      rho.new <- update_rho_all(X=data, s=s, mu=mu, Fuv=Fuv, rho=rho, tmp.ruv=tmp.ruv, tol.rho=tol.rho)
+      rho.new <- update_rho_all(data,s,mu,Fuv,rho,tmp.ruv,tol.rho = tol.rho)
       diff.rho        <- rho.new - rho
       bias.new        <- Fuv %*% rho.new
       bias.new        <- scale_bias(bias.new,maxbias)
@@ -281,9 +280,9 @@ pois_mash <- function (data, Ulist, ulist,
     
     if (verbose) {
       print("iter         ELBO")
-      print(sprintf("%d:    %f", iter, ELBOs.overall[iter]))
+      print(sprintf("%d:    %f",iter,ELBOs.overall[iter]))
       print("iter         number_of_j_to_update")
-      print(sprintf("%d:    %d", iter, length(idx.update)))
+      print(sprintf("%d:    %d",iter,length(idx.update)))
     }
     
     if (length(idx.update) == 0)

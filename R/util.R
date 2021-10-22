@@ -21,9 +21,11 @@ mat_inv_rank1 <- function (v1, v2, v3)
 
 # Compute the expected Poisson rates under the variational
 # approximation of the Poisson mash parameters.
-compute_poisson_rates <- function (s, mu, bias, gamma, V) {
-  return(s*exp(mu + bias + gamma + V/2))
-}
+compute_poisson_rates <- function (s, mu = rep(0,length(s)),
+                                   bias = rep(0,length(mu)),
+                                   gamma = rep(0,length(bias)),
+                                   V = rep(0,length(gamma)))
+  s*exp(mu + bias + gamma + V/2)
 
 # Scale the J x R matrix of bias to avoid too large values in bias.
 scale_bias <- function (bias, maxbias) {
