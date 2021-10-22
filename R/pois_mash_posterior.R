@@ -109,26 +109,20 @@ pois_mash_posterior <- function (data, s, mu, psi2,
           if (zeta[j,hl] > thresh) {
                 
             # Calculate posterior mean and covariance of theta.
-            theta.qjhl <- update_q_theta_general(x = data[j,],s = s,
-                                                 mu = mu[j,],bias = bias[j,],
-                                                 c2 = rep(1,R),psi2 = psi2[j],
-                                                 w = wlist[l],U = Ulist[[h]])
+            out <- update_q_theta_general(data[j,],s,mu[j,],bias[j,],rep(1,R),
+                                          psi2[j],wlist[l],Ulist[[h]])
               
             # Calculate posterior mean and covariance of beta.
-            beta.qjhl <- update_q_beta_general(theta_m = theta.qjhl$m,
-                                               theta_V = theta.qjhl$V,
-                                               c2 = rep(1,R),psi2 = psi2[j],
-                                               w = wlist[l],U = Ulist[[h]])
-              
+            out <- update_q_beta_general(out$m,out$V,rep(1,R),psi2[j],
+                                         wlist[l],Ulist[[h]])
+
             # Calculate posterior mean and variance of C %*% beta.
-            m.qjhl <- as.numeric(C %*% beta.qjhl$beta_m)
-            sigma2.qjhl <- pmax(0,diag(C %*% beta.qjhl$beta_V %*% t(C)))
+            m.qjhl              <- drop(C %*% out$beta_m)
+            sigma2.qjhl         <- pmax(0,diag(C %*% out$beta_V %*% t(C)))
             tmp_post_mean[hl,]  <- m.qjhl
             tmp_post_mean2[hl,] <- m.qjhl^2 + sigma2.qjhl
-            tmp_post_neg[hl,]   <-
-              ifelse(sigma2.qjhl == 0,0,
-                     pnorm(0,mean = m.qjhl,sd = sqrt(sigma2.qjhl),
-                           lower.tail=TRUE))
+            tmp_post_neg[hl,]   <- ifelse(sigma2.qjhl == 0,0,
+                                          pnorm(0,m.qjhl,sqrt(sigma2.qjhl)))
             tmp_post_zero[hl,]  <- ifelse(sigma2.qjhl == 0,1,0)            
           }
         }
@@ -139,7 +133,7 @@ pois_mash_posterior <- function (data, s, mu, psi2,
     gl <- 0
     for (g in 1:G) {
       ug         <- ulist[[g]]
-      utildeg    <- as.numeric(C %*% ug)
+      utildeg    <- drop(C %*% ug)
       epsilon2.g <- ulist.epsilon2[g]
       for (l in 1:L) {
         gl <- gl + 1
@@ -150,19 +144,17 @@ pois_mash_posterior <- function (data, s, mu, psi2,
           if (epsilon2.g > 1e-4) {
                 
             # Calculate posterior mean and covariance of theta.
-            theta.qjgl <- update_q_theta_rank1(x = data[j,],s = s,mu = mu[j,],
-                            bias = bias[j,],c2 = rep(1,R),
-                            psi2 = psi2[j] + wlist[l] * epsilon2.g,
-                            w = wlist[l],u = ug)
-                
+            out <- update_q_theta_rank1(data[j,],s,mu[j,],bias[j,],rep(1,R),
+                                        psi2[j] + wlist[l] * epsilon2.g,
+                                        wlist[l],ug)
+                    
             # Calculate posterior mean and covariance of beta.
-            beta.qjgl <- update_q_beta_rank1_robust(theta_m = theta.qjgl$m,
-                           theta_V = theta.qjgl$V,c2 = rep(1,R),psi2 = psi2[j],
-                           w = wlist[l],u = ug,epsilon2 = epsilon2.g)
+            out <- update_q_beta_rank1_robust(out$m,out$V,rep(1,R),psi2[j],
+                                              wlist[l],ug,epsilon2.g)
                 
             # Calculate posterior mean and variance of C %*% beta.
-            m.qjgl      <- as.numeric(C %*% beta.qjgl$beta_m)
-            sigma2.qjgl <- pmax(0,diag(C %*% beta.qjgl$beta_V %*% t(C)))
+            m.qjgl      <- drop(C %*% out$beta_m)
+            sigma2.qjgl <- pmax(0,diag(C %*% out$beta_V %*% t(C)))
             tmp_post_mean[H*L+gl,]  <- m.qjgl
             tmp_post_mean2[H*L+gl,] <- m.qjgl^2 + sigma2.qjgl
             tmp_post_neg[H*L+gl,]   <-
@@ -174,33 +166,29 @@ pois_mash_posterior <- function (data, s, mu, psi2,
           else {
               
             # Calculate posterior mean and covariance of theta.
-            theta.qjgl <- update_q_theta_rank1(x = data[j,],s = s,mu = mu[j,],
-                                               bias = bias[j,],c2 = rep(1,R),
-                                               psi2 = psi2[j],w = wlist[l],
-                                               u = ug)
-            
+            out <- update_q_theta_rank1(data[j,],s,mu[j,],bias[j,],rep(1,R),
+                                        psi2[j],wlist[l],ug)
+
             # Calculate posterior mean and covariance of beta.
-            beta.qjgl <- update_q_beta_rank1(theta_m = theta.qjgl$m,
-                                             theta_V = theta.qjgl$V,
-                                             c2 = rep(1,R),psi2 = psi2[j],
-                                             w = wlist[l],u = ug)
-            
+            out <- update_q_beta_rank1(out$m,out$V,rep(1,R),psi2[j],
+                                       wlist[l],ug)
+
             # Calculate posterior mean and variance of C %*% beta.
-            post.qjgl <- pois_mash_compute_posterior_rank1(m = beta.qjgl$a_m,
-                           sigma2 = beta.qjgl$a_sigma2,u = utildeg)
-            tmp_post_mean[H*L+gl,]  <- post.qjgl$post_mean
-            tmp_post_mean2[H*L+gl,] <- post.qjgl$post_mean2
-            tmp_post_neg[H*L+gl,]   <- post.qjgl$post_neg
-            tmp_post_zero[H*L+gl,]  <- post.qjgl$post_zero
+            out <- pois_mash_compute_posterior_rank1(out$a_m,out$a_sigma2,
+                                                     utildeg)
+            tmp_post_mean[H*L+gl,]  <- out$post_mean
+            tmp_post_mean2[H*L+gl,] <- out$post_mean2
+            tmp_post_neg[H*L+gl,]   <- out$post_neg
+            tmp_post_zero[H*L+gl,]  <- out$post_zero
           }
         }
       }
     }
     
-    res_post_mean[j,] <- zeta[j,] %*% tmp_post_mean
+    res_post_mean[j,]  <- zeta[j,] %*% tmp_post_mean
     res_post_mean2[j,] <- zeta[j,] %*% tmp_post_mean2
-    res_post_neg[j,] <- zeta[j,] %*% tmp_post_neg
-    res_post_zero[j,] <- zeta[j,] %*% tmp_post_zero
+    res_post_neg[j,]   <- zeta[j,] %*% tmp_post_neg
+    res_post_zero[j,]  <- zeta[j,] %*% tmp_post_zero
   }
   
   # Calculate posterior standard deviation.
@@ -233,8 +221,7 @@ pois_mash_compute_posterior_rank1 <- function (m, sigma2, u) {
   post_mean2  <- (m^2 + sigma2) * (u^2)
   post_neg    <- rep(0,R)
   post_zero   <- rep(0,R)
-  post_neg_v  <- ifelse(sigma2 == 0,0,
-                        pnorm(0,mean = m,sd = sqrt(sigma2),lower.tail = TRUE))
+  post_neg_v  <- ifelse(sigma2 == 0,0,pnorm(0,m,sqrt(sigma2)))
   post_zero_v <- ifelse(sigma2 == 0,1,0)
   post_pos_v  <- pmax(0,1 - post_neg_v - post_zero_v)
   
@@ -252,6 +239,8 @@ pois_mash_compute_posterior_rank1 <- function (m, sigma2, u) {
       post_zero[r] <- 1
   }
   
-  return(list(post_mean = post_mean,post_mean2 = post_mean2,
-              post_neg = post_neg,post_zero = post_zero))
+  return(list(post_mean  = post_mean,
+              post_mean2 = post_mean2,
+              post_neg   = post_neg,
+              post_zero  = post_zero))
 }

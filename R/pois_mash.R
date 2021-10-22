@@ -105,7 +105,6 @@ pois_mash <- function (data, Ulist, ulist,
   subgroup <- as.numeric(as.factor(subgroup))
   version   <- match.arg(version)
   control   <- modifyList(pois_mash_control_default(),control,keep.null = TRUE)
-  
   maxiter   <- control$maxiter
   maxiter.q <- control$maxiter.q
   maxpsi2   <- control$maxpsi2
@@ -214,9 +213,9 @@ pois_mash <- function (data, Ulist, ulist,
   tmp.psi2 <- matrix(0,J,K)
   
   # Update posterior mean and covariance of theta and local ELBO.
-  out <- update_q_by_j(X=data, s=s, subgroup=subgroup, idx.update=1:J, mu=mu, bias=bias, psi2=psi2,
-                                   wlist=wlist, Ulist=Ulist, ulist=ulist, ulist.epsilon2=ulist.epsilon2,
-                                   gamma=gamma, A=A, ELBOs=ELBOs, tmp.mu=tmp.mu, tmp.psi2=tmp.psi2, maxiter.q=maxiter.q, tol.q=tol.q)
+  out <- update_q_by_j(data,s,subgroup,1:J,mu,bias,psi2,wlist,Ulist,
+                       ulist,ulist.epsilon2,gamma,A,ELBOs,tmp.mu,tmp.psi2,
+                       maxiter.q,tol.q)
   gamma    <- out$gamma
   A        <- out$A
   ELBOs    <- out$ELBOs
