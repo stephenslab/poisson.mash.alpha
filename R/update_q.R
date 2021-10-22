@@ -33,26 +33,30 @@ update_q_by_j <- function (X, s, subgroup, idx.update, mu, bias, psi2,
           out <- update_q_theta_general(X[j.idx,],s,mu[j.idx,],bias[j.idx,],
                                         rep(1,R),psi2[j.idx],wlist[l],
                                         Ulist[[h]],list(m = init.m,V = init.V),
-                                        maxiter = maxiter.q,tol = tol.q))
+                                        maxiter = maxiter.q,tol = tol.q)
           ELBOs[j.idx,hl] <- out$ELBO
           gamma.tmp       <- out$m
           Sigma.tmp       <- out$V
           for (i in 1:M) {
             k <- which(subgroup == i)
-            tmp.mu[j.idx,hl,i] <- sum(s[k] *
-              exp(bias[j.idx,k] + gamma.tmp[k] + diag(Sigma.tmp)[k]/2))
-        }
-          eta.qjhl <- update_q_eta_general(theta_m = gamma.tmp, theta_V = Sigma.tmp, c2 = rep(1,R), psi2 = psi2[j.idx], w = wlist[l], U = Ulist[[h]])
-          tmp.psi2[j.idx,hl] <- sum(eta.qjhl)
-          gamma[j.idx,hl,] <- gamma.tmp
-          A[j.idx,hl,] <- gamma.tmp + diag(Sigma.tmp)/2 
+            tmp.mu[j.idx,hl,i] <-
+              sum(compute_poisson_rates(s[k],bias = bias[j.idx,k],
+                                        gamma = gamma.tmp[k],
+                                        V = diag(Sigma.tmp)[k]))
+          }
+          out <- update_q_eta_general(theta_m = gamma.tmp,theta_V = Sigma.tmp,
+                                      c2 = rep(1,R),psi2 = psi2[j.idx],
+                                      w = wlist[l],U = Ulist[[h]])
+          tmp.psi2[j.idx,hl] <- sum(out)
+          gamma[j.idx,hl,]   <- gamma.tmp
+          A[j.idx,hl,]       <- gamma.tmp + diag(Sigma.tmp)/2 
         }
       }        
     }
     
     gl <- 0
     for (g in 1:G) {
-      ug <- ulist[[g]]
+      ug         <- ulist[[g]]
       epsilon2.g <- ulist.epsilon2[g]
       for (l in 1:L) {
         gl <- gl + 1
@@ -75,31 +79,31 @@ update_q_by_j <- function (X, s, subgroup, idx.update, mu, bias, psi2,
         Sigma.tmp <- out$V
         for (i in 1:M) {
           k <- which(subgroup == i)
-          tmp.mu[j.idx,H*L+gl,i] <- sum(s[k] *
-            exp(bias[j.idx,k] + gamma.tmp[k] + diag(Sigma.tmp)[k]/2))
+          tmp.mu[j.idx,H*L+gl,i] <-
+            sum(compute_poisson_rates(s[k],bias = bias[j.idx,k],
+                                      gamma = gamma.tmp[k],
+                                      V = diag(Sigma.tmp)[k]))
         }
         gamma[j.idx,H*L+gl,] <- gamma.tmp
-        A[j.idx,H*L+gl,] <- gamma.tmp + diag(Sigma.tmp)/2
-        
+        A[j.idx,H*L+gl,]     <- gamma.tmp + diag(Sigma.tmp)/2
+       
         # If ug is zero vector.
-        if (sum(ug != 0) == 0) {
-          eta.qjgl <- gamma.tmp^2 + diag(Sigma.tmp) 
-          tmp.psi2[j.idx,H*L+gl] <- sum(eta.qjgl)
-        }
+        if (sum(ug != 0) == 0)
+          tmp.psi2[j.idx,H*L+gl] <- sum(gamma.tmp^2 + diag(Sigma.tmp))
         else if (epsilon2.g > 1e-4) {
-          eta.qjgl <- update_q_eta_rank1_robust(theta_m = gamma.tmp, theta_V = Sigma.tmp, c2 = rep(1,R), psi2 = psi2[j.idx],
+          out <- update_q_eta_rank1_robust(theta_m = gamma.tmp, theta_V = Sigma.tmp, c2 = rep(1,R), psi2 = psi2[j.idx],
                                                 w = wlist[l], u = ug, epsilon2 = epsilon2.g)
-          tmp.psi2[j.idx,H*L+gl] <- sum(eta.qjgl)
+          tmp.psi2[j.idx,H*L+gl] <- sum(out)
         }
         else {
-          beta.qjgl <- update_q_beta_rank1(theta_m = gamma.tmp, theta_V = Sigma.tmp, c2 = rep(1,R), psi2 = psi2[j.idx], w = wlist[l], u = ug)
-          eta.qjgl <- update_q_eta_rank1(theta_m = gamma.tmp, theta_V = Sigma.tmp, a2_m = beta.qjgl$a2_m, a_theta_m = beta.qjgl$a_theta_m, u = ug)
-          tmp.psi2[j.idx,H*L+gl] <- sum(eta.qjgl)
+          out <- update_q_beta_rank1(theta_m = gamma.tmp, theta_V = Sigma.tmp, c2 = rep(1,R), psi2 = psi2[j.idx], w = wlist[l], u = ug)
+          out <- update_q_eta_rank1(theta_m = gamma.tmp, theta_V = Sigma.tmp, a2_m = out$a2_m, a_theta_m = out$a_theta_m, u = ug)
+          tmp.psi2[j.idx,H*L+gl] <- sum(out)
         }
       }
-    }      
+    }
   }
   
-  return(list(ELBOs = ELBOs,A = A,gamma = gamma,tmp.mu = tmp.mu,
-              tmp.psi2 = tmp.psi2))
+  return(list(ELBOs = ELBOs,A = A,gamma = gamma,
+              tmp.mu = tmp.mu,tmp.psi2 = tmp.psi2))
 }

@@ -289,9 +289,9 @@ pois_mash <- function (data, Ulist, ulist,
     
     # Update posterior mean and covariance of theta and local ELBO for
     # these j.
-    out <- update_q_by_j(X=data, s=s, subgroup=subgroup, idx.update=idx.update, mu=mu, bias=bias, psi2=psi2,
-                                     wlist=wlist, Ulist=Ulist, ulist=ulist, ulist.epsilon2=ulist.epsilon2,
-                                     gamma=gamma, A=A, ELBOs=ELBOs, tmp.mu=tmp.mu, tmp.psi2=tmp.psi2, maxiter.q=maxiter.q, tol.q=tol.q)
+    out <- update_q_by_j(data,s,subgroup,idx.update,mu,bias,psi2,wlist,
+                         Ulist,ulist,ulist.epsilon2,gamma,A,ELBOs,tmp.mu,
+                         tmp.psi2,maxiter.q,tol.q)
     gamma    <- out$gamma
     A        <- out$A
     ELBOs    <- out$ELBOs

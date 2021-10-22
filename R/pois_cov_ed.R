@@ -287,7 +287,7 @@ pois_cov_ed <- function (data, subset, Ulist, ulist, ulist.dd,
             k <- which(subgroup == i)
             tmp.mu[j,H+g,i] <-
               sum(compute_poisson_rates(s[k],bias = bias[j,k],
-                                        gamma = gamma.tmp[k] +
+                                        gamma = gamma.tmp[k],
                                         V = diag(Sigma.tmp)[k]))
           }
           eta.qjg <- update_q_eta_rank1(theta_m = gamma.tmp,
