@@ -80,6 +80,7 @@ res <- pois_mash(data = dat,Ulist = fit.ed$Ulist,ulist = ulist,
                  control = list(maxiter = 4))
 cat("finish fitting poisson mash with ruv\n")
 runtime <- proc.time() - start_time
+print(runtime)
 res$runtime <- runtime
 saveRDS(res,"pois_mash_ruv_fit.Rds")
 print(sessionInfo())

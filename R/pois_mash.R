@@ -259,7 +259,8 @@ pois_mash <- function (data, Ulist, ulist,
     
     # Calculate the new rho and bias.
     if (ruv & update.rho) {
-      rho.new <- update_rho_all(data,s,mu,Fuv,rho,tmp.ruv,tol = tol.rho)
+      rho.new <- update_rho_all(data,s,mu,Fuv,rho,tmp.ruv,tol = tol.rho,
+                                version = version)
       diff.rho        <- rho.new - rho
       bias.new        <- Fuv %*% rho.new
       bias.new        <- scale_bias(bias.new,maxbias)

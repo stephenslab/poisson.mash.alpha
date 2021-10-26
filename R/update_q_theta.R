@@ -68,19 +68,32 @@ update_q_theta_all <- function (x, s, mu, bias, c2 = rep(1,length(x)),
 # has full rank.
 update_q_theta_general <- function (x, s, mu, bias, c2, psi2, w = 1, U,
                                     init = list(), maxiter = 25, tol = 0.01,
-                                    lwr = -10, upr = 10) {
-  R      <- length(x)
-  m      <- init$m
-  V      <- init$V
-  Utilde <- w*U + psi2*diag(c2) 
+                                    lwr = -10, upr = 10,
+                                    version = c("Rcpp","R")) {
+  version <- match.arg(version)
+  R       <- length(x)
+  m       <- init$m
+  V       <- init$V
+  Utilde  <- w*U + psi2*diag(c2) 
+  bias    <- drop(bias)
   if (is.null(m))
     m <- rep(0,R)
   if (is.null(V))
     V <- Utilde
-  
-  bias <- drop(bias)
-  a    <- compute_poisson_rates(s,mu,bias,m,diag(V))
-  
+  if (version == "R")
+    out <- update_q_theta_general_r(x,s,mu,bias,c2,psi2,w,U,m,V,
+                                    maxiter,tol,lwr,upr)
+  else if (version == "Rcpp") {
+    out <- update_q_theta_general_rcpp(x,s,mu,bias,c2,psi2,w,U,m,V,
+                                       maxiter,tol,lwr,upr)
+  }
+  return(out)
+}
+
+# This implements update_q_theta_general with version = "R".
+update_q_theta_general_r <- function (x, s, mu, bias, c2, psi2, w, U, m, V,
+                                      maxiter, tol, lwr, upr) {
+  a <- compute_poisson_rates(s,mu,bias,m,diag(V))
   for (iter in 1:maxiter) {
     V_new <- update_V(Utilde,a)
     a     <- compute_poisson_rates(s,mu,bias,m,diag(V_new))

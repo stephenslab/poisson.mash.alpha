@@ -10,6 +10,8 @@ void update_rho (const vec& x, const mat& Fuv, double s, const  vec& mu,
 
 // FUNCTION DEFINITIONS
 // --------------------
+// This implements update_rho_all with version = "Rcpp".
+//
 // [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::export]]
 arma::mat update_rho_all_rcpp (const arma::mat& X, const arma::mat& Fuv,
