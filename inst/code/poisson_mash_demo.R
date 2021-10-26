@@ -75,7 +75,7 @@ start_time <- proc.time()
 cat("start fitting poisson mash with ruv\n")
 res <- pois_mash(data = dat,Ulist = fit.ed$Ulist,ulist = ulist,
                  normalizeU = TRUE,gridmult = 2.5,ruv = TRUE,Fuv = Fuv,
-                 rho = prefit$rho,verbose = TRUE,
+                 rho = prefit$rho,version = "R",verbose = TRUE,
                  init = list(mu = prefit$mu,psi2 = prefit$psi2),
                  control = list(maxiter = 4))
 cat("finish fitting poisson mash with ruv\n")

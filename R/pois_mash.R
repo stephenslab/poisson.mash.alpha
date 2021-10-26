@@ -92,8 +92,10 @@
 pois_mash <- function (data, Ulist, ulist,
                        ulist.epsilon2 = rep(1e-8,length(ulist)),
                        normalizeU = TRUE, gridmult = 2, wlist, ruv = FALSE,
-                       Fuv, rho, update.rho = TRUE, verbose = FALSE, C,
-                       res.colnames, init = list(), version = c("Rcpp","R"),
+                       Fuv, rho, update.rho = TRUE, verbose = FALSE,
+                       C = diag(ncol(data)) - 1/ncol(data),
+                       res.colnames = paste0(colnames(data),"-mean"),
+                       init = list(), version = c("Rcpp","R"),
                        control = list()) {
   
   s         <- data$s
@@ -257,7 +259,7 @@ pois_mash <- function (data, Ulist, ulist,
     
     # Calculate the new rho and bias.
     if (ruv & update.rho) {
-      rho.new <- update_rho_all(data,s,mu,Fuv,rho,tmp.ruv,tol.rho = tol.rho)
+      rho.new <- update_rho_all(data,s,mu,Fuv,rho,tmp.ruv,tol = tol.rho)
       diff.rho        <- rho.new - rho
       bias.new        <- Fuv %*% rho.new
       bias.new        <- scale_bias(bias.new,maxbias)

@@ -18,8 +18,8 @@ pois_mash(
   rho,
   update.rho = TRUE,
   verbose = FALSE,
-  C,
-  res.colnames,
+  C = diag(ncol(data)) - 1/ncol(data),
+  res.colnames = paste0(colnames(data), "-mean"),
   init = list(),
   version = c("Rcpp", "R"),
   control = list()

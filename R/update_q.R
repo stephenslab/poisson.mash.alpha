@@ -26,7 +26,7 @@ update_q_by_j <- function (X, s, subgroup, idx.update, mu, bias, psi2,
           else {
             init.m <- gamma[j.idx,hl,]
             Utilde <- wlist[l] * Ulist[[h]] + psi2[j.idx] * diag(R)
-            a.tmp  <- compute_poisson_rates(s,mu[j.idx,],ias[j.idx,],
+            a.tmp  <- compute_poisson_rates(s,mu[j.idx,],bias[j.idx,],
                                             A[j.idx,hl,])
             init.V <- update_V(Utilde,a.tmp)
           }
