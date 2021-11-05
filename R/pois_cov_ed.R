@@ -35,10 +35,6 @@
 #' @param init Optional list of initial values for model parameters
 #'   (e.g., returned by \code{pois_mash_ruv_prefit}).
 #' 
-#' @param version R (slower) and C++ (faster) implementations of the
-#'   model fitting algorithm are provided; these are selected with
-#'   \code{version = "R"} and \code{version = "Rcpp"}.
-#' 
 #' @param control A list of control parameters with the following
 #'   elements: \dQuote{maxiter}, maximum number of ED iterations;
 #'   \dQuote{maxiter.q}, maximum number of inner loop iterations to
@@ -73,8 +69,7 @@
 #' 
 pois_cov_ed <- function (data, subset, Ulist, ulist, ulist.dd,
                          ruv = FALSE, Fuv, verbose = FALSE,
-                         init = list(), version = c("Rcpp","R"),
-                         control = list()) {
+                         init = list(), control = list()) {
   X        <- data$X
   s        <- data$s
   subgroup <- data$subgroup
@@ -88,7 +83,6 @@ pois_cov_ed <- function (data, subset, Ulist, ulist, ulist.dd,
   G         <- length(ulist)
   K         <- H + G
   subgroup  <- as.numeric(as.factor(subgroup))
-  version   <- match.arg(version)
   control   <- modifyList(pois_cov_ed_control_default(),control,
                           keep.null = TRUE)
   
@@ -357,8 +351,7 @@ pois_cov_ed <- function (data, subset, Ulist, ulist, ulist.dd,
     
     # Update rho and bias if ruv = TRUE.
     if (ruv) {
-      rho.new  <- update_rho_all(data.ed,s,mu,F.ed,rho,tmp.ruv,tol = tol.rho,
-                                 version = version)
+      rho.new  <- update_rho_all(data.ed,s,mu,F.ed,rho,tmp.ruv,tol = tol.rho)
       diff.rho <- rho.new - rho
       rho      <- rho.new
       bias     <- F.ed %*% rho

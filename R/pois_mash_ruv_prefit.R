@@ -19,10 +19,6 @@
 #' @param init List of initial values for model parameters which
 #'   could be empty.
 #'
-#' @param version R (slower) and C++ (faster) implementations of the
-#'   model fitting algorithm are provided; these are selected with
-#'   \code{version = "R"} and \code{version = "Rcpp"}.
-#' 
 #' @param control List of control parameters with one or more of the
 #'   following elements: \dQuote{maxiter}, maximum number of iterations;
 #'   \dQuote{maxiter.q}, maximum number of inner-loop iterations to
@@ -48,7 +44,6 @@
 #' 
 pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
                                   init = list(),
-                                  version = c("Rcpp","R"),
                                   control = list()) {
 
   s         <- data$s
@@ -59,7 +54,6 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
   M         <- length(unique(subgroup))
   subgroup  <- as.numeric(as.factor(subgroup))
   Fuv       <- as.matrix(Fuv)
-  version   <- match.arg(version)
   control   <- modifyList(pois_mash_ruv_prefit_control_default(),control,
                           keep.null = TRUE)
 
@@ -152,8 +146,7 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
     psi2     <- pmin(pmax(psi2.new,minpsi2),maxpsi2)
     
     # Update rho and bias.
-    rho.new  <- update_rho_all(data,s,mu,Fuv,rho,exp(A),tol = tol.rho,
-                               version = version)
+    rho.new  <- update_rho_all(data,s,mu,Fuv,rho,exp(A),tol = tol.rho)
     diff.rho <- rho.new - rho
     rho      <- rho.new
     bias     <- Fuv %*% rho

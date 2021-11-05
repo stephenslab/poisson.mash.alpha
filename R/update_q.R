@@ -4,19 +4,7 @@
 update_q_by_j <- function (X, s, subgroup, idx.update, mu, bias, psi2,
                            wlist = 1, Ulist, ulist, ulist.epsilon2, gamma,
                            A, ELBOs, tmp.mu, tmp.psi2, maxiter.q = 25,
-                           tol.q = 0.01, version = c("Rcpp","R")) {
-  version <- match.arg(version)
-  out <- update_q_by_j_r(X,s,subgroup,idx.update,mu,bias,psi2,wlist,Ulist,
-                         ulist,ulist.epsilon2,gamma,A,ELBOs,tmp.mu,tmp.psi2,
-                         maxiter.q,tol.q,version)
-  return(out)
-}
-  
-# This implements update_q_by_j with version = "R".
-update_q_by_j_r <- function (X, s, subgroup, idx.update, mu, bias, psi2,
-                             wlist, Ulist, ulist, ulist.epsilon2, gamma,
-                             A, ELBOs, tmp.mu, tmp.psi2, maxiter.q, tol.q,
-                             version) {
+                           tol.q = 0.01) {
   J <- nrow(X)
   R <- ncol(X)
   M <- length(unique(subgroup))

@@ -21,7 +21,6 @@ pois_mash(
   C = diag(ncol(data)) - 1/ncol(data),
   res.colnames = paste0(colnames(data), "-mean"),
   init = list(),
-  version = c("Rcpp", "R"),
   control = list()
 )
 
@@ -79,10 +78,6 @@ of the contrasts.}
 
 \item{init}{List of initial values for model parameters, such as an
 output from \code{\link{pois_mash_ruv_prefit}}).}
-
-\item{version}{R (slower) and C++ (faster) implementations of the
-model fitting algorithm are provided; these are selected with
-\code{version = "R"} and \code{version = "Rcpp"}.}
 
 \item{control}{List of control parameters with the following
 elements: \dQuote{maxiter}, maximum number of outer loop

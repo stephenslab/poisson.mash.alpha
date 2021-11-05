@@ -11,73 +11,6 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// rcpparma_hello_world
-arma::mat rcpparma_hello_world();
-RcppExport SEXP _poisson_mash_alpha_rcpparma_hello_world() {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(rcpparma_hello_world());
-    return rcpp_result_gen;
-END_RCPP
-}
-// rcpparma_outerproduct
-arma::mat rcpparma_outerproduct(const arma::colvec& x);
-RcppExport SEXP _poisson_mash_alpha_rcpparma_outerproduct(SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::colvec& >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(rcpparma_outerproduct(x));
-    return rcpp_result_gen;
-END_RCPP
-}
-// rcpparma_innerproduct
-double rcpparma_innerproduct(const arma::colvec& x);
-RcppExport SEXP _poisson_mash_alpha_rcpparma_innerproduct(SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::colvec& >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(rcpparma_innerproduct(x));
-    return rcpp_result_gen;
-END_RCPP
-}
-// rcpparma_bothproducts
-Rcpp::List rcpparma_bothproducts(const arma::colvec& x);
-RcppExport SEXP _poisson_mash_alpha_rcpparma_bothproducts(SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::colvec& >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(rcpparma_bothproducts(x));
-    return rcpp_result_gen;
-END_RCPP
-}
-// update_q_theta_rcpp
-List update_q_theta_rcpp(const arma::vec& x, const arma::vec& s, const arma::vec& mu, const arma::vec& bias, const arma::vec& c2, const arma::vec& psi2, double w, const arma::mat& U, const arma::vec& m, const arma::mat& V, unsigned int maxiter, double tol, double lwr, double upr);
-RcppExport SEXP _poisson_mash_alpha_update_q_theta_rcpp(SEXP xSEXP, SEXP sSEXP, SEXP muSEXP, SEXP biasSEXP, SEXP c2SEXP, SEXP psi2SEXP, SEXP wSEXP, SEXP USEXP, SEXP mSEXP, SEXP VSEXP, SEXP maxiterSEXP, SEXP tolSEXP, SEXP lwrSEXP, SEXP uprSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::vec& >::type x(xSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type s(sSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type mu(muSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type bias(biasSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type c2(c2SEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type psi2(psi2SEXP);
-    Rcpp::traits::input_parameter< double >::type w(wSEXP);
-    Rcpp::traits::input_parameter< const arma::mat& >::type U(USEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type m(mSEXP);
-    Rcpp::traits::input_parameter< const arma::mat& >::type V(VSEXP);
-    Rcpp::traits::input_parameter< unsigned int >::type maxiter(maxiterSEXP);
-    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    Rcpp::traits::input_parameter< double >::type lwr(lwrSEXP);
-    Rcpp::traits::input_parameter< double >::type upr(uprSEXP);
-    rcpp_result_gen = Rcpp::wrap(update_q_theta_rcpp(x, s, mu, bias, c2, psi2, w, U, m, V, maxiter, tol, lwr, upr));
-    return rcpp_result_gen;
-END_RCPP
-}
 // update_rho_all_rcpp
 arma::mat update_rho_all_rcpp(const arma::mat& X, const arma::mat& Fuv, const arma::vec& s, const arma::mat& mu, const arma::mat& L, const arma::mat& rho, unsigned int maxiter, double tol, double maxrho);
 RcppExport SEXP _poisson_mash_alpha_update_rho_all_rcpp(SEXP XSEXP, SEXP FuvSEXP, SEXP sSEXP, SEXP muSEXP, SEXP LSEXP, SEXP rhoSEXP, SEXP maxiterSEXP, SEXP tolSEXP, SEXP maxrhoSEXP) {
@@ -99,11 +32,6 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_poisson_mash_alpha_rcpparma_hello_world", (DL_FUNC) &_poisson_mash_alpha_rcpparma_hello_world, 0},
-    {"_poisson_mash_alpha_rcpparma_outerproduct", (DL_FUNC) &_poisson_mash_alpha_rcpparma_outerproduct, 1},
-    {"_poisson_mash_alpha_rcpparma_innerproduct", (DL_FUNC) &_poisson_mash_alpha_rcpparma_innerproduct, 1},
-    {"_poisson_mash_alpha_rcpparma_bothproducts", (DL_FUNC) &_poisson_mash_alpha_rcpparma_bothproducts, 1},
-    {"_poisson_mash_alpha_update_q_theta_rcpp", (DL_FUNC) &_poisson_mash_alpha_update_q_theta_rcpp, 14},
     {"_poisson_mash_alpha_update_rho_all_rcpp", (DL_FUNC) &_poisson_mash_alpha_update_rho_all_rcpp, 9},
     {NULL, NULL, 0}
 };

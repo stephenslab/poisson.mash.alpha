@@ -10,7 +10,6 @@ pois_mash_ruv_prefit(
   Fuv,
   verbose = FALSE,
   init = list(),
-  version = c("Rcpp", "R"),
   control = list()
 )
 
@@ -28,10 +27,6 @@ each iteration.}
 
 \item{init}{List of initial values for model parameters which
 could be empty.}
-
-\item{version}{R (slower) and C++ (faster) implementations of the
-model fitting algorithm are provided; these are selected with
-\code{version = "R"} and \code{version = "Rcpp"}.}
 
 \item{control}{List of control parameters with one or more of the
 following elements: \dQuote{maxiter}, maximum number of iterations;

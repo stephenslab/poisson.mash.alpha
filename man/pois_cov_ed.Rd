@@ -15,7 +15,6 @@ pois_cov_ed(
   Fuv,
   verbose = FALSE,
   init = list(),
-  version = c("Rcpp", "R"),
   control = list()
 )
 
@@ -51,10 +50,6 @@ each iteration.}
 
 \item{init}{Optional list of initial values for model parameters
 (e.g., returned by \code{pois_mash_ruv_prefit}).}
-
-\item{version}{R (slower) and C++ (faster) implementations of the
-model fitting algorithm are provided; these are selected with
-\code{version = "R"} and \code{version = "Rcpp"}.}
 
 \item{control}{A list of control parameters with the following
 elements: \dQuote{maxiter}, maximum number of ED iterations;

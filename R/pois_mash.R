@@ -54,10 +54,6 @@
 #' @param init List of initial values for model parameters, such as an
 #'   output from \code{\link{pois_mash_ruv_prefit}}).
 #' 
-#' @param version R (slower) and C++ (faster) implementations of the
-#'   model fitting algorithm are provided; these are selected with
-#'   \code{version = "R"} and \code{version = "Rcpp"}.
-#' 
 #' @param control List of control parameters with the following
 #'   elements: \dQuote{maxiter}, maximum number of outer loop
 #'   iterations; \dQuote{maxiter.q}, maximum number of inner loop
@@ -95,8 +91,7 @@ pois_mash <- function (data, Ulist, ulist,
                        Fuv, rho, update.rho = TRUE, verbose = FALSE,
                        C = diag(ncol(data)) - 1/ncol(data),
                        res.colnames = paste0(colnames(data),"-mean"),
-                       init = list(), version = c("Rcpp","R"),
-                       control = list()) {
+                       init = list(), control = list()) {
   
   s         <- data$s
   subgroup  <- data$subgroup
@@ -105,7 +100,6 @@ pois_mash <- function (data, Ulist, ulist,
   R         <- ncol(data)
   M         <- length(unique(subgroup))
   subgroup  <- as.numeric(as.factor(subgroup))
-  version   <- match.arg(version)
   control   <- modifyList(pois_mash_control_default(),control,keep.null = TRUE)
   maxiter   <- control$maxiter
   maxiter.q <- control$maxiter.q
@@ -259,8 +253,7 @@ pois_mash <- function (data, Ulist, ulist,
     
     # Calculate the new rho and bias.
     if (ruv & update.rho) {
-      rho.new <- update_rho_all(data,s,mu,Fuv,rho,tmp.ruv,tol = tol.rho,
-                                version = version)
+      rho.new <- update_rho_all(data,s,mu,Fuv,rho,tmp.ruv,tol = tol.rho)
       diff.rho        <- rho.new - rho
       bias.new        <- Fuv %*% rho.new
       bias.new        <- scale_bias(bias.new,maxbias)
