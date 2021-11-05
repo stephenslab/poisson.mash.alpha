@@ -41,7 +41,7 @@ saveRDS(fit.glmpca,"fit_glmpca.Rds")
 # -----------------------------------------
 cat("start prefit for parameter initialization\n")
 t0 <- proc.time()
-prefit <- pois_mash_ruv_prefit(dat,Fuv,version = "R",verbose = TRUE)
+prefit <- pois_mash_ruv_prefit(dat,Fuv,verbose = TRUE)
 t1 <- proc.time()
 cat("finish prefit for parameter initialization\n")
 print(t1 - t0)
@@ -56,7 +56,7 @@ start_time <- proc.time()
 cat("start fitting ED step\n")
 fit.ed <- pois_cov_ed(dat,subset = res.pca$subset,Ulist = res.pca$Ulist,
                       ulist = res.pca$ulist,ruv = TRUE,Fuv = Fuv,
-                      verbose = TRUE,init = prefit,version = "R",
+                      verbose = TRUE,init = prefit,
                       control = list(maxiter = 100))
 cat("finish fitting ED step\n")
 runtime <- proc.time() - start_time
@@ -75,7 +75,7 @@ start_time <- proc.time()
 cat("start fitting poisson mash with ruv\n")
 res <- pois_mash(data = dat,Ulist = fit.ed$Ulist,ulist = ulist,
                  normalizeU = TRUE,gridmult = 2.5,ruv = TRUE,Fuv = Fuv,
-                 rho = prefit$rho,version = "R",verbose = TRUE,
+                 rho = prefit$rho,verbose = TRUE,
                  init = list(mu = prefit$mu,psi2 = prefit$psi2),
                  control = list(maxiter = 4))
 cat("finish fitting poisson mash with ruv\n")
