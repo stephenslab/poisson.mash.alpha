@@ -20,8 +20,7 @@ package; if it does not, please go [here][ashr].
 
 ## License
 
-Copyright (c) 2021, Yusha Liu, Peter Carbonetto and Matthew
-Stephens.
+Copyright (c) 2021, Yusha Liu, Peter Carbonetto and Matthew Stephens.
 
 All source code and software in this repository are made available
 under the terms of the [MIT license][mit-license].
