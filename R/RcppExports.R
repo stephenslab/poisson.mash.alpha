@@ -17,8 +17,8 @@ rcpparma_bothproducts <- function(x) {
     .Call('_poisson_mash_alpha_rcpparma_bothproducts', PACKAGE = 'poisson.mash.alpha', x)
 }
 
-update_q_theta_theta_rcpp <- function(x, s, mu, bias, c2, psi2, w, U, m, V, maxiter, tol, lwr, upr) {
-    .Call('_poisson_mash_alpha_update_q_theta_theta_rcpp', PACKAGE = 'poisson.mash.alpha', x, s, mu, bias, c2, psi2, w, U, m, V, maxiter, tol, lwr, upr)
+update_q_theta_rcpp <- function(x, s, mu, bias, c2, psi2, w, U, m, V, maxiter, tol, lwr, upr) {
+    .Call('_poisson_mash_alpha_update_q_theta_rcpp', PACKAGE = 'poisson.mash.alpha', x, s, mu, bias, c2, psi2, w, U, m, V, maxiter, tol, lwr, upr)
 }
 
 update_rho_all_rcpp <- function(X, Fuv, s, mu, L, rho, maxiter, tol, maxrho) {

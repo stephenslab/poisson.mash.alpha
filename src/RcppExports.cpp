@@ -54,9 +54,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// update_q_theta_theta_rcpp
-List update_q_theta_theta_rcpp(const arma::vec& x, const arma::vec& s, const arma::vec& mu, const arma::vec& bias, const arma::vec& c2, const arma::vec& psi2, double w, const arma::mat& U, const arma::vec& m, const arma::mat& V, unsigned int maxiter, double tol, double lwr, double upr);
-RcppExport SEXP _poisson_mash_alpha_update_q_theta_theta_rcpp(SEXP xSEXP, SEXP sSEXP, SEXP muSEXP, SEXP biasSEXP, SEXP c2SEXP, SEXP psi2SEXP, SEXP wSEXP, SEXP USEXP, SEXP mSEXP, SEXP VSEXP, SEXP maxiterSEXP, SEXP tolSEXP, SEXP lwrSEXP, SEXP uprSEXP) {
+// update_q_theta_rcpp
+List update_q_theta_rcpp(const arma::vec& x, const arma::vec& s, const arma::vec& mu, const arma::vec& bias, const arma::vec& c2, const arma::vec& psi2, double w, const arma::mat& U, const arma::vec& m, const arma::mat& V, unsigned int maxiter, double tol, double lwr, double upr);
+RcppExport SEXP _poisson_mash_alpha_update_q_theta_rcpp(SEXP xSEXP, SEXP sSEXP, SEXP muSEXP, SEXP biasSEXP, SEXP c2SEXP, SEXP psi2SEXP, SEXP wSEXP, SEXP USEXP, SEXP mSEXP, SEXP VSEXP, SEXP maxiterSEXP, SEXP tolSEXP, SEXP lwrSEXP, SEXP uprSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -74,7 +74,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
     Rcpp::traits::input_parameter< double >::type lwr(lwrSEXP);
     Rcpp::traits::input_parameter< double >::type upr(uprSEXP);
-    rcpp_result_gen = Rcpp::wrap(update_q_theta_theta_rcpp(x, s, mu, bias, c2, psi2, w, U, m, V, maxiter, tol, lwr, upr));
+    rcpp_result_gen = Rcpp::wrap(update_q_theta_rcpp(x, s, mu, bias, c2, psi2, w, U, m, V, maxiter, tol, lwr, upr));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -103,7 +103,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_poisson_mash_alpha_rcpparma_outerproduct", (DL_FUNC) &_poisson_mash_alpha_rcpparma_outerproduct, 1},
     {"_poisson_mash_alpha_rcpparma_innerproduct", (DL_FUNC) &_poisson_mash_alpha_rcpparma_innerproduct, 1},
     {"_poisson_mash_alpha_rcpparma_bothproducts", (DL_FUNC) &_poisson_mash_alpha_rcpparma_bothproducts, 1},
-    {"_poisson_mash_alpha_update_q_theta_theta_rcpp", (DL_FUNC) &_poisson_mash_alpha_update_q_theta_theta_rcpp, 14},
+    {"_poisson_mash_alpha_update_q_theta_rcpp", (DL_FUNC) &_poisson_mash_alpha_update_q_theta_rcpp, 14},
     {"_poisson_mash_alpha_update_rho_all_rcpp", (DL_FUNC) &_poisson_mash_alpha_update_rho_all_rcpp, 9},
     {NULL, NULL, 0}
 };
