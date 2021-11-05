@@ -114,3 +114,33 @@ update_q_by_j <- function (X, s, subgroup, idx.update, mu, bias, psi2,
   return(list(ELBOs = ELBOs,A = A,gamma = gamma,
               tmp.mu = tmp.mu,tmp.psi2 = tmp.psi2))
 }
+
+# This is the multithreading variant of update_q_by_j. It could
+# produce the same result as update_q_by_j, but possibly faster when
+# nc >= 2.
+#
+#' @importFrom parallel splitIndices
+#' @importFrom parallel mclapply
+update_q_by_j_multicore <- function (X, s, subgroup, idx.update, mu, bias,
+                                     psi2, wlist = 1, Ulist, ulist,
+                                     ulist.epsilon2, gamma, A, ELBOs, tmp.mu,
+                                     tmp.psi2, maxiter.q = 25, tol.q = 0.01,
+                                     nc = 1) {
+  if (nc == 1)
+    return(update_q_by_j(X,s,subgroup,idx.update,mu,bias,psi2,wlist,Ulist,
+                         ulist,ulist.epsilon2,gamma,A,ELBOs,tmp.mu,tmp.psi2,
+                         maxiter.q,tol.q))
+  else {
+      
+    # Split the data.
+    n       <- length(idx.update)
+    indices <- splitIndices(n,nsplit)
+
+    # Distribute the calculations using pblapply.
+    # TO DO.
+  
+    # Combine the individual update_q_by_j outputs, then output the
+    # combined result.
+    # TO DO.
+  }
+}
