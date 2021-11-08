@@ -11,7 +11,7 @@ update_q_by_j <- function (X, s, subgroup, idx.update, mu, bias, psi2,
   H <- length(Ulist)
   G <- length(ulist)
   L <- length(wlist)
-  
+
   for (j in 1:length(idx.update)) {
     j.idx <- idx.update[j]
     if (H > 0) {
@@ -32,7 +32,7 @@ update_q_by_j <- function (X, s, subgroup, idx.update, mu, bias, psi2,
           }
           out <- update_q_theta_general(X[j.idx,],s,mu[j.idx,],bias[j.idx,],
                                         rep(1,R),psi2[j.idx],wlist[l],
-                                        Ulist[[h]],list(m = init.m,V = init.V),
+                                        Ulist[[h]],list(m=init.m,V=init.V),
                                         maxiter = maxiter.q,tol = tol.q)
           ELBOs[j.idx,hl] <- out$ELBO
           gamma.tmp       <- out$m
@@ -53,7 +53,7 @@ update_q_by_j <- function (X, s, subgroup, idx.update, mu, bias, psi2,
         }
       }        
     }
-    
+
     gl <- 0
     for (g in 1:G) {
       ug         <- ulist[[g]]
@@ -110,10 +110,19 @@ update_q_by_j <- function (X, s, subgroup, idx.update, mu, bias, psi2,
       }
     }
   }
-  
-  return(list(ELBOs = ELBOs,A = A,gamma = gamma,
-              tmp.mu = tmp.mu,tmp.psi2 = tmp.psi2))
+
+  return(list(ELBOs = ELBOs,A = A,gamma = gamma,tmp.mu = tmp.mu,
+              tmp.psi2 = tmp.psi2))
 }
+
+# This is the same as update_q_by_j, except that "dat" is a list
+# containing all the arguments that contain the gene-wise data; that
+# is, data that is indexed by the indices specified in idx.update.
+update_q_by_j_with_dat <- function (dat, s, subgroup, wlist, Ulist, ulist,
+                                    ulist.epsilon2, maxiter.q = 25, tol.q)
+  update_q_by_j(dat$X,s,subgroup,1:nrow(dat$X),dat$mu,dat$bias,dat$psi2,
+                wlist,Ulist,ulist,ulist.epsilon2,dat$gamma,dat$A,dat$ELBOs,
+                dat$tmp.mu,dat$tmp.psi2,maxiter.q,tol.q)
 
 # This is the multithreading variant of update_q_by_j. It could
 # produce the same result as update_q_by_j, but possibly faster when
@@ -128,19 +137,45 @@ update_q_by_j_multicore <- function (X, s, subgroup, idx.update, mu, bias,
                                      nc = 1) {
   if (nc == 1)
     return(update_q_by_j(X,s,subgroup,idx.update,mu,bias,psi2,wlist,Ulist,
-                         ulist,ulist.epsilon2,gamma,A,ELBOs,tmp.mu,tmp.psi2,
-                         maxiter.q,tol.q))
+                         ulist,ulist.epsilon2,gamma,A,ELBOs,tmp.mu,
+                         tmp.psi2,maxiter.q,tol.q))
   else {
       
     # Split the data.
     n       <- length(idx.update)
-    indices <- splitIndices(n,nsplit)
+    indices <- splitIndices(n,nc)
+    dat     <- vector("list",nc)
+    for (i in 1:nc) {
+      js       <- indices[[i]]
+      dat[[i]] <- list(X        = X[js,,drop=FALSE],
+                       mu       = mu[js,,drop=FALSE],
+                       bias     = bias[js,,drop=FALSE],
+                       psi2     = psi2[js],
+                       gamma    = gamma[js,,,drop=FALSE],
+                       A        = A[js,,,drop=FALSE],
+                       ELBOs    = ELBOs[js,,drop=FALSE],
+                       tmp.mu   = tmp.mu[js,,,drop=FALSE],
+                       tmp.psi2 = tmp.psi2[js,,drop=FALSE])
+    }
 
-    # Distribute the calculations using pblapply.
-    # TO DO.
-  
+    # Distribute the calculations using mclapply.
+    ans <- mclapply(mc.cores = nc,dat,update_q_by_j_with_dat,s,subgroup,
+                    wlist,Ulist,ulist,ulist.epsilon2,maxiter.q,tol.q)
+    # ans <- lapply(dat,update_q_by_j_with_dat,s,subgroup,wlist,
+    #               Ulist,ulist,ulist.epsilon2,maxiter.q,tol.q)
+
     # Combine the individual update_q_by_j outputs, then output the
     # combined result.
-    # TO DO.
+    for (i in 1:nc) {
+      js            <- indices[[i]]
+      ELBOs[js,]    <- ans[[i]]$ELBOs[js,]
+      A[js,,]       <- ans[[i]]$A[js,,]
+      gamma[js,,]   <- ans[[i]]$gamma[js,,]
+      tmp.mu[js,,]  <- ans[[i]]$tmp.mu[js,,]
+      tmp.psi2[js,] <- ans[[i]]$tmp.psi2[js,]
+    }
   }
+
+  return(list(ELBOs = ELBOs,A = A,gamma = gamma,tmp.mu = tmp.mu,
+              tmp.psi2 = tmp.psi2))
 }

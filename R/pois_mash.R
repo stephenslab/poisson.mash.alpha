@@ -69,7 +69,8 @@
 #'   \dQuote{tol.q}, relative tolerance for assessing convergence of
 #'   variational parameters at each iteration; \dQuote{tol.rho},
 #'   tolerance for assessing convergence of effects corresponding to
-#'   unwanted variation. Any named components will override the
+#'   unwanted variation; \code{nc}, number of threads used in the
+#'   multithreaded updates. Any named components will override the
 #'   default optimization algorithm settings (as they are defined by
 #'   \code{pois_mash_control_default}).
 #' 
@@ -110,6 +111,7 @@ pois_mash <- function (data, Ulist, ulist,
   tol.mu    <- control$tol.mu
   tol.psi2  <- control$tol.psi2
   tol.bias  <- control$tol.bias
+  nc        <- control$nc
   
   # Initialize rho and bias.
   if (ruv) {
@@ -209,9 +211,9 @@ pois_mash <- function (data, Ulist, ulist,
   tmp.psi2 <- matrix(0,J,K)
   
   # Update posterior mean and covariance of theta and local ELBO.
-  out <- update_q_by_j(data,s,subgroup,1:J,mu,bias,psi2,wlist,Ulist,
-                       ulist,ulist.epsilon2,gamma,A,ELBOs,tmp.mu,tmp.psi2,
-                       maxiter.q,tol.q)
+  out <- update_q_by_j_multicore(data,s,subgroup,1:J,mu,bias,psi2,wlist,Ulist,
+                                 ulist,ulist.epsilon2,gamma,A,ELBOs,tmp.mu,
+                                 tmp.psi2,maxiter.q,tol.q,nc)
   gamma    <- out$gamma
   A        <- out$A
   ELBOs    <- out$ELBOs
@@ -343,4 +345,5 @@ pois_mash_control_default <- function()
        tol.psi2  = 0.02,
        tol.bias  = 0.01,
        tol.q     = 0.01,
-       tol.rho   = 1e-6)
+       tol.rho   = 1e-6,
+       nc        = 1)
