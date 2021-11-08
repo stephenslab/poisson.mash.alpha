@@ -166,11 +166,11 @@ update_q_by_j_multicore <- function (X, s, subgroup, idx.update, mu, bias,
     # combined result.
     for (i in 1:nc) {
       js            <- indices[[i]]
-      ELBOs[js,]    <- ans[[i]]$ELBOs[js,]
-      A[js,,]       <- ans[[i]]$A[js,,]
-      gamma[js,,]   <- ans[[i]]$gamma[js,,]
-      tmp.mu[js,,]  <- ans[[i]]$tmp.mu[js,,]
-      tmp.psi2[js,] <- ans[[i]]$tmp.psi2[js,]
+      ELBOs[js,]    <- ans[[i]]$ELBOs
+      A[js,,]       <- ans[[i]]$A
+      gamma[js,,]   <- ans[[i]]$gamma
+      tmp.mu[js,,]  <- ans[[i]]$tmp.mu
+      tmp.psi2[js,] <- ans[[i]]$tmp.psi2
     }
   }
 
