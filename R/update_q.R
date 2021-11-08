@@ -161,8 +161,6 @@ update_q_by_j_multicore <- function (X, s, subgroup, idx.update, mu, bias,
     # Distribute the calculations using mclapply.
     ans <- mclapply(mc.cores = nc,dat,update_q_by_j_with_dat,s,subgroup,
                     wlist,Ulist,ulist,ulist.epsilon2,maxiter.q,tol.q)
-    # ans <- lapply(dat,update_q_by_j_with_dat,s,subgroup,wlist,
-    #               Ulist,ulist,ulist.epsilon2,maxiter.q,tol.q)
 
     # Combine the individual update_q_by_j outputs, then output the
     # combined result.
