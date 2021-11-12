@@ -18,7 +18,7 @@ test_that("Describe test here",{
 
   # Run glmpca to estimate matrix of latent factors.
   design <- model.matrix(~condition)
-  fit.glmpca <- glmpca(Y = as.matrix(Y),X = design[,-1],L = 10,
+  fit.glmpca <- glmpca(Y = as.matrix(Y),X = design[,-1],L = 2,
                        fam = "nb2",sz = s,
                        ctl = list(maxIter = 100,tol = 1e-5))
   Fuv <- as.matrix(fit.glmpca$loadings)
@@ -28,4 +28,7 @@ test_that("Describe test here",{
   # iterations.
   prefit <- pois_mash_ruv_prefit(dat,Fuv)
   expect_gte(min(diff(prefit$ELBO)),0)
+
+  # Initialize the data-driven covariance matrices.
+  res.pca <- pois_cov_init(dat,ruv = TRUE,Fuv = Fuv,rho = prefit$rho,npc = 2)
 })
