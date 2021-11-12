@@ -144,6 +144,7 @@ update_q_by_j_multicore <- function (X, s, subgroup, idx.update, mu, bias,
     # Split the data.
     n       <- length(idx.update)
     indices <- splitIndices(n,nc)
+    indices <- lapply(indices,function (x) idx.update[x])
     dat     <- vector("list",nc)
     for (i in 1:nc) {
       js       <- indices[[i]]
