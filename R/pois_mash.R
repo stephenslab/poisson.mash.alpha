@@ -69,9 +69,9 @@
 #'   \dQuote{tol.q}, relative tolerance for assessing convergence of
 #'   variational parameters at each iteration; \dQuote{tol.rho},
 #'   tolerance for assessing convergence of effects corresponding to
-#'   unwanted variation; \code{nc}, number of threads used in the
-#'   multithreaded updates. Any named components will override the
-#'   default optimization algorithm settings (as they are defined by
+#'   unwanted variation; \code{nc}, the maximum number of threads used
+#'   in the multithreaded updates. Any named components will override
+#'   the default optimization algorithm settings (as they are defined by
 #'   \code{pois_mash_control_default}).
 #' 
 #' @return List with the following elements:

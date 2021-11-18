@@ -135,6 +135,7 @@ update_q_by_j_multicore <- function (X, s, subgroup, idx.update, mu, bias,
                                      ulist.epsilon2, gamma, A, ELBOs, tmp.mu,
                                      tmp.psi2, maxiter.q = 25, tol.q = 0.01,
                                      nc = 1) {
+  nc <- pmin(nc,length(idx.update))
   if (nc == 1)
     return(update_q_by_j(X,s,subgroup,idx.update,mu,bias,psi2,wlist,Ulist,
                          ulist,ulist.epsilon2,gamma,A,ELBOs,tmp.mu,
