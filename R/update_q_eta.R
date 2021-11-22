@@ -41,6 +41,7 @@ update_q_eta_only <- function (x, s, mu, bias, c2, psi2, init = list(),
   }
   
   # Calculate "local" ELBO F_j.
+  a <- compute_poisson_rates(s,mu,bias,m,V)
   ELBO <- sum(x*(mu + bias + m)) - sum(a) -
           0.5*(sum(V/Utilde) + sum(m^2/Utilde) - R
                + sum(log(Utilde)) - sum(log(V)))
@@ -58,7 +59,7 @@ update_q_eta_general <- function (theta_m, theta_V, c2, psi2, w=1, U) {
   U       <- tcrossprod(eig.U$vectors %*% diag(sqrt(eig.val)))
   R       <- length(theta_m)
   S_inv   <- 1/(psi2*c2)
-  tmp1    <- solve(solve(U) + diag(S_inv))
+  tmp1 <- update_V(U, S_inv)
   tmp2    <- solve(diag(R) + t(t(U)*S_inv))
   eta2_m  <- diag(tmp1 + tmp2 %*% (theta_m %*% t(theta_m) + theta_V) %*%
                   t(tmp2))

@@ -48,8 +48,9 @@ update_ruv <- function (zeta, A) {
   return(Ruv)
 }
 
+# Calculate solve(solve(U) + diag(a)) in a numerically more stable manner, where a is R x 1 vector
 update_V <- function (U, a)
-  solve(solve(U) + diag(a),tol = 1e-50)
+  return(U %*% solve(U*a + diag(nrow=nrow(U)), tol = 1e-50))
 
 update_m <- function (U, V, a, x, m)
   drop(m - V %*% (a - x + solve(U,m)))

@@ -50,6 +50,16 @@
 #' 
 #' @param res.colnames Character vector of length Q giving the names
 #'   of the contrasts.
+#'   
+#' @param posterior_samples The number of samples to be drawn from the
+#' posterior distribution of each effect.
+#' 
+#' @param median_deviations Logical scalar indicating whether to calculate
+#' posterior summary of deviation of condition-specific effects 
+#' relative to the median over all conditions.
+#' 
+#' @param seed a random number seed to use when sampling from the posteriors.
+#' It is used when \code{posterior_samples > 0} or \code{median_deviations = TRUE}. 
 #'
 #' @param init List of initial values for model parameters, such as an
 #'   output from \code{\link{pois_mash_ruv_prefit}}).
@@ -92,6 +102,7 @@ pois_mash <- function (data, Ulist, ulist,
                        Fuv, rho, update.rho = TRUE, verbose = FALSE,
                        C = diag(ncol(data)) - 1/ncol(data),
                        res.colnames = paste0(colnames(data),"-mean"),
+                       posterior_samples = 0, median_deviations = FALSE, seed = 1,
                        init = list(), control = list()) {
   
   s         <- data$s
@@ -326,7 +337,10 @@ pois_mash <- function (data, Ulist, ulist,
   result <- pois_mash_posterior(data = data,s = s,mu = mu,psi2 = psi2,
                                 bias = bias,wlist = wlist,Ulist = Ulist,
                                 ulist = ulist,ulist.epsilon2 = ulist.epsilon2, 
-                                zeta = zeta,C = C,res.colnames = res.colnames)
+                                zeta = zeta,C = C,res.colnames = res.colnames,
+                                posterior_samples = posterior_samples, 
+                                median_deviations = median_deviations, 
+                                seed = seed)
   if (verbose)
     cat("Finish calculating posterior summary.\n")
   return(list(pois.mash.fit = pois.mash.fit,result = result))

@@ -43,7 +43,7 @@
 #'   parameter \code{psi2}; \dQuote{maxbias}, maximum for the
 #'   gene-specific range of bias caused by unwanted variation;
 #'   \dQuote{tol.stop}, tolerance for assessing convergence of ED, as
-#'   measured by relative change in ELBO; \dQuote{tol.q}, relative
+#'   measured by absolute change in ELBO; \dQuote{tol.q}, relative
 #'   tolerance for assessing convergence of variational parameters at
 #'   each ED iteration; and \dQuote{tol.rho}{tolerance for assessing
 #'   convergence of effects corresponding to unwanted variation.} Any
@@ -197,11 +197,17 @@ pois_cov_ed <- function (data, subset, Ulist, ulist, ulist.dd,
       print(sprintf("%d:    %f",iter,ELBOs.overall[iter]))
     }
 
-    if (iter >= 50) 
-      if (is.finite(ELBOs.overall[iter]) & is.finite(ELBOs.overall[iter - 1]))
-        if (abs(ELBOs.overall[iter] -
-               ELBOs.overall[iter-1])/abs(ELBOs.overall[iter-1]) < tol.stop)
-          break
+    # Check the convergence criteria: fix this to (1) check for increases in ELBO;
+    # and (2) compare absolute change (not relative change).
+    if(iter > 1){
+      if(ELBOs.overall[iter] < ELBOs.overall[iter-1])
+        warning("ELBO is decreasing")
+      
+      if (iter >= 50) 
+        if (is.finite(ELBOs.overall[iter]) & is.finite(ELBOs.overall[iter - 1]))
+          if (abs(ELBOs.overall[iter] - ELBOs.overall[iter-1]) < tol.stop)
+            break
+    }
 
     # Calculate or update quantities related to model parameters mu,
     # psi2, U_h, u_g and, rho.
@@ -407,4 +413,4 @@ pois_cov_ed_control_default <- function()
        maxpsi2   = NULL,
        tol.q     = 0.01,
        tol.rho   = 1e-6,
-       tol.stop  = 1e-6)
+       tol.stop  = 0.1)

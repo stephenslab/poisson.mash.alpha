@@ -46,6 +46,17 @@
 #' @param res.colnames Character vector of length Q giving the names
 #' of the contrasts.
 #' 
+#' @param posterior_samples The number of samples to be drawn from the
+#' posterior distribution of each effect.
+#' 
+#' @param median_deviations Logical scalar indicating whether to calculate
+#' posterior summary of deviation of condition-specific effects 
+#' relative to the median over all conditions.
+#' 
+#' @param seed a random number seed to use when sampling from the posteriors.
+#' It is used when \code{posterior_samples > 0} 
+#' or \code{median_deviations = TRUE}.
+#' 
 #' @return The return value is a list with the following components:
 #' 
 #' \item{PosteriorMean}{J x Q matrix of posterior means.}
@@ -59,11 +70,20 @@
 #'   posterior probability of the true effect being negative.}
 #' 
 #' \item{lfsr}{J x Q matrix of local false sign rate estimates.}
+#' 
+#' \item{PosteriorSamples}{J x R x posterior_samples array of samples of effects, 
+#' if \code{posterior_samples > 0}.}
+#' 
+#' \item{beta_median_dev_post}{a list containing posterior summary of 
+#' deviation of effects relative to the median, 
+#' if \code{median_deviations = TRUE}.}
 #'
 #' @keywords internal
 #'
-#' @importFrom stats pnorm
+#' @importFrom stats pnorm rmultinom
 #' @importFrom ashr compute_lfsr
+#' @importFrom mvtnorm rmvnorm
+#' @importFrom abind abind
 #' 
 #' @export
 #' 
@@ -73,7 +93,8 @@ pois_mash_posterior <- function (data, s, mu, psi2,
                                  ulist.epsilon2 = rep(1e-8,length(ulist)),
                                  zeta, thresh = 1/(500*ncol(zeta)),
                                  C = diag(ncol(data)) - 1/ncol(data),
-                                 res.colnames=paste0(colnames(data),"-mean")) {
+                                 res.colnames=paste0(colnames(data),"-mean"),
+                                 posterior_samples = 0, median_deviations = FALSE, seed = 1) {
   data <- as.matrix(data)
   J    <- nrow(data)
   R    <- ncol(data)
@@ -89,6 +110,27 @@ pois_mash_posterior <- function (data, s, mu, psi2,
   res_post_neg   <- matrix(as.numeric(NA),J,Q)
   res_post_zero  <- matrix(as.numeric(NA),J,Q)
   
+  # Whether to draw posterior samples of effects
+  PosteriorSamples <- NULL
+  beta_median_dev_post <- NULL
+  
+  if(posterior_samples > 0 | median_deviations){
+    N <- ifelse(posterior_samples > 0, posterior_samples, 2e3)
+    set.seed(seed)
+    
+    # List to store posterior samples of effects
+    if(posterior_samples > 0)
+      res_post_samples <- vector("list", J)
+    
+    # posterior summary of deviations of beta relative to the median
+    if(median_deviations){
+      median_post_mean <- matrix(as.numeric(NA), J, R)
+      median_post_sd <- matrix(as.numeric(NA), J, R)
+      median_post_neg <- matrix(as.numeric(NA), J, R)
+      median_post_zero <- matrix(as.numeric(NA), J, R)      
+    }
+  }
+  
   # Calculate the posterior summary for each j.
   for (j in 1:J) {
       
@@ -97,6 +139,12 @@ pois_mash_posterior <- function (data, s, mu, psi2,
     tmp_post_mean2 <- matrix(0,K,Q)
     tmp_post_neg   <- matrix(0,K,Q)
     tmp_post_zero  <- matrix(1,K,Q)
+    
+    # Draw posterior samples of effects for a given j.
+    if(posterior_samples > 0 | median_deviations){
+      samples_j <- rep(list(matrix(0, 0, R)), K)
+      z <- rowSums(rmultinom(N, 1, zeta[j,]))
+    }
     
     # full-rank prior covariances
     if (H > 0) {
@@ -123,7 +171,13 @@ pois_mash_posterior <- function (data, s, mu, psi2,
             tmp_post_mean2[hl,] <- m.qjhl^2 + sigma2.qjhl
             tmp_post_neg[hl,]   <- ifelse(sigma2.qjhl == 0,0,
                                           pnorm(0,m.qjhl,sqrt(sigma2.qjhl)))
-            tmp_post_zero[hl,]  <- ifelse(sigma2.qjhl == 0,1,0)            
+            tmp_post_zero[hl,]  <- ifelse(sigma2.qjhl == 0,1,0)
+            
+            # Draw poterior samples of beta
+            if(posterior_samples > 0 | median_deviations){
+              if(z[hl] > 0)
+                samples_j[[hl]] <- rmvnorm(z[hl], mean = as.numeric(out$beta_m), sigma = out$beta_V)
+            }
           }
         }
       }
@@ -138,10 +192,17 @@ pois_mash_posterior <- function (data, s, mu, psi2,
       for (l in 1:L) {
         gl <- gl + 1
           
-        # Check if posterior weight exceeds the specified threshold
-        # and ug is not zero vector.
-        if (zeta[j,H*L+gl] > thresh & sum(utildeg != 0) > 0) {
-          if (epsilon2.g > 1e-4) {
+        # If posterior weight exceeds the specified threshold.
+        if (zeta[j,H*L+gl] > thresh) {
+          # If ug is zero vector
+          if(sum(utildeg != 0) == 0){
+            # Draw posterior samples of beta
+            if(posterior_samples > 0 | median_deviations)
+              samples_j[[H*L+gl]] <- matrix(0, z[H*L+gl], R)
+          }
+          
+          # If ug is not zero vector and epsilon2.g is not zero
+          else if (epsilon2.g > 1e-4) {
                 
             # Calculate posterior mean and covariance of theta.
             out <- update_q_theta_rank1(data[j,],s,mu[j,],bias[j,],rep(1,R),
@@ -162,7 +223,15 @@ pois_mash_posterior <- function (data, s, mu, psi2,
                      pnorm(0,mean = m.qjgl,sd = sqrt(sigma2.qjgl),
                            lower.tail = TRUE))
             tmp_post_zero[H*L+gl,]  <- ifelse(sigma2.qjgl == 0,1,0)
+            
+            # Draw poterior samples of beta
+            if(posterior_samples > 0 | median_deviations){
+              if(z[H*L+gl] > 0)
+                samples_j[[H*L+gl]] <- rmvnorm(z[H*L+gl], mean = as.numeric(out$beta_m), sigma = out$beta_V)
+            }
           }
+          
+          # If ug is not zero vector and epsilon2.g is zero
           else {
               
             # Calculate posterior mean and covariance of theta.
@@ -172,6 +241,12 @@ pois_mash_posterior <- function (data, s, mu, psi2,
             # Calculate posterior mean and covariance of beta.
             out <- update_q_beta_rank1(out$m,out$V,rep(1,R),psi2[j],
                                        wlist[l],ug)
+            
+            # Draw posterior samples of beta
+            if(posterior_samples > 0 | median_deviations){
+              if(z[H*L+gl] > 0)
+                samples_j[[H*L+gl]] <- rnorm(z[H*L+gl], mean=out$a_m, sd=sqrt(out$a_sigma2)) %*% t(ug)
+            }
 
             # Calculate posterior mean and variance of C %*% beta.
             out <- pois_mash_compute_posterior_rank1(out$a_m,out$a_sigma2,
@@ -189,6 +264,27 @@ pois_mash_posterior <- function (data, s, mu, psi2,
     res_post_mean2[j,] <- zeta[j,] %*% tmp_post_mean2
     res_post_neg[j,]   <- zeta[j,] %*% tmp_post_neg
     res_post_zero[j,]  <- zeta[j,] %*% tmp_post_zero
+    
+    if(posterior_samples > 0 | median_deviations){
+      samples_j_full <- do.call(rbind, samples_j)
+      
+      # Store posterior samples of effects for a given j.
+      if(posterior_samples > 0){
+        if(nrow(samples_j_full) >= posterior_samples)
+          res_post_samples[[j]] <- samples_j_full[sample(nrow(samples_j_full), posterior_samples),]
+        else
+          res_post_samples[[j]] <- samples_j_full[sample(nrow(samples_j_full), posterior_samples, replace = TRUE),]
+      }
+      
+      # Calculate posterior summary of deviations of beta relative to the median
+      if(median_deviations){
+        samples_j_full <- samples_j_full - apply(samples_j_full, 1, median) %*% t(rep(1,R))
+        median_post_mean[j,] <- apply(samples_j_full, 2, mean)
+        median_post_sd[j,] <- apply(samples_j_full, 2, sd)
+        median_post_neg[j,] <- apply(samples_j_full, 2, function(x){mean(x<0)})
+        median_post_zero[j,] <- apply(samples_j_full, 2, function(x){mean(x==0)})
+      }
+    }
   }
   
   # Calculate posterior standard deviation.
@@ -208,9 +304,29 @@ pois_mash_posterior <- function (data, s, mu, psi2,
   rownames(lfsr)          <- rownames(data)
   colnames(lfsr)          <- res.colnames
   
+  if(posterior_samples > 0){
+    res_post_samples = abind(res_post_samples, along = 0, force.array=TRUE) # dim J x posterior_samples x R
+    res_post_samples = array(res_post_samples, dim=c(J,posterior_samples,R))
+    res_post_samples = aperm(res_post_samples, c(1,3,2)) # dim J x R x posterior_samples
+    dimnames(res_post_samples) <- list(rownames(data), colnames(data), paste0("sample_", (1:posterior_samples)))
+    PosteriorSamples = res_post_samples
+  }
+  
+  if(median_deviations){
+    rownames(median_post_mean) <- rownames(data)
+    colnames(median_post_mean) <- colnames(data)
+    rownames(median_post_sd) <- rownames(data)
+    colnames(median_post_sd) <- colnames(data)
+    rownames(median_post_neg) <- rownames(data)
+    colnames(median_post_neg) <- colnames(data)
+    rownames(median_post_zero) <- rownames(data)
+    colnames(median_post_zero) <- colnames(data)
+    beta_median_dev_post <- list(PosteriorMean=median_post_mean, PosteriorSD=median_post_sd, ZeroProb=median_post_zero, NegativeProb=median_post_neg)
+  }
+  
   return(list(PosteriorMean = res_post_mean,PosteriorSD = res_post_sd,
-              ZeroProb = res_post_zero,NegativeProb = res_post_neg,
-              lfsr = lfsr))
+              ZeroProb = res_post_zero,NegativeProb = res_post_neg,lfsr = lfsr,
+              PosteriorSamples = PosteriorSamples, beta_median_dev_post = beta_median_dev_post))
 }
 
 #' @importFrom stats pnorm

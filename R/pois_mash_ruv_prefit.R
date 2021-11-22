@@ -24,7 +24,7 @@
 #'   \dQuote{maxiter.q}, maximum number of inner-loop iterations to
 #'   update variational parameters at each iteration; \dQuote{tol.stop},
 #'   tolerance for assessing convergence of prefit, as measured by
-#'   relative change in ELBO; \dQuote{tol.q}, relative tolerance for
+#'   absolute change in ELBO; \dQuote{tol.q}, relative tolerance for
 #'   assessing convergence of variational parameters at each iteration;
 #'   \dQuote{tol.rho}, tolerance for assessing convergence of effects
 #'   corresponding to unwanted variation. Any named components will
@@ -174,12 +174,15 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
     #
     # NOTE: Consider fixing this to (1) check for increases in ELBO;
     # and (2) compare absolute change (not relative change).
-    # 
-    if (iter >= 50)
-      if (is.finite(ELBOs.overall[iter]) & is.finite(ELBOs.overall[iter-1]))
-        if (abs(ELBOs.overall[iter] -
-                ELBOs.overall[iter-1])/abs(ELBOs.overall[iter-1]) < tol.stop)
-          break
+    if(iter > 1){
+      if(ELBOs.overall[iter] < ELBOs.overall[iter-1])
+        warning("ELBO is decreasing")
+      
+      if(iter >= 50)
+        if (is.finite(ELBOs.overall[iter]) & is.finite(ELBOs.overall[iter-1]))
+          if(abs(ELBOs.overall[iter]-ELBOs.overall[iter-1]) < tol.stop)
+            break
+    }
   }
   
   # Add names to the parameter estimates.
@@ -207,4 +210,4 @@ pois_mash_ruv_prefit_control_default <- function()
        maxiter.q = 25,
        tol.q     = 0.01,
        tol.rho   = 1e-4,
-       tol.stop  = 1e-6)
+       tol.stop  = 0.01)

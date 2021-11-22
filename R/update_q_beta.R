@@ -8,7 +8,7 @@ update_q_beta_general <- function (theta_m, theta_V, c2, psi2, w = 1, U) {
   eig.val <- pmax(eig.U$values,1e-8)
   U       <- tcrossprod(eig.U$vectors %*% diag(sqrt(eig.val)))
   S_inv   <- 1/(psi2*c2)
-  tmp     <- solve(solve(U) + diag(S_inv))
+  tmp     <- update_V(U, S_inv)
   beta_m  <- tmp %*% (theta_m * S_inv)
   beta_V  <- tmp + tmp %*% t(t(theta_V*S_inv)*S_inv) %*% tmp
   beta2_m <- beta_m %*% t(beta_m) + beta_V

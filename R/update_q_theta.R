@@ -107,6 +107,7 @@ update_q_theta_general <- function (x, s, mu, bias, c2, psi2, w = 1, U,
   }
   
   # Calculate "local" ELBO F_jhl.
+  a <- compute_poisson_rates(s,mu,bias,m,diag(V))
   ELBO <- sum(x*(mu + bias + m)) - sum(a) -
           0.5*(tr(solve(Utilde,V)) + drop(t(m) %*% solve(Utilde,m)) 
                - R + logdet(Utilde) - logdet(V))
@@ -160,6 +161,7 @@ update_q_theta_rank1 <- function (x, s, mu, bias, c2, psi2, w = 1, u,
   }
   
   # Calculate "local" ELBO F_jhl
+  a <- compute_poisson_rates(s,mu,bias,m,diag(V))
   ELBO <- sum(x*(mu + bias + m)) - sum(a) -
           0.5*(tr(solve(Utilde, V)) + drop(t(m) %*% solve(Utilde,m))
                - R + logdet(Utilde) - logdet(V))
