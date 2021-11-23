@@ -107,7 +107,7 @@ pois_cov_init <- function (data, ruv = FALSE, Fuv = NULL, rho = NULL, prop = 1,
   
   # Get the initial data-driven covariances based on SVD.
   res.svd <- svd(Z.cen,nv = npc,nu = npc)
-  f.svd   <- res.svd$v  
+  f.svd   <- res.svd$v
   d.svd   <- res.svd$d[1:npc]
   
   # Create list of rank-1 data-driven covariance matrices U_g =

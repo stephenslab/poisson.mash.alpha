@@ -398,7 +398,7 @@ pois_cov_ed <- function (data, subset, Ulist, ulist, ulist.dd,
   
   return(list(subset = subset,mu = mu,psi2 = psi2,rho = rho,Ulist = Ulist,
               ulist = ulist,ulist.dd = ulist.dd,pi = pi,zeta = zeta,
-              ELBO = ELBOs.overall[1:iter],iff.U = diff.U,
+              ELBO = ELBOs.overall[1:iter],diff.U = diff.U,
               diff.pi = diff.pi,diff.rho = diff.rho))
 }
 

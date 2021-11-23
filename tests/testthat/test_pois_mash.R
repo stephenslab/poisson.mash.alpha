@@ -5,7 +5,7 @@ test_that("Describe test here",{
   library(glmpca)
   
   # Simulate a toy single-cell data for 100 genes and 4 conditions.
-  dat <- pois_mash_sim_data(J = 100,R = 4,seed = 1)
+  dat <- pois_mash_sim_data(J = 200,R = 4,seed = 1)
   Y   <- dat$Y
   condition <- dat$condition
   
@@ -30,5 +30,17 @@ test_that("Describe test here",{
   expect_gte(min(diff(prefit$ELBO)),0)
 
   # Initialize the data-driven covariance matrices.
-  res.pca <- pois_cov_init(dat,ruv = TRUE,Fuv = Fuv,rho = prefit$rho,npc = 2)
+  res.pca <- pois_cov_init(dat,ruv = TRUE,Fuv = Fuv,rho = prefit$rho,
+                           npc = 2,cutoff = 2)
+
+  # Run the ED step.
+  capture.output(
+    fit.ed <- pois_cov_ed(dat,subset = res.pca$subset,Ulist = res.pca$Ulist,
+                          ulist = res.pca$ulist,ruv = TRUE,Fuv = Fuv,
+                          verbose = TRUE,init = prefit,
+                          control = list(maxiter = 100)))
+
+  # The ELBO should increase (or at least not decrease) over two
+  # successive iterations.
+  expect_gte(min(diff(fit.ed$ELBO)),0)
 })
