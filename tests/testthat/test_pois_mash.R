@@ -43,4 +43,22 @@ test_that("Describe test here",{
   # The ELBO should increase (or at least not decrease) over two
   # successive iterations.
   expect_gte(min(diff(fit.ed$ELBO)),0)
+ 
+  # Construct the canonical prior covariance matrices.
+  ulist.c <- pois_cov_canonical(dat)
+
+  # Combine all the rank-1 prior covariance matrices.
+  ulist <- c(fit.ed$ulist,ulist.c)
+
+  # Run Poisson mash RUV.
+  capture.output(
+    res <- pois_mash(data = dat,Ulist = fit.ed$Ulist,ulist = ulist,
+                     normalizeU = TRUE,gridmult = 2.5,ruv = TRUE,Fuv = Fuv,
+                     rho = prefit$rho,verbose = TRUE,
+                     init = list(mu = prefit$mu,psi2 = prefit$psi2),
+                     control = list(maxiter = 100,nc = 2)))
+
+  # The ELBO should increase (or at least not decrease) over two
+  # successive iterations.
+  expect_gte(min(diff(res$pois.mash.fit$ELBO)),0)
 })

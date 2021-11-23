@@ -327,7 +327,8 @@ pois_mash <- function (data, Ulist, ulist,
   pois.mash.fit <- list(mu = mu,psi2 = psi2,pi = pi,ulist = ulist,
                         ulist.epsilon2 = ulist.epsilon2,Ulist = Ulist,
                         wlist = wlist,zeta = zeta,Fuv = Fuv,rho = rho,
-                        bias = bias,ELBO = ELBOs.overall,j.update = j.update)
+                        bias = bias,ELBO = ELBOs.overall[1:iter],
+                        j.update = j.update)
   if (verbose) {
     cat("Finished fitting Poisson mash model.\n")
     cat("Start calculating posterior summary.\n")
