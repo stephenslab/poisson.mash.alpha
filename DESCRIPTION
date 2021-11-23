@@ -1,8 +1,8 @@
 Encoding: UTF-8
 Type: Package
 Package: poisson.mash.alpha
-Version: 0.1-82
-Date: 2021-11-22
+Version: 0.1-83
+Date: 2021-11-23
 Title: Poisson Multivariate Adaptive Shrinkage
 Authors@R: c(person("Yusha","Liu",role=c("aut","cre"),
                     email="yushaliu@uchicago.edu"),

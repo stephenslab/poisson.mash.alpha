@@ -59,7 +59,7 @@ update variational parameters at each ED iteration;
 parameter \code{psi2}; \dQuote{maxbias}, maximum for the
 gene-specific range of bias caused by unwanted variation;
 \dQuote{tol.stop}, tolerance for assessing convergence of ED, as
-measured by relative change in ELBO; \dQuote{tol.q}, relative
+measured by absolute change in ELBO; \dQuote{tol.q}, relative
 tolerance for assessing convergence of variational parameters at
 each ED iteration; and \dQuote{tol.rho}{tolerance for assessing
 convergence of effects corresponding to unwanted variation.} Any

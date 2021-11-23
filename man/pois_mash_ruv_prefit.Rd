@@ -33,7 +33,7 @@ following elements: \dQuote{maxiter}, maximum number of iterations;
 \dQuote{maxiter.q}, maximum number of inner-loop iterations to
 update variational parameters at each iteration; \dQuote{tol.stop},
 tolerance for assessing convergence of prefit, as measured by
-relative change in ELBO; \dQuote{tol.q}, relative tolerance for
+absolute change in ELBO; \dQuote{tol.q}, relative tolerance for
 assessing convergence of variational parameters at each iteration;
 \dQuote{tol.rho}, tolerance for assessing convergence of effects
 corresponding to unwanted variation. Any named components will

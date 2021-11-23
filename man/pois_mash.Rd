@@ -20,6 +20,9 @@ pois_mash(
   verbose = FALSE,
   C = diag(ncol(data)) - 1/ncol(data),
   res.colnames = paste0(colnames(data), "-mean"),
+  posterior_samples = 0,
+  median_deviations = FALSE,
+  seed = 1,
   init = list(),
   control = list()
 )
@@ -75,6 +78,16 @@ relative to the mean across all conditions.}
 
 \item{res.colnames}{Character vector of length Q giving the names
 of the contrasts.}
+
+\item{posterior_samples}{The number of samples to be drawn from the
+posterior distribution of each effect.}
+
+\item{median_deviations}{Logical scalar indicating whether to calculate
+posterior summary of deviation of condition-specific effects 
+relative to the median over all conditions.}
+
+\item{seed}{a random number seed to use when sampling from the posteriors.
+It is used when \code{posterior_samples > 0} or \code{median_deviations = TRUE}.}
 
 \item{init}{List of initial values for model parameters, such as an
 output from \code{\link{pois_mash_ruv_prefit}}).}
