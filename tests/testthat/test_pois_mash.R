@@ -1,6 +1,6 @@
 context("pois_mash")
 
-test_that("Describe test here",{
+test_that("Perform basic checks of the model fitting",{
   library(scran)
   library(glmpca)
   
@@ -26,7 +26,7 @@ test_that("Describe test here",{
   # Prefit the model to initialize parameters. The ELBO should
   # increase (or at least not decrease) over two successive
   # iterations.
-  prefit <- pois_mash_ruv_prefit(dat,Fuv)
+  capture.output(prefit <- pois_mash_ruv_prefit(dat,Fuv))
   expect_gte(min(diff(prefit$ELBO)),0)
 
   # Initialize the data-driven covariance matrices.
