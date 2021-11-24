@@ -97,6 +97,9 @@ pois_cov_init <- function (data, ruv = FALSE, Fuv = NULL, rho = NULL, prop = 1,
   
   # Get the genes that are differentially expressed across conditions.
   idx.sig <- which(apply(abs(Z.score),1,max) >= cutoff)
+  if (length(idx.sig) < 2)
+    stop("Number of genes satisfying cutoff is less than 2; consider ",
+         "increasing cutoff")
   
   # Get the Z-scores for these genes.
   Z.sig <- Z.score[idx.sig,]
