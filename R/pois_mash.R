@@ -100,11 +100,12 @@ pois_mash <- function (data, Ulist, ulist,
                        ulist.epsilon2 = rep(1e-8,length(ulist)),
                        normalizeU = TRUE, gridmult = 2, wlist, ruv = FALSE,
                        Fuv, rho, update.rho = TRUE, verbose = FALSE,
-                       C = diag(ncol(data)) - 1/ncol(data),
-                       res.colnames = paste0(colnames(data),"-mean"),
-                       posterior_samples = 0, median_deviations = FALSE, seed = 1,
-                       init = list(), control = list()) {
-  
+                       C = diag(ncol(data$X)) - 1/ncol(data$X),
+                       res.colnames = paste0(colnames(data$X),"-mean"),
+                       posterior_samples = 0, median_deviations = FALSE,
+                       seed = 1, init = list(), control = list()) {
+  force(C) # Forces evaluation of "C" input argument.
+  force(res.colnames) # Forces evaluation of "res.colnames" input argument.
   s         <- data$s
   subgroup  <- data$subgroup
   data      <- as.matrix(data$X)
