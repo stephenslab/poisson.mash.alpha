@@ -28,6 +28,10 @@
 #' 
 #' @param Fuv J x D matrix of latent factors causing unwanted
 #'   variation, with features as rows and latent factors as columns.
+#'   
+#' @param update.mu A logical scalar indicating whether to update 
+#'   gene-specific means mu. If \code{update.mu = FALSE}, initial mu
+#'   must be provided in \code{init}.
 #' 
 #' @param verbose Logical scalar indicating whether to print ELBO at
 #'   each iteration.
@@ -68,7 +72,7 @@
 #' @export
 #' 
 pois_cov_ed <- function (data, subset, Ulist, ulist, ulist.dd,
-                         ruv = FALSE, Fuv, verbose = FALSE,
+                         ruv = FALSE, Fuv, update.mu = TRUE, verbose = FALSE,
                          init = list(), control = list()) {
   X        <- data$X
   s        <- data$s
@@ -128,14 +132,18 @@ pois_cov_ed <- function (data, subset, Ulist, ulist, ulist.dd,
   # Initialize mu by ignoring condition-specific effects (i.e.,
   # theta) and unwanted variation.
   mu <- init$mu
-  if (is.null(mu))
-    mu <- initialize_mu(data.ed,s,subgroup)
+  if (is.null(mu)){
+    if(!update.mu)
+      stop("The initial values for mu must be provided if update.mu is set to FALSE")
+    else
+      mu <- initialize_mu(data.ed,s,subgroup)
+  }
   else
     mu <- mu[subset,]
   
   # Get a rough estimate of log-lambda, which is useful for estimating
   # the range of psi2, Ulist, ulist.
-  out     <- estimate_psi2_range(data.ed,s,maxpsi2)
+  out     <- estimate_psi2_range(data.ed,s,subgroup,maxpsi2)
   minpsi2 <- out$minpsi2
   maxpsi2 <- out$maxpsi2
   upr_bd  <- out$upr_bd
@@ -145,7 +153,7 @@ pois_cov_ed <- function (data, subset, Ulist, ulist, ulist.dd,
   # beta_j) and unwanted variation.
   psi2 <- init$psi2
   if (is.null(psi2))
-    psi2 <- initialize_psi2(data.ed,s,mu)
+    psi2 <- initialize_psi2(data.ed,s,subgroup,mu)
   else
     psi2 <- pmin(psi2[subset],maxpsi2)
   
@@ -346,7 +354,8 @@ pois_cov_ed <- function (data, subset, Ulist, ulist, ulist.dd,
     }
     
     # Update the matrix of means mu.
-    mu <- update_mu(data.ed,subgroup,zeta,tmp.mu)
+    if(update.mu)
+      mu <- update_mu(data.ed,subgroup,zeta,tmp.mu)
 
     # Update the dispersion parameter psi2.
     psi2 <- update_psi2(zeta,tmp.psi2,R,minpsi2,maxpsi2)
@@ -398,7 +407,7 @@ pois_cov_ed <- function (data, subset, Ulist, ulist, ulist.dd,
   
   return(list(subset = subset,mu = mu,psi2 = psi2,rho = rho,Ulist = Ulist,
               ulist = ulist,ulist.dd = ulist.dd,pi = pi,zeta = zeta,
-              ELBO = ELBOs.overall[1:iter],diff.U = diff.U,
+              ELBO = ELBOs.overall[1:iter],iff.U = diff.U,
               diff.pi = diff.pi,diff.rho = diff.rho))
 }
 

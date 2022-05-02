@@ -17,9 +17,10 @@ pois_mash(
   Fuv,
   rho,
   update.rho = TRUE,
+  update.mu = TRUE,
   verbose = FALSE,
-  C = diag(ncol(data)) - 1/ncol(data),
-  res.colnames = paste0(colnames(data), "-mean"),
+  C = diag(ncol(data$X)) - 1/ncol(data$X),
+  res.colnames = paste0(colnames(data$X), "-mean"),
   posterior_samples = 0,
   median_deviations = FALSE,
   seed = 1,
@@ -68,6 +69,10 @@ variation, such that \code{bias = Fuv \%*\% rho}.}
 \item{update.rho}{A logical scalar indicating whether to update
 effects corresponding to unwanted variation. Ignored if \code{ruv =
 FALSE}.}
+
+\item{update.mu}{A logical scalar indicating whether to update 
+gene-specific means mu. If \code{update.mu = FALSE}, initial mu
+must be provided in \code{init}.}
 
 \item{verbose}{A logical scalar indicating whether to print ELBO at
 each iteration.}

@@ -12,6 +12,10 @@
 #'
 #' @param Fuv J x D matrix of latent factors causing unwanted
 #'   variation, with features as rows and latent factors as columns.
+#'   
+#' @param update.mu A logical scalar indicating whether to update 
+#'   gene-specific means mu. If \code{update.mu = FALSE}, initial mu
+#'   must be provided in \code{init}.
 #' 
 #' @param verbose Logical scalar indicating whether to print ELBO at
 #'   each iteration.
@@ -42,7 +46,7 @@
 #' 
 #' @export
 #' 
-pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
+pois_mash_ruv_prefit <- function (data, Fuv, update.mu=TRUE, verbose = FALSE,
                                   init = list(),
                                   control = list()) {
 
@@ -66,12 +70,16 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
 
   # Initialize mu by ignoring random effects and unwanted variation.
   mu <- init$mu
-  if (is.null(mu))
-    mu <- initialize_mu(data,s,subgroup)
+  if (is.null(mu)){
+    if(!update.mu)
+      stop("The initial values for mu must be provided if update.mu is set to FALSE")
+    else
+      mu <- initialize_mu(data,s,subgroup)
+  }
     
   # Get a rough estimate of log-lambda, which is useful for estimating
   # the range of psi2.
-  out     <- estimate_psi2_range(data,s,epsilon = 1e-4)
+  out     <- estimate_psi2_range(data,s,subgroup,epsilon = 1e-4)
   minpsi2 <- out$minpsi2
   maxpsi2 <- out$maxpsi2
   
@@ -80,7 +88,7 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
   cat("Initializing psi2 via grid search.\n")
   psi2 <- init$psi2
   if (is.null(psi2))
-    psi2 <- initialize_psi2(data,s,mu)
+    psi2 <- initialize_psi2(data,s,subgroup,mu)
   
   # Initialize rho and bias.
   D   <- ncol(Fuv)
@@ -135,10 +143,12 @@ pois_mash_ruv_prefit <- function (data, Fuv, verbose = FALSE,
     }
     
     # Update mu.
-    for (i in 1:M) {
-      k        <- which(subgroup == i)
-      mu.i.new <- log(rowSums(data[,k])) - log(tmp.mu[,i])
-      mu[,k]   <- mu.i.new
+    if(update.mu){
+      for (i in 1:M) {
+        k        <- which(subgroup == i)
+        mu.i.new <- log(rowSums(data[,k])) - log(tmp.mu[,i])
+        mu[,k]   <- mu.i.new
+      }
     }
     
     # Update the dispersion parameter psi2.

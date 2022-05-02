@@ -37,14 +37,20 @@ scale_bias <- function (bias, maxbias) {
 }
 
 # Estimate the range of dispersion parameter psi2, where X is J x R
-# matrix of counts, s is R x 1 vector of sequencing depths, maxpsi2 is
-# a positive scalar specifying the upper bound for psi2, epsilon is a
-# small positive number to avoid psi2 being exactly 0.
-estimate_psi2_range <- function (X, s, maxpsi2 = NULL, epsilon = 1e-8) {
+# matrix of counts, s is R x 1 vector of sequencing depths, subgroup is R x 1 factor
+# vector with M levels, maxpsi2 is a positive scalar specifying the upper bound for psi2, 
+# epsilon is a small positive number to avoid psi2 being exactly 0.
+estimate_psi2_range <- function (X, s, subgroup = rep(1, length(s)), maxpsi2 = NULL, epsilon = 1e-8) {
   J         <- nrow(X)
   s.mat     <- outer(rep(1,J),s)
   loglambda <- log((X + 0.1)/s.mat)
-  v         <- apply(loglambda,1,sd)^2
+  M  <- length(unique(subgroup))
+  v  <- matrix(as.numeric(NA), J, M)
+  for(i in 1:M){
+    cols <- which(subgroup == i)
+    v[,i] <- apply(loglambda[, cols], 1, sd)^2
+  }
+  v <- as.numeric(v)
   upr_bd    <- 4*max(v) 
   minpsi2   <- pmax(min(v)/100,epsilon)
   if (is.null(maxpsi2))

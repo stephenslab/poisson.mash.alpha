@@ -115,7 +115,7 @@ pois_mash_posterior <- function (data, s, mu, psi2,
   beta_median_dev_post <- NULL
   
   if(posterior_samples > 0 | median_deviations){
-    N <- ifelse(posterior_samples > 0, posterior_samples, 2e3)
+    N <- ifelse(posterior_samples > 0, posterior_samples, 5e3)
     set.seed(seed)
     
     # List to store posterior samples of effects

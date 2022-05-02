@@ -8,6 +8,7 @@
 pois_mash_ruv_prefit(
   data,
   Fuv,
+  update.mu = TRUE,
   verbose = FALSE,
   init = list(),
   control = list()
@@ -21,6 +22,10 @@ calling \code{\link{pois_mash_set_data}}.}
 
 \item{Fuv}{J x D matrix of latent factors causing unwanted
 variation, with features as rows and latent factors as columns.}
+
+\item{update.mu}{A logical scalar indicating whether to update 
+gene-specific means mu. If \code{update.mu = FALSE}, initial mu
+must be provided in \code{init}.}
 
 \item{verbose}{Logical scalar indicating whether to print ELBO at
 each iteration.}

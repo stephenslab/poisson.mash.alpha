@@ -40,6 +40,10 @@
 #' @param update.rho A logical scalar indicating whether to update
 #'   effects corresponding to unwanted variation. Ignored if \code{ruv =
 #'   FALSE}.
+#'
+#' @param update.mu A logical scalar indicating whether to update 
+#'   gene-specific means mu. If \code{update.mu = FALSE}, initial mu
+#'   must be provided in \code{init}.
 #' 
 #' @param verbose A logical scalar indicating whether to print ELBO at
 #'   each iteration.
@@ -99,11 +103,11 @@
 pois_mash <- function (data, Ulist, ulist,
                        ulist.epsilon2 = rep(1e-8,length(ulist)),
                        normalizeU = TRUE, gridmult = 2, wlist, ruv = FALSE,
-                       Fuv, rho, update.rho = TRUE, verbose = FALSE,
+                       Fuv, rho, update.rho = TRUE, update.mu = TRUE, verbose = FALSE,
                        C = diag(ncol(data$X)) - 1/ncol(data$X),
                        res.colnames = paste0(colnames(data$X),"-mean"),
-                       posterior_samples = 0, median_deviations = FALSE,
-                       seed = 1, init = list(), control = list()) {
+                       posterior_samples = 0, median_deviations = FALSE, seed = 1,
+                       init = list(), control = list()) {
   force(C) # Forces evaluation of "C" input argument.
   force(res.colnames) # Forces evaluation of "res.colnames" input argument.
   s         <- data$s
@@ -140,6 +144,7 @@ pois_mash <- function (data, Ulist, ulist,
     bias     <- scale_bias(bias,maxbias)
   }
   else {
+    Fuv      <- NULL
     rho      <- NULL
     diff.rho <- NULL
     bias     <- matrix(0,J,R)
@@ -148,12 +153,16 @@ pois_mash <- function (data, Ulist, ulist,
   # Initialize mu by ignoring condition-specific effects (i.e.,
   # theta) and unwanted variation.
   mu <- init$mu
-  if (is.null(mu))
-    mu <- initialize_mu(data,s,subgroup,bias)
+  if (is.null(mu)){
+    if(!update.mu)
+      stop("The initial values for mu must be provided if update.mu is set to FALSE")
+    else
+      mu <- initialize_mu(data,s,subgroup,bias)
+  }
   
   # Get a rough estimate of log lambda, which is useful for estimating
   # the range of psi2.
-  out       <- estimate_psi2_range(data,s,maxpsi2)
+  out       <- estimate_psi2_range(data,s,subgroup,maxpsi2)
   loglambda <- out$loglambda
   minpsi2   <- out$minpsi2
   maxpsi2   <- out$maxpsi2
@@ -163,7 +172,7 @@ pois_mash <- function (data, Ulist, ulist,
   # variation.
   psi2 <- init$psi2
   if (is.null(psi2))
-    psi2 <- initialize_psi2(data,s,mu,bias)
+    psi2 <- initialize_psi2(data,s,subgroup,mu,bias)
   else
     psi2 <- pmin(psi2,maxpsi2)
   
@@ -251,14 +260,17 @@ pois_mash <- function (data, Ulist, ulist,
     ELBOs.overall[iter] <- compute_overall_elbo(ELBOs,pi,zeta,const)
     
     # Update pi.
-    pi.new  <- update_pi(zeta)
-    diff.pi <- pi.new - pi
-    pi      <- pi.new
+    pi <- update_pi(zeta)
     
     # Calculate the new mu.
-    mu.new        <- update_mu(data,subgroup,zeta,tmp.mu)
-    idx.update.mu <- apply(abs(mu.new - mu),1,max) > tol.mu
-    diff.mu       <- mu.new - mu
+    if(update.mu){
+      mu.new        <- update_mu(data,subgroup,zeta,tmp.mu)
+      idx.update.mu <- apply(abs(mu.new - mu),1,max) > tol.mu
+    }
+    else{
+      mu.new <- mu
+      idx.update.mu <- rep(FALSE, J)
+    }
     
     # Calculate the new psi2.
     psi2.new        <- update_psi2(zeta,tmp.psi2,R,minpsi2,maxpsi2)
@@ -324,12 +336,16 @@ pois_mash <- function (data, Ulist, ulist,
   if (ruv)
     colnames(rho) <- colnames(data)
   
+  # Reshape and name the prior weight estimates.
+  pi_mat <- matrix(pi, byrow=TRUE, ncol=length(wlist))
+  colnames(pi_mat) <- paste0("w=", round(wlist, 3))
+  rownames(pi_mat) <- c(names(Ulist), names(ulist))
+  
   # Create the list with model parameters.
-  pois.mash.fit <- list(mu = mu,psi2 = psi2,pi = pi,ulist = ulist,
+  pois.mash.fit <- list(mu = mu,psi2 = psi2,pi = pi_mat,ulist = ulist,
                         ulist.epsilon2 = ulist.epsilon2,Ulist = Ulist,
                         wlist = wlist,zeta = zeta,Fuv = Fuv,rho = rho,
-                        bias = bias,ELBO = ELBOs.overall[1:iter],
-                        j.update = j.update)
+                        bias = bias,ELBO = ELBOs.overall[1:iter],j.update = j.update)
   if (verbose) {
     cat("Finished fitting Poisson mash model.\n")
     cat("Start calculating posterior summary.\n")
