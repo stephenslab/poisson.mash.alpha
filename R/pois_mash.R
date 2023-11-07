@@ -328,11 +328,15 @@ pois_mash <- function (data, Ulist, ulist,
     tmp.ruv <- update_ruv(zeta,A)
   }
   
+  # Calculate the gene-wise ELBO.
+  ELBOs.genewise <- compute_genewise_elbo(ELBOs,pi,zeta,data,s)
+  
   # Name the model paramter estimates.
   rownames(mu)   <- rownames(data)
   colnames(mu)   <- colnames(data)
   names(psi2)    <- rownames(data)
   rownames(zeta) <- rownames(data)
+  names(ELBOs.genewise) <- rownames(data)
   if (ruv)
     colnames(rho) <- colnames(data)
   
@@ -344,8 +348,10 @@ pois_mash <- function (data, Ulist, ulist,
   # Create the list with model parameters.
   pois.mash.fit <- list(mu = mu,psi2 = psi2,pi = pi_mat,ulist = ulist,
                         ulist.epsilon2 = ulist.epsilon2,Ulist = Ulist,
-                        wlist = wlist,zeta = zeta,Fuv = Fuv,rho = rho,
-                        bias = bias,ELBO = ELBOs.overall[1:iter],j.update = j.update)
+                        wlist = wlist,zeta = zeta,
+                        Fuv = Fuv,rho = rho,bias = bias,
+                        ELBO.overall = ELBOs.overall[1:iter], ELBO.genewise = ELBOs.genewise, 
+                        j.update = j.update)
   if (verbose) {
     cat("Finished fitting Poisson mash model.\n")
     cat("Start calculating posterior summary.\n")

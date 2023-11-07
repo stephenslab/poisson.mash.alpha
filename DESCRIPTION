@@ -38,5 +38,5 @@ LinkingTo:
 NeedsCompilation: no
 LazyData: true
 LazyDataCompression: xz
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.3
 Remotes: stephens999/ashr

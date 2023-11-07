@@ -15,7 +15,7 @@ condition[i] specifies the condition status of the ith observation.}
 
 \item{si}{Vector of size factors for each observation.}
 
-\item{subgroup}{Factor with N entries and M levels giving the
+\item{subgroup}{Factor with R entries and M levels giving the
 subgroup status of each of R conditions. Default is no subgroups
 (that is, M = 1 level). If not set to \code{NULL}, the names of
 subgroup must match the levels of \code{condition}.}

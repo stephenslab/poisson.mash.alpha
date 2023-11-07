@@ -1,0 +1,222 @@
+---
+title: "Perform multi-condition differential expression analysis in single-cell RNA-seq data using Poisson mash"
+author: Yusha Liu
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+# Overview {-}
+
+```{r setup, include=FALSE}
+#knitr::opts_chunk$set(echo = TRUE, results = "hide")
+knitr::opts_chunk$set(comment = "#", collapse = TRUE, results = "hold", fig.align = "center", dpi = 120)
+```
+
+This vignette shows how to apply "Poisson multivariate adaptive shrinkage", or Poisson mash, from [Liu et al.][paper], using the [poisson.mash.alpha][software] software. Poisson mash was developed to perform multi-condition differential expression analyses on single cell RNA-sequencing (scRNA-seq) data, in which gene expression is measured in many (e.g., dozens) different conditions and the aim is to detect which
+genes are differentially expressed (DE) and to estimate expression differences (log-fold changes) among multiple conditions. This approach makes use of the multivariate adaptive shrinkage ([mash][mash]) prior introduced previously by our lab. 
+
+We illustrate how to implement this approach by analyzing data from an [experiment][paper] conducted to study the effects of cytokine stimulation on gene expression in neutrophils collected from cytokine-injected mice. 
+
+We first load in the R packages that will be used in the analysis, then go through an example to illustrate how to apply Poisson mash step by step.
+
+```{r load-pkgs, message=FALSE, warning=FALSE}
+library(Matrix)
+# R package that calculates cell-wise library size using a deconvolution-based approach
+suppressMessages(library(scran))    
+# R package that estimates the latent factors confounding DE analysis
+suppressMessages(library(glmpca))   
+# load in poisson.mash.alpha R package
+devtools::load_all()
+```
+
+
+# Create a data object for Poisson mash analysis {-}
+
+To run Poisson mash, users need to provide (1) a matrix of UMI counts, which is stored as a $J \times N$ matrix $Y$ with entries $y_{ji}$, where $i=1,\dots,N$ indexes cells and $j=1,\dots,J$ indexes genes, and (2) a $N \times 1$ vector with its $i^{\text{th}}$ element indicating the condition label of cell $i$. We assume that the $N$ cells come from $R$ conditions and focus on multi-condition experiments with $R \gg 2$. As a concrete example, the original neutrophils dataset contains counts from $13,362$ cells in $8,543$ genes from $45$ conditions (44 cytokine treatments and one control). For time reason, here we show how to fit Poisson mash using a subset of the dataset containing $1,936$ cells in $2,158$ genes from $12$ conditions. 
+
+```{r load-data}
+load("data/neutrophils_subset.RData")
+dim(Y)
+conditions <- as.factor(conditions)
+table(conditions)
+R <- length(unique(conditions))
+```
+ 
+After loading in the data, we compute the cell-specific size factors, which can be done in various ways. The simplest option is to take the sum of the counts $y_{ji}$ across all genes in each cell $i$, but here we take a more robust deconvolution-based approach. 
+
+```{r calculate-size-factor, message=FALSE}
+clusters <- quickCluster(Y)
+si <- calculateSumFactors(Y, clusters=clusters)
+names(si) <- colnames(Y)
+```
+
+Next, we create a data object for poisson mash analysis using the function `pois_mash_set_data`.
+
+```{r create-data-object}
+data <- pois_mash_set_data(Y, conditions, si)
+```
+
+By default, Poisson mash assumes a gene-specific baseline expression level, $\mu_j$, which is shared across all conditions. Poisson mash can also  handle the more complex setting in which the $R$ conditions arise from $m = 1, \dots, M$ subgroups, and each subgroup has its own baseline, $\mu_{jm}$. For example, one may want to perform a DE analysis across multiple treatment conditions, jointly for multiple cell types. In this case, $M$ is the number of cell types, and $R$ represents the total number of combinations of treatment conditions and cell types. Please refer to the documentation for 
+the function `pois_mash_set_data` to see how to do this. 
+
+
+# Estimate the latent factors causing unwanted variation {-}
+
+Unwanted variation present in the data can induce dependence among gene-wise tests and confound DE analysis. In some cases, the confounding variables are known, such as when these capture batch effects. More often, the unwanted variation is due to unmeasured factors. Poisson mash accounts for unwanted variation by estimating the latent confounding factors using the R package [glmpca][glmpca]. 
+
+```{r ruv, message=FALSE, warning=FALSE}
+start_time <- proc.time()
+design <- model.matrix(~conditions)
+fit.glmpca <- glmpca(Y=Y, X=design[,-1], L=4, fam="nb2", sz=si, ctl=list(verbose=FALSE, maxIter=100))
+Fuv <- as.matrix(fit.glmpca$loadings)
+runtime <- proc.time() - start_time
+print(runtime)
+```
+
+To save time, we just run `glmpca` for 100 iterations, but we recommend setting `maxIter = 500` for better estimation of latent confounding factors.
+
+
+# Fit the model {-}
+
+## Step 1. Prefit the model to initialize parameters {-}
+
+We first fit Poisson mash under the assumption of no DE to get sensible initial estimates of the other model parameters, including the gene-specific baseline expression $\mu_j$. Please refer to the model description sections in our [paper][paper] for more details. 
+
+```{r prefit, message=FALSE}
+prefit <- pois_mash_prefit(data, ruv=TRUE, Fuv=Fuv, verbose=FALSE)
+```
+
+## Step 2. Set up the prior covariance matrices {-}
+
+Let the $R \times 1$ vector $\beta_j = (\beta_{j1}, \dots, \beta_{jR})'$ denote the true DE effects of each of the $R$ conditions relative to the baseline expression $\mu_j$ for gene $j$. We assume that $\beta_j$ follows a mash prior, which is a mixture of multivariate normal distributions:
+$$ p(\beta_j; \pi, U) = \sum_{k=1}^K \sum_{l=1}^L \pi_{kl} N_R(\beta_j; 0, w_l U_k).$$
+In the mash prior, $w_l$ is a pre-specified grid of scaling coefficients, spanning from very small to very large, to capture the full range of possible DE effect sizes; $U_k$ is a set of covariance matrices, each of which capturing a different pattern of covariation of DE effects across conditions; $\pi_{kl}$ are corresponding mixture proportions that are estimated from the data during model fitting.  
+
+To use Poisson mash, users need to specify prior covariance matrices, which include both "canonical" covariance matrices that represent, for example, DE specific to a condition, and "data-driven" covariance matrices that are learned from the data and can capture arbitrary patterns of DE among conditions.
+
+For the canonical matrices, here we consider the matrices capturing condition-specific effects for each of the $R$ conditions. These matrices can be defined using the function `pois_cov_canonical`. 
+
+```{r canonical, message=FALSE}
+ulist.c <- pois_cov_canonical(data)
+```
+
+The data-driven covariance matrices are estimated using a three-step process: (1) initialization, (2) refinement, (3) diagonal entry modification. The initialization phase is implemented by the function `pois_cov_init`. To estimate data-driven covariance matrices, we only use the subset of genes containing "strong signals", i.e., the genes that are considered DE by a multinomial goodness-of-fit test.
+
+```{r cov-init, message=FALSE}
+res.pca <- pois_cov_init(data)
+```
+
+The refinement phase refines the initial estimates of data-driven covariance matrices using an extreme deconvolution algorithm, and is implemented by the function `pois_cov_ed`. As in the initialization phase, only data from the genes with strong signals are used. To save time, below we just run `pois_cov_ed` for 100 iterations, but we recommend using the default value `maxiter = 500` when analyzing your own data.
+
+```{r cov-ed, message=FALSE}
+ulist <- c(res.pca$ulist, ulist.c)
+
+# specify whether each prior covariance matrix is data-driven or not
+ulist.dd <- c(rep(TRUE, length(res.pca$ulist)-1), rep(FALSE, R+1)) 
+
+# run extreme deconvolution on the genes with strong signals
+start_time <- proc.time()
+fit.ed <- pois_cov_ed(data, subset=res.pca$subset, Ulist=res.pca$Ulist, ulist=ulist, ulist.dd=ulist.dd,
+                      ruv=TRUE, Fuv=Fuv, verbose=TRUE, init=prefit, control=list(maxiter=100))
+runtime <- proc.time() - start_time
+print(runtime)
+```
+
+The modification phase adds a small constant (e.g., $0.01$) to the diagonal entries of the estimated data-driven covariance matrices. This step is done to alleviate issues of inflated [local false sign rates (lfsr)][lfsr], which are analogous to but more conservative than local false discovery rates. 
+
+```{r cov-mod, message=FALSE}
+# add epsilon*I to each full-rank data-driven prior covariance matrix
+Ulist <- fit.ed$Ulist
+H <- length(Ulist)
+for(h in 1:H){
+  Uh <- Ulist[[h]]
+  Uh <- Uh/max(diag(Uh))
+  Ulist[[h]] <- Uh + 1e-2*diag(R)
+}
+
+# add epsilon*I to each rank-1 data-driven prior covariance matrix
+G <- length(fit.ed$ulist)
+epsilon2.G <- rep(1e-8, G)
+names(epsilon2.G) <- names(fit.ed$ulist)
+epsilon2.G[ulist.dd] <- 1e-2
+```
+
+## Step 3. Fit the Poisson mash model {-}
+
+Now we are ready to fit the Poisson mash model to data from all genes, which is implemented by the function `pois_mash`. To save time, we just run `pois_mash` for 5 iterations, but we recommend setting at least `maxiter = 100` when analyzing your own data.
+
+```{r fit-model, message=FALSE}
+start_time <- proc.time()
+res <- pois_mash(data=data, Ulist=Ulist, ulist=fit.ed$ulist, ulist.epsilon2=epsilon2.G, gridmult=2.5, ruv=TRUE, Fuv=Fuv, rho=prefit$rho, 
+                 verbose=TRUE, init=list(mu=prefit$mu, psi2=prefit$psi2), control=list(maxiter=5)) 
+runtime <- proc.time() - start_time
+print(runtime)
+saveRDS(res, file = "data/neutrophils_subset_pois_mash_ruv_fit.rds")
+```
+
+Of note, Poisson mash aims to detect and estimate expression differences relative to some "reference" condition, which needs to be specified by the user. By default, the reference condition is the mean across all conditions. Alternatively, users can specify a particular condition as the reference condition using the arguments `C` and `res.colnames` of the function `pois_mash`. If it is also of interest to detect and estimate expression 
+differences relative to the median across all conditions, this can be accomplished by setting `median_deviations = TRUE` in the above call.
+
+
+# Understand the output {-}
+We will next look at the results, which are stored in the `res` object produced by the call to `pois_mash`. Recall that we illustrate how to fit the Poisson mash model using a subset of the neutrophils data to save time. Here we load in the Poisson mash fit to the entire neutrophils dataset.
+
+```{r load-results, message=FALSE}
+load("data/neutrophils_pois_mash_ruv_fit.RData")
+```
+
+The output contains posterior summaries of the condition-specific DE effects relative to the reference condition specified by the user, including posterior means and posterior standard deviations of the DE effect sizes (log-fold changes) and measures of significance (lfsr), for each gene in the dataset. These DE effect posterior summaries are stored in the `result` component. 
+
+```{r posterior-summary, message=FALSE}
+# transform DE effect estimates to the scale of log2 fold change
+res$result$PosteriorMean[1:5, 1:5]/log(2)
+# gene-specific, condition-specific lfsr
+res$result$lfsr[1:5,1:5]
+```
+
+We can find the number of DE genes, which are defined as genes having lfsr less than $\alpha$ in at least one condition, where $\alpha$ is a threshold specified by the user (e.g., $0.05$).
+
+```{r find-de, message=FALSE}
+lfsr <- res$result$lfsr
+# get the indices of identified DE genes
+de.genes <- which(apply(lfsr, 1, min) < 0.05)
+# get the total number of DE genes
+length(de.genes)
+# order DE genes by significance based on mininum lfsr across conditions
+de.genes <- de.genes[order(apply(lfsr[de.genes,], 1, min))]    
+head(de.genes)
+```
+
+The model parameter estimates are stored in the `pois.mash.fit` component. In particular, let us look at the estimates of the mixture proportions for different prior covariance matrices: 
+
+```{r mixture-proportion, message=FALSE}
+round(rowSums(res$pois.mash.fit$pi), 3)
+```
+
+The data-driven covariance matrix "tPCA" has by far the largest proportion estimate ($91\%$). We plot the correlation heatmap for this covariance matrix, which captures the most frequent pattern of sharing of DE effects across cytokine treatments in the neutrophils data. For space reason, here we present the correlation heatmap only for selected conditions. 
+
+```{r plot-sharing-pattern, fig.height=5, fig.width=5, warning=FALSE, message=FALSE}
+library(pheatmap)
+load("data/condition_colors.RData")
+U <- res$pois.mash.fit$Ulist[[1]]
+colnames(U) <- colnames(res$pois.mash.fit$mu)
+rownames(U) <- colnames(res$pois.mash.fit$mu)
+idx.trts <- match(names(cols.trt), colnames(res$pois.mash.fit$mu))
+corr <- cov2cor(U[idx.trts, idx.trts])
+pheatmap(corr, cluster_rows = FALSE, cluster_cols = FALSE, angle_col = 90, fontsize = 15, main = "Major prior covariance matrix (weight = 91%)")
+```
+
+
+# Session info {-}
+
+This is the version of R and the packages that were used to generate these results.
+
+```{r session-info}
+sessionInfo()
+```
+
+[paper]: https://arxiv.org/abs/2210.00697
+[software]: https://github.com/stephenslab/poisson.mash.alpha
+[mash]: https://dx.doi.org/10.1038/s41588-018-0268-8
+[lfsr]: https://doi.org/10.1093/biostatistics/kxw041
+[glmpca]: https://github.com/willtownes/glmpca
