@@ -43,6 +43,7 @@ mash step-by-step.
 library(Matrix)
 library(scran)
 library(glmpca)
+library(pheatmap)
 library(poisson.mash.alpha)
 ```
 
@@ -193,11 +194,8 @@ ulist <- c(res.pca$ulist, ulist.c)
 ulist.dd <- c(rep(TRUE, length(res.pca$ulist)-1), rep(FALSE, R+1)) 
 
 # run extreme deconvolution on the genes with strong signals
-start_time <- proc.time()
-fit.ed <- pois_cov_ed(data, subset=res.pca$subset, Ulist=res.pca$Ulist, ulist=ulist, ulist.dd=ulist.dd,
+fit.ed <- pois_cov_ed(dat, subset=res.pca$subset, Ulist=res.pca$Ulist, ulist=ulist, ulist.dd=ulist.dd,
                       ruv=TRUE, Fuv=Fuv, verbose=TRUE, init=prefit, control=list(maxiter=100))
-runtime <- proc.time() - start_time
-print(runtime)
 ```
 
 The modification phase adds a small constant (e.g., $0.01$) to the
@@ -225,15 +223,14 @@ epsilon2.G[ulist.dd] <- 1e-2
 
 ### Step 3: Fit the Poisson mash model
 
-Now we are ready to fit the Poisson mash model to data from all genes, which is implemented by the function `pois_mash`. To save time, we just run `pois_mash` for 5 iterations, but we recommend setting at least `maxiter = 100` when analyzing your own data.
+Now we are ready to fit the Poisson mash model to data from all genes,
+which is implemented by the function `pois_mash`. To save time, we
+just run `pois_mash` for 5 iterations, but we recommend setting at
+least `maxiter = 100` when analyzing your own data.
 
 ```{r fit-model, message=FALSE, eval=FALSE}
-start_time <- proc.time()
-res <- pois_mash(data=data, Ulist=Ulist, ulist=fit.ed$ulist, ulist.epsilon2=epsilon2.G, gridmult=2.5, ruv=TRUE, Fuv=Fuv, rho=prefit$rho, 
+res <- pois_mash(data=dat, Ulist=Ulist, ulist=fit.ed$ulist, ulist.epsilon2=epsilon2.G, gridmult=2.5, ruv=TRUE, Fuv=Fuv, rho=prefit$rho, 
                  verbose=TRUE, init=list(mu=prefit$mu, psi2=prefit$psi2), control=list(maxiter=5)) 
-runtime <- proc.time() - start_time
-print(runtime)
-saveRDS(res, file = "data/neutrophils_subset_pois_mash_ruv_fit.rds")
 ```
 
 Of note, Poisson mash aims to detect and estimate expression
@@ -255,7 +252,7 @@ save time. Here we load in the Poisson mash fit to the entire
 neutrophils dataset.
 
 ```{r load-results, message=FALSE, eval=FALSE}
-load("data/neutrophils_pois_mash_ruv_fit.RData")
+data(neutrophils_pois_mash_ruv_fit)
 ```
 
 The output contains posterior summaries of the condition-specific DE
@@ -272,7 +269,9 @@ res$result$PosteriorMean[1:5, 1:5]/log(2)
 res$result$lfsr[1:5,1:5]
 ```
 
-We can find the number of DE genes, which are defined as genes having lfsr less than $\alpha$ in at least one condition, where $\alpha$ is a threshold specified by the user (e.g., $0.05$).
+We can find the number of DE genes, which are defined as genes having
+lfsr less than $\alpha$ in at least one condition, where $\alpha$ is a
+threshold specified by the user (e.g., $0.05$).
 
 ```{r find-de, message=FALSE, eval=FALSE}
 lfsr <- res$result$lfsr
@@ -281,21 +280,27 @@ de.genes <- which(apply(lfsr, 1, min) < 0.05)
 # get the total number of DE genes
 length(de.genes)
 # order DE genes by significance based on mininum lfsr across conditions
-de.genes <- de.genes[order(apply(lfsr[de.genes,], 1, min))]    
+de.genes <- de.genes[order(apply(lfsr[de.genes,], 1, min))]
 head(de.genes)
 ```
 
-The model parameter estimates are stored in the `pois.mash.fit` component. In particular, let us look at the estimates of the mixture proportions for different prior covariance matrices: 
+The model parameter estimates are stored in the `pois.mash.fit`
+component. In particular, let us look at the estimates of the mixture
+proportions for different prior covariance matrices:
 
 ```{r mixture-proportion, message=FALSE, eval=FALSE}
 round(rowSums(res$pois.mash.fit$pi), 3)
 ```
 
-The data-driven covariance matrix "tPCA" has by far the largest proportion estimate ($91\%$). We plot the correlation heatmap for this covariance matrix, which captures the most frequent pattern of sharing of DE effects across cytokine treatments in the neutrophils data. For space reason, here we present the correlation heatmap only for selected conditions. 
+The data-driven covariance matrix "tPCA" has by far the largest
+proportion estimate ($91\%$). We plot the correlation heatmap for this
+covariance matrix, which captures the most frequent pattern of sharing
+of DE effects across cytokine treatments in the neutrophils data. For
+space reason, here we present the correlation heatmap only for
+selected conditions.
 
 ```{r plot-sharing-pattern, fig.height=5, fig.width=5, warning=FALSE, message=FALSE, eval=FALSE}
-library(pheatmap)
-load("data/condition_colors.RData")
+data(condition_colors)
 U <- res$pois.mash.fit$Ulist[[1]]
 colnames(U) <- colnames(res$pois.mash.fit$mu)
 rownames(U) <- colnames(res$pois.mash.fit$mu)
