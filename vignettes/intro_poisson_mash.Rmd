@@ -46,6 +46,13 @@ library(glmpca)
 library(poisson.mash.alpha)
 ```
 
+Also, set the random number generator seed to ensure that the
+results are more reproducible.
+
+```{r set-seed}
+set.seed(1)
+```
+
 Create a data object for Poisson mash analysis
 ----------------------------------------------
 
