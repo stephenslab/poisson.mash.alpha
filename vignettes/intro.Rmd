@@ -122,37 +122,67 @@ print(runtime)
 To save time, we just run `glmpca` for 100 iterations, but we recommend setting `maxIter = 500` for better estimation of latent confounding factors.
 
 
-# Fit the model {-}
+Fit the model
+-------------
 
-## Step 1. Prefit the model to initialize parameters {-}
+### Step 1. Prefit the model to initialize parameters
 
-We first fit Poisson mash under the assumption of no DE to get sensible initial estimates of the other model parameters, including the gene-specific baseline expression $\mu_j$. Please refer to the model description sections in our [paper][paper] for more details. 
+We first fit Poisson mash under the assumption of no DE to get
+sensible initial estimates of the other model parameters, including
+the gene-specific baseline expression $\mu_j$. Please refer to the
+model description sections in our [paper][paper] for more details.
 
 ```{r prefit, message=FALSE}
 prefit <- pois_mash_prefit(data, ruv=TRUE, Fuv=Fuv, verbose=FALSE)
 ```
 
-## Step 2. Set up the prior covariance matrices {-}
+### Step 2. Set up the prior covariance matrices
 
-Let the $R \times 1$ vector $\beta_j = (\beta_{j1}, \dots, \beta_{jR})'$ denote the true DE effects of each of the $R$ conditions relative to the baseline expression $\mu_j$ for gene $j$. We assume that $\beta_j$ follows a mash prior, which is a mixture of multivariate normal distributions:
-$$ p(\beta_j; \pi, U) = \sum_{k=1}^K \sum_{l=1}^L \pi_{kl} N_R(\beta_j; 0, w_l U_k).$$
-In the mash prior, $w_l$ is a pre-specified grid of scaling coefficients, spanning from very small to very large, to capture the full range of possible DE effect sizes; $U_k$ is a set of covariance matrices, each of which capturing a different pattern of covariation of DE effects across conditions; $\pi_{kl}$ are corresponding mixture proportions that are estimated from the data during model fitting.  
+Let the $R \times 1$ vector $\beta_j = (\beta_{j1}, \dots,
+\beta_{jR})'$ denote the true DE effects of each of the $R$ conditions
+relative to the baseline expression $\mu_j$ for gene $j$. We assume
+that $\beta_j$ follows a mash prior, which is a mixture of
+multivariate normal distributions: $$ p(\beta_j; \pi, U) =
+\sum_{k=1}^K \sum_{l=1}^L \pi_{kl} N_R(\beta_j; 0, w_l U_k).$$ In the
+mash prior, $w_l$ is a pre-specified grid of scaling coefficients,
+spanning from very small to very large, to capture the full range of
+possible DE effect sizes; $U_k$ is a set of covariance matrices, each
+of which capturing a different pattern of covariation of DE effects
+across conditions; $\pi_{kl}$ are corresponding mixture proportions
+that are estimated from the data during model fitting.
 
-To use Poisson mash, users need to specify prior covariance matrices, which include both "canonical" covariance matrices that represent, for example, DE specific to a condition, and "data-driven" covariance matrices that are learned from the data and can capture arbitrary patterns of DE among conditions.
+To use Poisson mash, users need to specify prior covariance matrices,
+which include both "canonical" covariance matrices that represent, for
+example, DE specific to a condition, and "data-driven" covariance
+matrices that are learned from the data and can capture arbitrary
+patterns of DE among conditions.
 
-For the canonical matrices, here we consider the matrices capturing condition-specific effects for each of the $R$ conditions. These matrices can be defined using the function `pois_cov_canonical`. 
+For the canonical matrices, here we consider the matrices capturing
+condition-specific effects for each of the $R$ conditions. These
+matrices can be defined using the function `pois_cov_canonical`.
 
 ```{r canonical, message=FALSE}
 ulist.c <- pois_cov_canonical(data)
 ```
 
-The data-driven covariance matrices are estimated using a three-step process: (1) initialization, (2) refinement, (3) diagonal entry modification. The initialization phase is implemented by the function `pois_cov_init`. To estimate data-driven covariance matrices, we only use the subset of genes containing "strong signals", i.e., the genes that are considered DE by a multinomial goodness-of-fit test.
+The data-driven covariance matrices are estimated using a three-step
+process: (1) initialization, (2) refinement, (3) diagonal entry
+modification. The initialization phase is implemented by the function
+`pois_cov_init`. To estimate data-driven covariance matrices, we only
+use the subset of genes containing "strong signals", i.e., the genes
+that are considered DE by a multinomial goodness-of-fit test.
 
 ```{r cov-init, message=FALSE}
 res.pca <- pois_cov_init(data)
 ```
 
-The refinement phase refines the initial estimates of data-driven covariance matrices using an extreme deconvolution algorithm, and is implemented by the function `pois_cov_ed`. As in the initialization phase, only data from the genes with strong signals are used. To save time, below we just run `pois_cov_ed` for 100 iterations, but we recommend using the default value `maxiter = 500` when analyzing your own data.
+The refinement phase refines the initial estimates of data-driven
+covariance matrices using an extreme deconvolution algorithm, and is
+implemented by the function `pois_cov_ed`. As in the initialization
+phase, only data from the genes with strong signals are used. To save
+time, below we just run `pois_cov_ed` for 100 iterations, but we
+recommend using the default value `maxiter = 500` when analyzing your
+own data.
 
 ```{r cov-ed, message=FALSE}
 ulist <- c(res.pca$ulist, ulist.c)
@@ -168,7 +198,11 @@ runtime <- proc.time() - start_time
 print(runtime)
 ```
 
-The modification phase adds a small constant (e.g., $0.01$) to the diagonal entries of the estimated data-driven covariance matrices. This step is done to alleviate issues of inflated [local false sign rates (lfsr)][lfsr], which are analogous to but more conservative than local false discovery rates. 
+The modification phase adds a small constant (e.g., $0.01$) to the
+diagonal entries of the estimated data-driven covariance
+matrices. This step is done to alleviate issues of inflated
+[local false sign rates (lfsr)][lfsr], which are analogous to but more
+conservative than local false discovery rates.
 
 ```{r cov-mod, message=FALSE}
 # add epsilon*I to each full-rank data-driven prior covariance matrix
@@ -187,7 +221,7 @@ names(epsilon2.G) <- names(fit.ed$ulist)
 epsilon2.G[ulist.dd] <- 1e-2
 ```
 
-## Step 3. Fit the Poisson mash model {-}
+### Step 3: Fit the Poisson mash model
 
 Now we are ready to fit the Poisson mash model to data from all genes, which is implemented by the function `pois_mash`. To save time, we just run `pois_mash` for 5 iterations, but we recommend setting at least `maxiter = 100` when analyzing your own data.
 
@@ -200,18 +234,34 @@ print(runtime)
 saveRDS(res, file = "data/neutrophils_subset_pois_mash_ruv_fit.rds")
 ```
 
-Of note, Poisson mash aims to detect and estimate expression differences relative to some "reference" condition, which needs to be specified by the user. By default, the reference condition is the mean across all conditions. Alternatively, users can specify a particular condition as the reference condition using the arguments `C` and `res.colnames` of the function `pois_mash`. If it is also of interest to detect and estimate expression 
-differences relative to the median across all conditions, this can be accomplished by setting `median_deviations = TRUE` in the above call.
+Of note, Poisson mash aims to detect and estimate expression
+differences relative to some "reference" condition, which needs to be
+specified by the user. By default, the reference condition is the mean
+across all conditions. Alternatively, users can specify a particular
+condition as the reference condition using the arguments `C` and
+`res.colnames` of the function `pois_mash`. If it is also of interest
+to detect and estimate expression differences relative to the median
+across all conditions, this can be accomplished by setting
+`median_deviations = TRUE` in the above call.
 
+# Inspecting the outputs
 
-# Understand the output {-}
-We will next look at the results, which are stored in the `res` object produced by the call to `pois_mash`. Recall that we illustrate how to fit the Poisson mash model using a subset of the neutrophils data to save time. Here we load in the Poisson mash fit to the entire neutrophils dataset.
+We will next look at the results, which are stored in the `res` object
+produced by the call to `pois_mash`. Recall that we illustrate how to
+fit the Poisson mash model using a subset of the neutrophils data to
+save time. Here we load in the Poisson mash fit to the entire
+neutrophils dataset.
 
 ```{r load-results, message=FALSE}
 load("data/neutrophils_pois_mash_ruv_fit.RData")
 ```
 
-The output contains posterior summaries of the condition-specific DE effects relative to the reference condition specified by the user, including posterior means and posterior standard deviations of the DE effect sizes (log-fold changes) and measures of significance (lfsr), for each gene in the dataset. These DE effect posterior summaries are stored in the `result` component. 
+The output contains posterior summaries of the condition-specific DE
+effects relative to the reference condition specified by the user,
+including posterior means and posterior standard deviations of the DE
+effect sizes (log-fold changes) and measures of significance (lfsr),
+for each gene in the dataset. These DE effect posterior summaries are
+stored in the `result` component.
 
 ```{r posterior-summary, message=FALSE}
 # transform DE effect estimates to the scale of log2 fold change
