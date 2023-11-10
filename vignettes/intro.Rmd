@@ -1,38 +1,67 @@
 ---
-title: "Perform multi-condition differential expression analysis in single-cell RNA-seq data using Poisson mash"
+title: "Multi-condition differential expression analysis in single-cell RNA-seq data using Poisson mash"
 author: Yusha Liu
 date: "`r Sys.Date()`"
-output: html_document
+output:
+  html_document:
+    toc: no
+    highlight: textmate
+    theme: readable
+vignette: >
+  %\VignetteIndexEntry{Multi-condition differential expression analysis in single-cell RNA-seq data using Poisson mash}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
-# Overview {-}
-
 ```{r setup, include=FALSE}
-#knitr::opts_chunk$set(echo = TRUE, results = "hide")
-knitr::opts_chunk$set(comment = "#", collapse = TRUE, results = "hold", fig.align = "center", dpi = 120)
+knitr::opts_chunk$set(comment = "#",collapse = TRUE,results = "hold",
+                      fig.align = "center",dpi = 120,eval = FALSE)
 ```
 
-This vignette shows how to apply "Poisson multivariate adaptive shrinkage", or Poisson mash, from [Liu et al.][paper], using the [poisson.mash.alpha][software] software. Poisson mash was developed to perform multi-condition differential expression analyses on single cell RNA-sequencing (scRNA-seq) data, in which gene expression is measured in many (e.g., dozens) different conditions and the aim is to detect which
-genes are differentially expressed (DE) and to estimate expression differences (log-fold changes) among multiple conditions. This approach makes use of the multivariate adaptive shrinkage ([mash][mash]) prior introduced previously by our lab. 
+Overview
+--------
 
-We illustrate how to implement this approach by analyzing data from an [experiment][paper] conducted to study the effects of cytokine stimulation on gene expression in neutrophils collected from cytokine-injected mice. 
+This vignette shows how to apply "Poisson multivariate adaptive
+shrinkage", or Poisson mash, from [Liu et al.][paper], using the
+[poisson.mash.alpha][software] software. Poisson mash was developed to
+perform multi-condition differential expression analyses on single
+cell RNA-sequencing (scRNA-seq) data, in which gene expression is
+measured in many (e.g., dozens) different conditions and the aim is to
+detect which genes are differentially expressed (DE) and to estimate
+expression differences (log-fold changes) among multiple
+conditions. This approach makes use of the multivariate adaptive
+shrinkage ([mash][mash]) prior introduced previously by our lab.
 
-We first load in the R packages that will be used in the analysis, then go through an example to illustrate how to apply Poisson mash step by step.
+We illustrate how to implement this approach by analyzing data from an
+[experiment][paper] conducted to study the effects of cytokine
+stimulation on gene expression in neutrophils collected from
+cytokine-injected mice.
+
+We first load in the R packages that will be used in the analysis,
+then go through an example to illustrate how to apply Poisson mash
+step by step.
 
 ```{r load-pkgs, message=FALSE, warning=FALSE}
 library(Matrix)
-# R package that calculates cell-wise library size using a deconvolution-based approach
-suppressMessages(library(scran))    
-# R package that estimates the latent factors confounding DE analysis
-suppressMessages(library(glmpca))   
-# load in poisson.mash.alpha R package
-devtools::load_all()
+library(scran)
+library(glmpca)
+library(poisson.mash.alpha)
 ```
 
+Create a data object for Poisson mash analysis
+----------------------------------------------
 
-# Create a data object for Poisson mash analysis {-}
-
-To run Poisson mash, users need to provide (1) a matrix of UMI counts, which is stored as a $J \times N$ matrix $Y$ with entries $y_{ji}$, where $i=1,\dots,N$ indexes cells and $j=1,\dots,J$ indexes genes, and (2) a $N \times 1$ vector with its $i^{\text{th}}$ element indicating the condition label of cell $i$. We assume that the $N$ cells come from $R$ conditions and focus on multi-condition experiments with $R \gg 2$. As a concrete example, the original neutrophils dataset contains counts from $13,362$ cells in $8,543$ genes from $45$ conditions (44 cytokine treatments and one control). For time reason, here we show how to fit Poisson mash using a subset of the dataset containing $1,936$ cells in $2,158$ genes from $12$ conditions. 
+To run Poisson mash, users need to provide (1) a matrix of UMI counts,
+which is stored as a $J \times N$ matrix $Y$ with entries $y_{ji}$,
+where $i=1,\dots,N$ indexes cells and $j=1,\dots,J$ indexes genes, and
+(2) a $N \times 1$ vector with its $i^{\text{th}}$ element indicating
+the condition label of cell $i$. We assume that the $N$ cells come
+from $R$ conditions and focus on multi-condition experiments with $R
+\gg 2$. As a concrete example, the original neutrophils dataset
+contains counts from 13,362 cells in 8,543 genes from 45
+conditions (44 cytokine treatments and one control). For time reason,
+here we show how to fit Poisson mash using a subset of the dataset
+containing 1,936 cells in 2,158 genes from 12 conditions.
 
 ```{r load-data}
 load("data/neutrophils_subset.RData")
@@ -42,7 +71,10 @@ table(conditions)
 R <- length(unique(conditions))
 ```
  
-After loading in the data, we compute the cell-specific size factors, which can be done in various ways. The simplest option is to take the sum of the counts $y_{ji}$ across all genes in each cell $i$, but here we take a more robust deconvolution-based approach. 
+After loading in the data, we compute the cell-specific size factors,
+which can be done in various ways. The simplest option is to take the
+sum of the counts $y_{ji}$ across all genes in each cell $i$, but here
+we take a more robust deconvolution-based approach.
 
 ```{r calculate-size-factor, message=FALSE}
 clusters <- quickCluster(Y)
@@ -50,19 +82,33 @@ si <- calculateSumFactors(Y, clusters=clusters)
 names(si) <- colnames(Y)
 ```
 
-Next, we create a data object for poisson mash analysis using the function `pois_mash_set_data`.
+Next, we create a data object for poisson mash analysis using the
+function `pois_mash_set_data`.
 
 ```{r create-data-object}
 data <- pois_mash_set_data(Y, conditions, si)
 ```
 
-By default, Poisson mash assumes a gene-specific baseline expression level, $\mu_j$, which is shared across all conditions. Poisson mash can also  handle the more complex setting in which the $R$ conditions arise from $m = 1, \dots, M$ subgroups, and each subgroup has its own baseline, $\mu_{jm}$. For example, one may want to perform a DE analysis across multiple treatment conditions, jointly for multiple cell types. In this case, $M$ is the number of cell types, and $R$ represents the total number of combinations of treatment conditions and cell types. Please refer to the documentation for 
-the function `pois_mash_set_data` to see how to do this. 
+By default, Poisson mash assumes a gene-specific baseline expression
+level, $\mu_j$, which is shared across all conditions. Poisson mash
+can also handle the more complex setting in which the $R$ conditions
+arise from $m = 1, \dots, M$ subgroups, and each subgroup has its own
+baseline, $\mu_{jm}$. For example, one may want to perform a DE
+analysis across multiple treatment conditions, jointly for multiple
+cell types. In this case, $M$ is the number of cell types, and $R$
+represents the total number of combinations of treatment conditions
+and cell types. Please refer to the documentation for the function
+`pois_mash_set_data` to see how to do this.
 
+Estimate the latent factors causing unwanted variation
+------------------------------------------------------
 
-# Estimate the latent factors causing unwanted variation {-}
-
-Unwanted variation present in the data can induce dependence among gene-wise tests and confound DE analysis. In some cases, the confounding variables are known, such as when these capture batch effects. More often, the unwanted variation is due to unmeasured factors. Poisson mash accounts for unwanted variation by estimating the latent confounding factors using the R package [glmpca][glmpca]. 
+Unwanted variation present in the data can induce dependence among
+gene-wise tests and confound DE analysis. In some cases, the
+confounding variables are known, such as when these capture batch
+effects. More often, the unwanted variation is due to unmeasured
+factors. Poisson mash accounts for unwanted variation by estimating
+the latent confounding factors using the R package [glmpca][glmpca].
 
 ```{r ruv, message=FALSE, warning=FALSE}
 start_time <- proc.time()
