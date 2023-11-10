@@ -26,7 +26,7 @@ test_that("Perform basic checks of the model fitting",{
   # Prefit the model to initialize parameters. The ELBO should
   # increase (or at least not decrease) over two successive
   # iterations.
-  capture.output(prefit <- pois_mash_ruv_prefit(dat,Fuv))
+  capture.output(prefit <- pois_mash_prefit(dat,ruv = TRUE,Fuv))
   expect_gte(min(diff(prefit$ELBO)),0)
 
   # Initialize the data-driven covariance matrices.

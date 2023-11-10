@@ -80,7 +80,9 @@
 #'
 #' @keywords internal
 #'
-#' @importFrom stats pnorm rmultinom
+#' @importFrom stats median
+#' @importFrom stats pnorm
+#' @importFrom stats rmultinom
 #' @importFrom ashr compute_lfsr
 #' @importFrom mvtnorm rmvnorm
 #' @importFrom abind abind
@@ -94,7 +96,8 @@ pois_mash_posterior <- function (data, s, mu, psi2,
                                  zeta, thresh = 1/(500*ncol(zeta)),
                                  C = diag(ncol(data)) - 1/ncol(data),
                                  res.colnames=paste0(colnames(data),"-mean"),
-                                 posterior_samples = 0, median_deviations = FALSE, seed = 1) {
+                                 posterior_samples = 0,
+                                 median_deviations = FALSE, seed = 1) {
   data <- as.matrix(data)
   J    <- nrow(data)
   R    <- ncol(data)

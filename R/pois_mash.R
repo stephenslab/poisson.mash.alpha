@@ -66,7 +66,7 @@
 #' It is used when \code{posterior_samples > 0} or \code{median_deviations = TRUE}. 
 #'
 #' @param init List of initial values for model parameters, such as an
-#'   output from \code{\link{pois_mash_ruv_prefit}}).
+#'   output from \code{\link{pois_mash_prefit}}).
 #' 
 #' @param control List of control parameters with the following
 #'   elements: \dQuote{maxiter}, maximum number of outer loop

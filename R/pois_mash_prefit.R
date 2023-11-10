@@ -35,7 +35,7 @@
 #'   \dQuote{tol.rho}, tolerance for assessing convergence of effects
 #'   corresponding to unwanted variation. Any named components will
 #'   override the default optimization algorithm settings (as they are
-#'   defined by \code{pois_mash_ruv_prefit_control_default}).
+#'   defined by \code{pois_mash_prefit_control_default}).
 #' 
 #' @return A list containing initial estimates of model parameters.
 #'
@@ -48,8 +48,8 @@
 #' 
 #' @export
 #' 
-pois_mash_prefit <- function (data, ruv = FALSE, Fuv, update.mu=TRUE, verbose = FALSE,
-                              init = list(),
+pois_mash_prefit <- function (data, ruv = FALSE, Fuv, update.mu = TRUE,
+                              verbose = FALSE, init = list(),
                               control = list()) {
 
   s         <- data$s

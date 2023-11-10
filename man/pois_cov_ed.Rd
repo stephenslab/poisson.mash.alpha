@@ -54,7 +54,7 @@ must be provided in \code{init}.}
 each iteration.}
 
 \item{init}{Optional list of initial values for model parameters
-(e.g., returned by \code{pois_mash_ruv_prefit}).}
+(e.g., returned by \code{pois_mash_prefit}).}
 
 \item{control}{A list of control parameters with the following
 elements: \dQuote{maxiter}, maximum number of ED iterations;
