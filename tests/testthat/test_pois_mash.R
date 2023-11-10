@@ -27,7 +27,7 @@ test_that("Perform basic checks of the model fitting",{
   # increase (or at least not decrease) over two successive
   # iterations.
   capture.output(prefit <- pois_mash_prefit(dat,ruv = TRUE,Fuv))
-  expect_gte(min(diff(prefit$ELBO)),0)
+  expect_gte(min(diff(prefit$ELBO.overall)),0)
 
   # Initialize the data-driven covariance matrices.
   res.pca <- pois_cov_init(dat,ruv = TRUE,Fuv = Fuv,rho = prefit$rho,
@@ -60,5 +60,5 @@ test_that("Perform basic checks of the model fitting",{
 
   # The ELBO should increase (or at least not decrease) over two
   # successive iterations.
-  expect_gte(min(diff(res$pois.mash.fit$ELBO)),0)
+  expect_gte(min(diff(res$pois.mash.fit$ELBO.overall)),0)
 })
