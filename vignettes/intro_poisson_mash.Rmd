@@ -54,11 +54,11 @@ stored as a $J \times N$ matrix $Y$ with entries $y_{ji}$, where $i =
 1, \dots,N$ indexes cells and $j=1,\dots,J$ indexes genes; and (2) an
 vector of length $n$ in which the $i^{\mathrm{th}}$ element gives the
 condition label of cell $i$. We assume that the $N$ cells come from
-$R$ conditions ($R$ should be considerably larger than 2). he original
-neutrophils dataset contained counts for 13,362 cells, 8,543 genes and
-45 conditions (44 cytokine treatments plus one control). For the
-purposes of this vignette, we use a small subset of these data (1,936
-cells, 2,158 genes, 12 conditions).
+$R$ conditions (in practice, $R$ should be considerably larger than
+2). he original neutrophils dataset contained counts for 13,362 cells,
+8,543 genes and 45 conditions (44 cytokine treatments plus one
+control). For the purposes of this vignette, we use a small subset of
+these data (1,936 cells, 2,158 genes, 12 conditions).
 
 ```{r load-data}
 data(neutrophils_subset)
@@ -70,69 +70,68 @@ table(conditions)
 After loading in the data, we compute the cell-specific size factors,
 which can be done in various ways. The simplest option is to take the
 sum of the counts $y_{ji}$ across all genes in each cell $i$, but here
-we take a more robust deconvolution-based approach.
+we take a deconvolution-based approach that was implemented in the
+scran package:
 
-```{r calculate-size-factor, message=FALSE, eval=FALSE}
-clusters <- quickCluster(Y)
-si <- calculateSumFactors(Y, clusters=clusters)
+```{r calculate-size-factor}
+clusters  <- quickCluster(Y)
+si        <- calculateSumFactors(Y,clusters = clusters)
 names(si) <- colnames(Y)
 ```
 
 Next, we create a data object for poisson mash analysis using the
 function `pois_mash_set_data`.
 
-```{r create-data-object, eval=FALSE}
-data <- pois_mash_set_data(Y, conditions, si)
+```{r create-data-object}
+dat <- pois_mash_set_data(Y,conditions,si)
 ```
 
 By default, Poisson mash assumes a gene-specific baseline expression
-level, $\mu_j$, which is shared across all conditions. Poisson mash
-can also handle the more complex setting in which the $R$ conditions
-arise from $m = 1, \dots, M$ subgroups, and each subgroup has its own
-baseline, $\mu_{jm}$. For example, one may want to perform a DE
-analysis across multiple treatment conditions, jointly for multiple
-cell types. In this case, $M$ is the number of cell types, and $R$
-represents the total number of combinations of treatment conditions
-and cell types. Please refer to the documentation for the function
+level, $\mu_j$, shared across all conditions. Poisson mash can also
+handle the more complex setting in which the $R$ conditions arise from
+$m = 1, \dots, M$ subgroups, and each subgroup has its own baseline,
+$\mu_{jm}$. For example, one may want to perform a DE analysis across
+multiple treatment conditions, jointly for multiple cell types. In
+this case, $M$ is the number of cell types, and $R$ represents the
+total number of combinations of treatment conditions and cell
+types. Please refer to the documentation for the function
 `pois_mash_set_data` to see how to do this.
 
-Estimate the latent factors causing unwanted variation
-------------------------------------------------------
+Estimate latent factors capturing unwanted variation
+----------------------------------------------------
 
 Unwanted variation present in the data can induce dependence among
 gene-wise tests and confound DE analysis. In some cases, the
 confounding variables are known, such as when these capture batch
 effects. More often, the unwanted variation is due to unmeasured
-factors. Poisson mash accounts for unwanted variation by estimating
-the latent confounding factors using the R package [glmpca][glmpca].
+factors. Here we estimating the confounding variables using
+[glmpca][glmpca].
 
-```{r ruv, message=FALSE, warning=FALSE, eval=FALSE}
-start_time <- proc.time()
+```{r ruv}
 design <- model.matrix(~conditions)
-fit.glmpca <- glmpca(Y=Y, X=design[,-1], L=4, fam="nb2", sz=si, ctl=list(verbose=FALSE, maxIter=100))
+fit.glmpca <- glmpca(Y = Y,X = design[,-1],L  = 4,fam = "nb2",sz = si,
+                     ctl = list(minIter = 1,maxIter = 10))
 Fuv <- as.matrix(fit.glmpca$loadings)
-runtime <- proc.time() - start_time
-print(runtime)
 ```
 
-To save time, we just run `glmpca` for 100 iterations, but we recommend setting `maxIter = 500` for better estimation of latent confounding factors.
+To save time, we ran `glmpca` for 100 iterations, but in practice more
+might be needed.
 
+Fit the Poisson mash model
+--------------------------
 
-Fit the model
--------------
-
-### Step 1. Prefit the model to initialize parameters
+### Step 1: Prefit the model to initialize parameters
 
 We first fit Poisson mash under the assumption of no DE to get
 sensible initial estimates of the other model parameters, including
-the gene-specific baseline expression $\mu_j$. Please refer to the
-model description sections in our [paper][paper] for more details.
+the gene-specific baseline expressions $\mu_j$. Please refer to the
+[paper][paper] for details.
 
 ```{r prefit, message=FALSE, eval=FALSE}
-prefit <- pois_mash_prefit(data, ruv=TRUE, Fuv=Fuv, verbose=FALSE)
+prefit <- pois_mash_prefit(dat,ruv = TRUE,Fuv = Fuv,verbose = FALSE)
 ```
 
-### Step 2. Set up the prior covariance matrices
+### Step 2: Set up the prior covariance matrices
 
 Let the $R \times 1$ vector $\beta_j = (\beta_{j1}, \dots,
 \beta_{jR})'$ denote the true DE effects of each of the $R$ conditions
@@ -157,8 +156,8 @@ For the canonical matrices, here we consider the matrices capturing
 condition-specific effects for each of the $R$ conditions. These
 matrices can be defined using the function `pois_cov_canonical`.
 
-```{r canonical, message=FALSE, eval=FALSE}
-ulist.c <- pois_cov_canonical(data)
+```{r canonical}
+ulist.c <- pois_cov_canonical(dat)
 ```
 
 The data-driven covariance matrices are estimated using a three-step
@@ -169,7 +168,7 @@ use the subset of genes containing "strong signals", i.e., the genes
 that are considered DE by a multinomial goodness-of-fit test.
 
 ```{r cov-init, message=FALSE, eval=FALSE}
-res.pca <- pois_cov_init(data)
+res.pca <- pois_cov_init(dat)
 ```
 
 The refinement phase refines the initial estimates of data-driven
