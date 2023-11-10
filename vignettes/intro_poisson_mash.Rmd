@@ -15,31 +15,29 @@ vignette: >
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(comment = "#",collapse = TRUE,results = "hold",
-                      fig.align = "center",dpi = 120,eval = FALSE)
+                      fig.align = "center",dpi = 120)
 ```
 
 Overview
 --------
 
-This vignette shows how to apply "Poisson multivariate adaptive
-shrinkage", or Poisson mash, from [Liu et al.][paper], using the
-[poisson.mash.alpha][software] software. Poisson mash was developed to
-perform multi-condition differential expression analyses on single
-cell RNA-sequencing (scRNA-seq) data, in which gene expression is
-measured in many (e.g., dozens) different conditions and the aim is to
-detect which genes are differentially expressed (DE) and to estimate
-expression differences (log-fold changes) among multiple
-conditions. This approach makes use of the multivariate adaptive
-shrinkage ([mash][mash]) prior introduced previously by our lab.
+This vignette illustrates how to use
+[Poisson multivariate adaptive shrinkage][paper] to analyze a data
+set. Poisson mash was developed for multi-condition differential
+expression analysis with single-cell RNA-sequencing (scRNA-seq) data in
+which gene expression is measured in many (e.g., dozens) of different
+conditions. The aim is to detect which genes are differentially
+expressed (DE) and to estimate expression differences (log-fold
+changes) among multiple conditions. This approach makes use of the
+multivariate adaptive shrinkage ([mash][mash]) prior.
 
 We illustrate how to implement this approach by analyzing data from an
-[experiment][paper] conducted to study the effects of cytokine
-stimulation on gene expression in neutrophils collected from
-cytokine-injected mice.
+experiment intended to study the effects of cytokine stimulation on
+gene expression in neutrophils collected from cytokine-injected mice.
 
 We first load in the R packages that will be used in the analysis,
-then go through an example to illustrate how to apply Poisson mash
-step by step.
+then we work through an example to illustrate how to apply Poisson
+mash step-by-step.
 
 ```{r load-pkgs, message=FALSE, warning=FALSE}
 library(Matrix)
@@ -51,24 +49,22 @@ library(poisson.mash.alpha)
 Create a data object for Poisson mash analysis
 ----------------------------------------------
 
-To run Poisson mash, users need to provide (1) a matrix of UMI counts,
-which is stored as a $J \times N$ matrix $Y$ with entries $y_{ji}$,
-where $i=1,\dots,N$ indexes cells and $j=1,\dots,J$ indexes genes, and
-(2) a $N \times 1$ vector with its $i^{\text{th}}$ element indicating
-the condition label of cell $i$. We assume that the $N$ cells come
-from $R$ conditions and focus on multi-condition experiments with $R
-\gg 2$. As a concrete example, the original neutrophils dataset
-contains counts from 13,362 cells in 8,543 genes from 45
-conditions (44 cytokine treatments and one control). For time reason,
-here we show how to fit Poisson mash using a subset of the dataset
-containing 1,936 cells in 2,158 genes from 12 conditions.
+To run Poisson mash, you need to provide (1) a matrix of UMI counts,
+stored as a $J \times N$ matrix $Y$ with entries $y_{ji}$, where $i =
+1, \dots,N$ indexes cells and $j=1,\dots,J$ indexes genes; and (2) an
+vector of length $n$ in which the $i^{\mathrm{th}}$ element gives the
+condition label of cell $i$. We assume that the $N$ cells come from
+$R$ conditions ($R$ should be considerably larger than 2). he original
+neutrophils dataset contained counts for 13,362 cells, 8,543 genes and
+45 conditions (44 cytokine treatments plus one control). For the
+purposes of this vignette, we use a small subset of these data (1,936
+cells, 2,158 genes, 12 conditions).
 
 ```{r load-data}
-load("data/neutrophils_subset.RData")
+data(neutrophils_subset)
 dim(Y)
 conditions <- as.factor(conditions)
 table(conditions)
-R <- length(unique(conditions))
 ```
  
 After loading in the data, we compute the cell-specific size factors,
@@ -76,7 +72,7 @@ which can be done in various ways. The simplest option is to take the
 sum of the counts $y_{ji}$ across all genes in each cell $i$, but here
 we take a more robust deconvolution-based approach.
 
-```{r calculate-size-factor, message=FALSE}
+```{r calculate-size-factor, message=FALSE, eval=FALSE}
 clusters <- quickCluster(Y)
 si <- calculateSumFactors(Y, clusters=clusters)
 names(si) <- colnames(Y)
@@ -85,7 +81,7 @@ names(si) <- colnames(Y)
 Next, we create a data object for poisson mash analysis using the
 function `pois_mash_set_data`.
 
-```{r create-data-object}
+```{r create-data-object, eval=FALSE}
 data <- pois_mash_set_data(Y, conditions, si)
 ```
 
@@ -110,7 +106,7 @@ effects. More often, the unwanted variation is due to unmeasured
 factors. Poisson mash accounts for unwanted variation by estimating
 the latent confounding factors using the R package [glmpca][glmpca].
 
-```{r ruv, message=FALSE, warning=FALSE}
+```{r ruv, message=FALSE, warning=FALSE, eval=FALSE}
 start_time <- proc.time()
 design <- model.matrix(~conditions)
 fit.glmpca <- glmpca(Y=Y, X=design[,-1], L=4, fam="nb2", sz=si, ctl=list(verbose=FALSE, maxIter=100))
@@ -132,7 +128,7 @@ sensible initial estimates of the other model parameters, including
 the gene-specific baseline expression $\mu_j$. Please refer to the
 model description sections in our [paper][paper] for more details.
 
-```{r prefit, message=FALSE}
+```{r prefit, message=FALSE, eval=FALSE}
 prefit <- pois_mash_prefit(data, ruv=TRUE, Fuv=Fuv, verbose=FALSE)
 ```
 
@@ -161,7 +157,7 @@ For the canonical matrices, here we consider the matrices capturing
 condition-specific effects for each of the $R$ conditions. These
 matrices can be defined using the function `pois_cov_canonical`.
 
-```{r canonical, message=FALSE}
+```{r canonical, message=FALSE, eval=FALSE}
 ulist.c <- pois_cov_canonical(data)
 ```
 
@@ -172,7 +168,7 @@ modification. The initialization phase is implemented by the function
 use the subset of genes containing "strong signals", i.e., the genes
 that are considered DE by a multinomial goodness-of-fit test.
 
-```{r cov-init, message=FALSE}
+```{r cov-init, message=FALSE, eval=FALSE}
 res.pca <- pois_cov_init(data)
 ```
 
@@ -184,7 +180,7 @@ time, below we just run `pois_cov_ed` for 100 iterations, but we
 recommend using the default value `maxiter = 500` when analyzing your
 own data.
 
-```{r cov-ed, message=FALSE}
+```{r cov-ed, message=FALSE, eval=FALSE}
 ulist <- c(res.pca$ulist, ulist.c)
 
 # specify whether each prior covariance matrix is data-driven or not
@@ -204,7 +200,7 @@ matrices. This step is done to alleviate issues of inflated
 [local false sign rates (lfsr)][lfsr], which are analogous to but more
 conservative than local false discovery rates.
 
-```{r cov-mod, message=FALSE}
+```{r cov-mod, message=FALSE, eval=FALSE}
 # add epsilon*I to each full-rank data-driven prior covariance matrix
 Ulist <- fit.ed$Ulist
 H <- length(Ulist)
@@ -225,7 +221,7 @@ epsilon2.G[ulist.dd] <- 1e-2
 
 Now we are ready to fit the Poisson mash model to data from all genes, which is implemented by the function `pois_mash`. To save time, we just run `pois_mash` for 5 iterations, but we recommend setting at least `maxiter = 100` when analyzing your own data.
 
-```{r fit-model, message=FALSE}
+```{r fit-model, message=FALSE, eval=FALSE}
 start_time <- proc.time()
 res <- pois_mash(data=data, Ulist=Ulist, ulist=fit.ed$ulist, ulist.epsilon2=epsilon2.G, gridmult=2.5, ruv=TRUE, Fuv=Fuv, rho=prefit$rho, 
                  verbose=TRUE, init=list(mu=prefit$mu, psi2=prefit$psi2), control=list(maxiter=5)) 
@@ -252,7 +248,7 @@ fit the Poisson mash model using a subset of the neutrophils data to
 save time. Here we load in the Poisson mash fit to the entire
 neutrophils dataset.
 
-```{r load-results, message=FALSE}
+```{r load-results, message=FALSE, eval=FALSE}
 load("data/neutrophils_pois_mash_ruv_fit.RData")
 ```
 
@@ -263,7 +259,7 @@ effect sizes (log-fold changes) and measures of significance (lfsr),
 for each gene in the dataset. These DE effect posterior summaries are
 stored in the `result` component.
 
-```{r posterior-summary, message=FALSE}
+```{r posterior-summary, message=FALSE, eval=FALSE}
 # transform DE effect estimates to the scale of log2 fold change
 res$result$PosteriorMean[1:5, 1:5]/log(2)
 # gene-specific, condition-specific lfsr
@@ -272,7 +268,7 @@ res$result$lfsr[1:5,1:5]
 
 We can find the number of DE genes, which are defined as genes having lfsr less than $\alpha$ in at least one condition, where $\alpha$ is a threshold specified by the user (e.g., $0.05$).
 
-```{r find-de, message=FALSE}
+```{r find-de, message=FALSE, eval=FALSE}
 lfsr <- res$result$lfsr
 # get the indices of identified DE genes
 de.genes <- which(apply(lfsr, 1, min) < 0.05)
@@ -285,13 +281,13 @@ head(de.genes)
 
 The model parameter estimates are stored in the `pois.mash.fit` component. In particular, let us look at the estimates of the mixture proportions for different prior covariance matrices: 
 
-```{r mixture-proportion, message=FALSE}
+```{r mixture-proportion, message=FALSE, eval=FALSE}
 round(rowSums(res$pois.mash.fit$pi), 3)
 ```
 
 The data-driven covariance matrix "tPCA" has by far the largest proportion estimate ($91\%$). We plot the correlation heatmap for this covariance matrix, which captures the most frequent pattern of sharing of DE effects across cytokine treatments in the neutrophils data. For space reason, here we present the correlation heatmap only for selected conditions. 
 
-```{r plot-sharing-pattern, fig.height=5, fig.width=5, warning=FALSE, message=FALSE}
+```{r plot-sharing-pattern, fig.height=5, fig.width=5, warning=FALSE, message=FALSE, eval=FALSE}
 library(pheatmap)
 load("data/condition_colors.RData")
 U <- res$pois.mash.fit$Ulist[[1]]
@@ -302,10 +298,11 @@ corr <- cov2cor(U[idx.trts, idx.trts])
 pheatmap(corr, cluster_rows = FALSE, cluster_cols = FALSE, angle_col = 90, fontsize = 15, main = "Major prior covariance matrix (weight = 91%)")
 ```
 
+Session info
+------------
 
-# Session info {-}
-
-This is the version of R and the packages that were used to generate these results.
+This is the version of R and the packages that were used to generate
+these results.
 
 ```{r session-info}
 sessionInfo()
