@@ -117,8 +117,8 @@ factors. Here we estimating the confounding variables using
 
 ```{r ruv}
 design <- model.matrix(~conditions)
-fit.glmpca <- glmpca(Y = Y,X = design[,-1],L  = 4,fam = "nb2",sz = si,
-                     ctl = list(minIter = 1,maxIter = 10))
+fit.glmpca <- glmpca(Y = as.matrix(Y),X = design[,-1],L  = 4,fam = "nb2",
+                     sz = si,ctl = list(minIter = 1,maxIter = 10))
 Fuv <- as.matrix(fit.glmpca$loadings)
 ```
 
