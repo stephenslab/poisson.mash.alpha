@@ -137,7 +137,7 @@ sensible initial estimates of the other model parameters, including
 the gene-specific baseline expressions $\mu_j$. Please refer to the
 [paper][paper] for details.
 
-```{r prefit, message=FALSE, eval=FALSE}
+```{r prefit}
 prefit <- pois_mash_prefit(dat,ruv = TRUE,Fuv = Fuv,verbose = FALSE)
 ```
 
@@ -207,7 +207,7 @@ matrices. This step is done to alleviate issues of inflated
 [local false sign rates (lfsr)][lfsr], which are analogous to but more
 conservative than local false discovery rates.
 
-```{r cov-mod, message=FALSE, eval=FALSE}
+```{r cov-mod}
 # add epsilon*I to each full-rank data-driven prior covariance matrix
 Ulist <- fit.ed$Ulist
 H <- length(Ulist)
