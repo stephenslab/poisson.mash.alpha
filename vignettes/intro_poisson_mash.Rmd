@@ -67,8 +67,10 @@ $R$ conditions (in practice, $R$ should be considerably larger than
 
 The original neutrophils dataset contained counts for 13,362 cells,
 8,543 genes and 45 conditions (44 cytokine treatments plus one
-control). For the purposes of this vignette, we use a small subset of
-these data (1,936 cells, 2,158 genes, 12 conditions).
+control). For the purposes of illustrating the interface, we use a
+small subset of these data (1,936 cells, 2,158 genes, 12 conditions),
+but later we examine the results from running Poisson mash on the full
+data.
 
 ```{r load-data}
 data(neutrophils_subset)
@@ -120,12 +122,12 @@ factors. Here we estimating the confounding variables using
 ```{r ruv}
 design <- model.matrix(~conditions)
 fit.glmpca <- glmpca(Y = as.matrix(Y),X = design[,-1],L  = 4,fam = "nb2",
-                     sz = si,ctl = list(minIter = 1,maxIter = 10))
+                     sz = si,ctl = list(minIter = 1,maxIter = 20))
 Fuv <- as.matrix(fit.glmpca$loadings)
 ```
 
-To save time, we ran `glmpca` for 100 iterations, but in practice more
-iteratioins might be needed.
+To save time, we ran `glmpca` for only 20 iterations, but typically
+more iterations will be needed (100, or perhaps more).
 
 Fit the Poisson mash model
 --------------------------
@@ -182,12 +184,12 @@ res.pca <- pois_cov_init(dat)
 ```
 
 The refinement phase refines the initial estimates of data-driven
-covariance matrices using the Extreme Eeconvolution (ED) algorithm, and is
-implemented by the function `pois_cov_ed`. As in the initialization
-phase, only data from the genes with strong signals are used. To save
-time, below we just run `pois_cov_ed` for 100 iterations, but we
-recommend using the default value `maxiter = 500` when analyzing your
-own data.
+covariance matrices using the Extreme Eeconvolution (ED) algorithm,
+and is implemented by the function `pois_cov_ed`. As in the
+initialization phase, only data from the genes with strong signals are
+used. For the purposes of this vignette, we just ran `pois_cov_ed` for
+10 iterations, but we recommend using the default value `maxiter =
+500` when analyzing your own data.
 
 ```{r cov-ed}
 R <- ncol(dat$X)
@@ -198,7 +200,7 @@ ulist.dd <- c(rep(TRUE,length(res.pca$ulist) - 1),rep(FALSE,R + 1))
 fit.ed <- pois_cov_ed(dat,subset = res.pca$subset,Ulist = res.pca$Ulist,
                       ulist = ulist,ulist.dd = ulist.dd,ruv = TRUE,
 					  Fuv = Fuv,verbose = TRUE,init = prefit,
-					  control = list(maxiter = 100))
+					  control = list(maxiter = 10))
 ```
 
 The modification phase adds a small constant (e.g., $0.01$) to the
@@ -228,8 +230,8 @@ epsilon2.G[ulist.dd] <- 1e-2
 
 Now we are ready to fit the Poisson mash model to data from all genes,
 which is implemented by the function `pois_mash`. For the purposes of
-this illustration, we only run `pois_mash` for 5 iterations, but we
-ini practice recommend setting `maxiter = 100` (or more) when
+this illustration, we only run `pois_mash` for 10 iterations, but we
+in practice recommend setting `maxiter = 100` (or more) when
 analyzing your own data.
 
 ```{r fit-model}
@@ -237,7 +239,7 @@ res <- pois_mash(data = dat,Ulist = Ulist,ulist = fit.ed$ulist,
                  ulist.epsilon2 = epsilon2.G,gridmult = 2.5,ruv = TRUE,
 				 Fuv = Fuv,rho = prefit$rho,verbose = TRUE,
 				 init = list(mu = prefit$mu,psi2 = prefit$psi2),
-				 control = list(maxiter = 5)) 
+				 control = list(maxiter = 10)) 
 ```
 
 Poisson mash aims to detect and estimate expression differences
