@@ -310,7 +310,7 @@ of DE effects across cytokine treatments in the neutrophils data. For
 space reason, here we present the correlation heatmap only for
 selected conditions.
 
-```{r plot-sharing-pattern, fig.height=5, fig.width=5}
+```{r plot-sharing-pattern, fig.height=4, fig.width=4}
 data(condition_colors)
 U <- res$pois.mash.fit$Ulist[[1]]
 colnames(U) <- colnames(res$pois.mash.fit$mu)
@@ -318,7 +318,7 @@ rownames(U) <- colnames(res$pois.mash.fit$mu)
 idx.trts <- match(names(cols.trt),colnames(res$pois.mash.fit$mu))
 corr <- cov2cor(U[idx.trts,idx.trts])
 pheatmap(corr,cluster_rows = FALSE,cluster_cols = FALSE,angle_col = 90,
-         fontsize = 12,main = "Major prior covariance matrix (weight = 91%)")
+         fontsize = 10,main = "Major prior covariance matrix (weight = 91%)")
 ```
 
 Session info
