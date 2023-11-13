@@ -239,7 +239,7 @@ res <- pois_mash(data = dat,Ulist = Ulist,ulist = fit.ed$ulist,
                  ulist.epsilon2 = epsilon2.G,gridmult = 2.5,ruv = TRUE,
 				 Fuv = Fuv,rho = prefit$rho,verbose = TRUE,
 				 init = list(mu = prefit$mu,psi2 = prefit$psi2),
-				 control = list(maxiter = 10)) 
+				 control = list(maxiter = 10,nc = 2)) 
 ```
 
 Poisson mash aims to detect and estimate expression differences
@@ -260,7 +260,7 @@ fit the Poisson mash model using a subset of the neutrophils data to
 save time. Here we load in the Poisson mash fit to the entire
 neutrophils dataset.
 
-```{r load-results, message=FALSE, eval=FALSE}
+```{r load-results}
 data(neutrophils_pois_mash_ruv_fit)
 ```
 
@@ -271,51 +271,54 @@ effect sizes (log-fold changes) and measures of significance (lfsr),
 for each gene in the dataset. These DE effect posterior summaries are
 stored in the `result` component.
 
-```{r posterior-summary, message=FALSE, eval=FALSE}
-# transform DE effect estimates to the scale of log2 fold change
-res$result$PosteriorMean[1:5, 1:5]/log(2)
+```{r posterior-summary}
+# Rransform DE effect estimates to the scale of log2 fold change.
+res$result$PosteriorMean[1:5,1:5]/log(2)
 # gene-specific, condition-specific lfsr
 res$result$lfsr[1:5,1:5]
 ```
 
 We can find the number of DE genes, which are defined as genes having
-lfsr less than $\alpha$ in at least one condition, where $\alpha$ is a
-threshold specified by the user (e.g., $0.05$).
+*lfsr* less than $\alpha$ in at least one condition, where $\alpha$ is a
+threshold specified by the user (e.g., 0.05).
 
-```{r find-de, message=FALSE, eval=FALSE}
+```{r find-de}
 lfsr <- res$result$lfsr
-# get the indices of identified DE genes
-de.genes <- which(apply(lfsr, 1, min) < 0.05)
-# get the total number of DE genes
+# Get the indices of identified DE genes.
+min.lfsr <- apply(lfsr,1,min)
+# Order genes by significance based on mininum lfsr across conditions.
+rows <- order(min.lfsr)
+lfsr <- lfsr[rows,]
+min.lfsr <- min.lfsr[rows]
+de.genes <- which(min.lfsr < 0.05)
+# Get the total number of DE genes.
 length(de.genes)
-# order DE genes by significance based on mininum lfsr across conditions
-de.genes <- de.genes[order(apply(lfsr[de.genes,], 1, min))]
-head(de.genes)
 ```
 
 The model parameter estimates are stored in the `pois.mash.fit`
 component. In particular, let us look at the estimates of the mixture
 proportions for different prior covariance matrices:
 
-```{r mixture-proportion, message=FALSE, eval=FALSE}
-round(rowSums(res$pois.mash.fit$pi), 3)
+```{r mixture-proportion}
+round(rowSums(res$pois.mash.fit$pi),3)
 ```
 
 The data-driven covariance matrix "tPCA" has by far the largest
-proportion estimate ($91\%$). We plot the correlation heatmap for this
+proportion estimate (91%). We plot the correlation heatmap for this
 covariance matrix, which captures the most frequent pattern of sharing
 of DE effects across cytokine treatments in the neutrophils data. For
 space reason, here we present the correlation heatmap only for
 selected conditions.
 
-```{r plot-sharing-pattern, fig.height=5, fig.width=5, warning=FALSE, message=FALSE, eval=FALSE}
+```{r plot-sharing-pattern, fig.height=5, fig.width=5}
 data(condition_colors)
 U <- res$pois.mash.fit$Ulist[[1]]
 colnames(U) <- colnames(res$pois.mash.fit$mu)
 rownames(U) <- colnames(res$pois.mash.fit$mu)
-idx.trts <- match(names(cols.trt), colnames(res$pois.mash.fit$mu))
-corr <- cov2cor(U[idx.trts, idx.trts])
-pheatmap(corr, cluster_rows = FALSE, cluster_cols = FALSE, angle_col = 90, fontsize = 15, main = "Major prior covariance matrix (weight = 91%)")
+idx.trts <- match(names(cols.trt),colnames(res$pois.mash.fit$mu))
+corr <- cov2cor(U[idx.trts,idx.trts])
+pheatmap(corr,cluster_rows = FALSE,cluster_cols = FALSE,angle_col = 90,
+         fontsize = 12,main = "Major prior covariance matrix (weight = 91%)")
 ```
 
 Session info
