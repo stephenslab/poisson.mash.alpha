@@ -1,6 +1,6 @@
 ---
 title: "Multi-condition differential expression analysis in single-cell RNA-seq data using Poisson mash"
-author: Yusha Liu
+author: Yusha Liu, Peter Carbonetto
 date: "`r Sys.Date()`"
 output:
   html_document:
@@ -159,7 +159,7 @@ across conditions; $\pi_{kl}$ are corresponding mixture proportions
 that are estimated from the data during model fitting.
 
 To use Poisson mash, you need to specify the prior covariance
-matrices. This maay include "canonical" covariance matrices that
+matrices. This may include "canonical" covariance matrices that
 represent, for example, DE specific to a condition; and "data-driven"
 covariance matrices that are learned from the data and can capture
 arbitrary patterns of DE among conditions.
@@ -178,23 +178,32 @@ modification. The initialization phase is implemented by the function
 `pois_cov_init`. To estimate data-driven covariance matrices, we only
 use the subset of genes containing "strong signals"; that is, the
 genes that are considered DE by a multinomial goodness-of-fit test.
+The selection of genes with strong signals is implicitly performed
+by the call to `pois_cov_init`, e.g., setting `cutoff = 3` selects
+the genes for which the magnitude of $Z$-score (inverted from the 
+$p$-value of the goodness-of-fit test) exceeds 3. 
 
 ```{r cov-init}
-res.pca <- pois_cov_init(dat)
+res.pca <- pois_cov_init(dat, cutoff = 3)
 ```
 
 The refinement phase refines the initial estimates of data-driven
 covariance matrices using the Extreme Eeconvolution (ED) algorithm,
 and is implemented by the function `pois_cov_ed`. As in the
 initialization phase, only data from the genes with strong signals are
-used. For the purposes of this vignette, we just ran `pois_cov_ed` for
-10 iterations, but we recommend using the default value `maxiter =
+used. It should be noted that only data-driven covariance matrices
+need to be refined, so they need to be distinguished from the canonical
+covariance matrices in the `pois_cov_ed` call using the argument 
+`ulist.dd`. For the purposes of this vignette, we just ran `pois_cov_ed` 
+for 10 iterations, but we recommend using the default value `maxiter =
 500` when analyzing your own data.
 
 ```{r cov-ed}
 R <- ncol(dat$X)
+# Merge data-driven and canonical rank-1 prior covariance matrices
 ulist <- c(res.pca$ulist,ulist.c)
-# Specify whether each prior covariance matrix is data-driven or not.
+# Specify whether a rank-1 prior covariance matrix is data-driven or not
+# (note all full-rank covariance matrices are data-driven so do not need this specification)
 ulist.dd <- c(rep(TRUE,length(res.pca$ulist) - 1),rep(FALSE,R + 1)) 
 # Run ED on the genes with strong signals.
 fit.ed <- pois_cov_ed(dat,subset = res.pca$subset,Ulist = res.pca$Ulist,
@@ -203,14 +212,18 @@ fit.ed <- pois_cov_ed(dat,subset = res.pca$subset,Ulist = res.pca$Ulist,
 					  control = list(maxiter = 10))
 ```
 
-The modification phase adds a small constant (e.g., $0.01$) to the
-diagonal entries of the estimated data-driven covariance
+The modification phase adds a small constant $\epsilon^2$ (e.g., $0.01$) 
+to the diagonal entries of the estimated data-driven covariance
 matrices. This step is done to alleviate issues of inflated
-[local false sign rates (lfsr)][lfsr], which are analogous to but more
-conservative than local false discovery rates.
+[local false sign rates (lfsr)][lfsr], which are analogous to but 
+more conservative than local false discovery rates. Similarly, only 
+data-driven covariance matrices require such modification, and 
+this information is encoded in the vector `epsilon2.G` and 
+will be passed to the function call in the next step.
 
 ```{r cov-mod}
-# add epsilon*I to each full-rank data-driven prior covariance matrix
+# add epsilon2*I to each full-rank data-driven prior covariance matrix
+# all the full-rank covariance matrices are data-driven and need this modification
 Ulist <- fit.ed$Ulist
 H <- length(Ulist)
 for(h in 1:H){
@@ -219,7 +232,8 @@ for(h in 1:H){
   Ulist[[h]] <- Uh + 1e-2*diag(R)
 }
 
-# add epsilon*I to each rank-1 data-driven prior covariance matrix
+# add epsilon2*I to each rank-1 data-driven prior covariance matrix
+# only a subset of the rank-1 covariance matrices are data-driven and need this modification
 G <- length(fit.ed$ulist)
 epsilon2.G <- rep(1e-8, G)
 names(epsilon2.G) <- names(fit.ed$ulist)
@@ -271,12 +285,16 @@ effect sizes (log-fold changes) and measures of significance (lfsr),
 for each gene in the dataset. These DE effect posterior summaries are
 stored in the `result` component.
 
-```{r posterior-summary}
-# Rransform DE effect estimates to the scale of log2 fold change.
+```{r posterior-mean}
+# Transform DE effect estimates to the scale of log2 fold change from natural log scale.
 res$result$PosteriorMean[1:5,1:5]/log(2)
-# gene-specific, condition-specific lfsr
+```
+
+```{r posterior-lfsr}
+# Obtain gene-specific, condition-specific lfsr for detecting gene-condition DE effects.
 res$result$lfsr[1:5,1:5]
 ```
+
 
 We can find the number of DE genes, which are defined as genes having
 *lfsr* less than $\alpha$ in at least one condition, where $\alpha$ is a
@@ -296,19 +314,20 @@ length(de.genes)
 ```
 
 The model parameter estimates are stored in the `pois.mash.fit`
-component. In particular, let us look at the estimates of the mixture
-proportions for different prior covariance matrices:
+component. In particular, let us look at $\pi_{kl}$, the estimates
+of the mixture proportions for combinations of different scaling 
+coefficients $w_l$ and prior covariance matrices $U_k$:
 
 ```{r mixture-proportion}
-round(rowSums(res$pois.mash.fit$pi),3)
+pheatmap(res$pois.mash.fit$pi, cluster_rows=FALSE, cluster_cols=FALSE, fontsize_row=6, fontsize_col=6, main="Proportion estimates of prior covariance matrices")
 ```
 
 The data-driven covariance matrix "tPCA" has by far the largest
-proportion estimate (91%). We plot the correlation heatmap for this
-covariance matrix, which captures the most frequent pattern of sharing
-of DE effects across cytokine treatments in the neutrophils data. For
-space reason, here we present the correlation heatmap only for
-selected conditions.
+proportion estimate (91%; summed over all scaling coefficients). 
+We plot the correlation heatmap for this covariance matrix, 
+which captures the most frequent pattern of sharing of DE effects 
+across cytokine treatments in the neutrophils data. For space reason, 
+here we present the correlation heatmap only for selected conditions.
 
 ```{r plot-sharing-pattern, fig.height=4, fig.width=4}
 data(condition_colors)
@@ -318,8 +337,31 @@ rownames(U) <- colnames(res$pois.mash.fit$mu)
 idx.trts <- match(names(cols.trt),colnames(res$pois.mash.fit$mu))
 corr <- cov2cor(U[idx.trts,idx.trts])
 pheatmap(corr,cluster_rows = FALSE,cluster_cols = FALSE,angle_col = 90,
-         fontsize = 10,main = "Major prior covariance matrix (weight = 91%)")
+         fontsize = 8,main = "Correlation matrix for\nthe major prior covariance (weight = 91%)")
 ```
+
+This correlation heatmap suggests strong sharing of DE effects among 
+two groups of cytokines (1) IL-1$\alpha$, IL-1$\beta$, G-CSF and 
+(2) IL-12 p70, IFN-$\gamma$, IL-18, IL-15, IL-33. We then plot
+the log-fold changes for a few DE genes that either show effect 
+sharing among (1) or (2), where the reference condition is the mean
+across all conditions.
+
+```{r plot-lfc, fig.height=4, fig.width=4}
+### define the color map for LFC
+cols <- colorRampPalette(c("blue","white","red"))(99)
+brks <- seq(-log(10), log(10), length=100)/log(2)
+
+### plot a few DE genes that show effect sharing among the first group of cytokines (taken from Figure 7 in our paper)
+genes1 <- c("Prok2", "Nos2", "Teddm3", "Lipg", "Saa3", "Wfdc17", "Cd38", "Ggt1", "Dpep2", "Mmp19")
+pheatmap(t(res$result$PosteriorMean[genes1, idx.trts])/log(2), cluster_rows = FALSE, cluster_cols = FALSE, color = cols, breaks = brks, angle_col = 90, main = "")
+
+### plot a few DE genes that show effect sharing among the second group of cytokines (taken from Figure 7 in our paper)
+genes2 <- c("Gbp2", "Gbp3", "Gbp4", "Gbp5", "Ifi47", "Ifit2", "Ifit3", "Socs1", "Tgtp2", "Zbp1")
+pheatmap(t(res$result$PosteriorMean[genes2, idx.trts])/log(2), cluster_rows = FALSE, cluster_cols = FALSE, color = cols, breaks = brks, angle_col = 90, main = "")
+```
+
+
 
 Session info
 ------------
