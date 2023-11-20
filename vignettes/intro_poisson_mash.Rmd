@@ -74,6 +74,8 @@ data.
 
 ```{r load-data}
 data(neutrophils_subset)
+Y <- neutrophils_subset$Y
+conditions <- neutrophils_subset$conditions
 dim(Y)
 conditions <- as.factor(conditions)
 table(conditions)
@@ -288,12 +290,12 @@ stored in the `result` component.
 
 ```{r posterior-mean}
 # Transform DE effect estimates to the scale of log2 fold change from natural log scale.
-res$result$PosteriorMean[1:5,1:5]/log(2)
+neutrophils_pois_mash_ruv_fit$result$PosteriorMean[1:5,1:5]/log(2)
 ```
 
 ```{r posterior-lfsr}
 # Obtain gene-specific, condition-specific lfsr for detecting gene-condition DE effects.
-res$result$lfsr[1:5,1:5]
+neutrophils_pois_mash_ruv_fit$result$lfsr[1:5,1:5]
 ```
 
 
@@ -302,7 +304,7 @@ We can find the number of DE genes, which are defined as genes having
 threshold specified by the user (e.g., 0.05).
 
 ```{r find-de}
-lfsr <- res$result$lfsr
+lfsr <- neutrophils_pois_mash_ruv_fit$result$lfsr
 # Get the indices of identified DE genes.
 min.lfsr <- apply(lfsr,1,min)
 # Order genes by significance based on mininum lfsr across conditions.
@@ -320,7 +322,7 @@ of the mixture proportions for combinations of different scaling
 coefficients $w_l$ and prior covariance matrices $U_k$:
 
 ```{r mixture-proportion}
-pheatmap(res$pois.mash.fit$pi, cluster_rows=FALSE, cluster_cols=FALSE, fontsize_row=6, fontsize_col=6, main="Proportion estimates of prior covariance matrices")
+pheatmap(neutrophils_pois_mash_ruv_fit$pois.mash.fit$pi, cluster_rows=FALSE, cluster_cols=FALSE, fontsize_row=6, fontsize_col=6, main="Proportion estimates of prior covariance matrices")
 ```
 
 The data-driven covariance matrix "tPCA" has by far the largest
@@ -332,10 +334,10 @@ here we present the correlation heatmap only for selected conditions.
 
 ```{r plot-sharing-pattern, fig.height=4, fig.width=4}
 data(condition_colors)
-U <- res$pois.mash.fit$Ulist[[1]]
-colnames(U) <- colnames(res$pois.mash.fit$mu)
-rownames(U) <- colnames(res$pois.mash.fit$mu)
-idx.trts <- match(names(cols.trt),colnames(res$pois.mash.fit$mu))
+U <- neutrophils_pois_mash_ruv_fit$pois.mash.fit$Ulist[[1]]
+colnames(U) <- colnames(neutrophils_pois_mash_ruv_fit$pois.mash.fit$mu)
+rownames(U) <- colnames(neutrophils_pois_mash_ruv_fit$pois.mash.fit$mu)
+idx.trts <- match(names(cols.trt),colnames(neutrophils_pois_mash_ruv_fit$pois.mash.fit$mu))
 corr <- cov2cor(U[idx.trts,idx.trts])
 pheatmap(corr,cluster_rows = FALSE,cluster_cols = FALSE,angle_col = 90,
          fontsize = 8,main = "Correlation matrix for\nthe major prior covariance (weight = 91%)")
@@ -355,11 +357,11 @@ brks <- seq(-log(10), log(10), length=100)/log(2)
 
 ### plot a few DE genes that show effect sharing among the first group of cytokines (taken from Figure 7 in our paper)
 genes1 <- c("Prok2", "Nos2", "Teddm3", "Lipg", "Saa3", "Wfdc17", "Cd38", "Ggt1", "Dpep2", "Mmp19")
-pheatmap(t(res$result$PosteriorMean[genes1, idx.trts])/log(2), cluster_rows = FALSE, cluster_cols = FALSE, color = cols, breaks = brks, angle_col = 90, main = "")
+pheatmap(t(neutrophils_pois_mash_ruv_fit$result$PosteriorMean[genes1, idx.trts])/log(2), cluster_rows = FALSE, cluster_cols = FALSE, color = cols, breaks = brks, angle_col = 90, main = "")
 
 ### plot a few DE genes that show effect sharing among the second group of cytokines (taken from Figure 7 in our paper)
 genes2 <- c("Gbp2", "Gbp3", "Gbp4", "Gbp5", "Ifi47", "Ifit2", "Ifit3", "Socs1", "Tgtp2", "Zbp1")
-pheatmap(t(res$result$PosteriorMean[genes2, idx.trts])/log(2), cluster_rows = FALSE, cluster_cols = FALSE, color = cols, breaks = brks, angle_col = 90, main = "")
+pheatmap(t(neutrophils_pois_mash_ruv_fit$result$PosteriorMean[genes2, idx.trts])/log(2), cluster_rows = FALSE, cluster_cols = FALSE, color = cols, breaks = brks, angle_col = 90, main = "")
 ```
 
 
