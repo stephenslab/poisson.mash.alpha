@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">poisson.mash.alpha</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1-93</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1-99</span>
       </span>
     </div>
 
@@ -68,9 +68,10 @@
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Multi-condition differential expression analysis
 in single-cell RNA-seq data using Poisson mash</h1>
-                        <h4 data-toc-skip class="author">Yusha Liu</h4>
+                        <h4 data-toc-skip class="author">Yusha Liu,
+Peter Carbonetto</h4>
             
-            <h4 data-toc-skip class="date">2023-11-13</h4>
+            <h4 data-toc-skip class="date">2023-11-22</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/stephenslab/poisson.mash.alpha/blob/HEAD/vignettes/intro_poisson_mash.Rmd" class="external-link"><code>vignettes/intro_poisson_mash.Rmd</code></a></small>
       <div class="hidden name"><code>intro_poisson_mash.Rmd</code></div>
@@ -126,6 +127,8 @@ these data (1,936 cells, 2,158 genes, 12 conditions), but later we
 examine the results from running Poisson mash on the full data.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">neutrophils_subset</span><span class="op">)</span>
+<span class="va">Y</span> <span class="op">&lt;-</span> <span class="va">neutrophils_subset</span><span class="op">$</span><span class="va">Y</span>
+<span class="va">conditions</span> <span class="op">&lt;-</span> <span class="va">neutrophils_subset</span><span class="op">$</span><span class="va">conditions</span>
 <span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">Y</span><span class="op">)</span>
 <span class="va">conditions</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">as.factor</a></span><span class="op">(</span><span class="va">conditions</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">conditions</span><span class="op">)</span>
@@ -172,7 +175,38 @@ estimating the confounding variables using <a href="https://github.com/willtowne
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">design</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/model.matrix.html" class="external-link">model.matrix</a></span><span class="op">(</span><span class="op">~</span><span class="va">conditions</span><span class="op">)</span>
 <span class="va">fit.glmpca</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/glmpca/man/glmpca.html" class="external-link">glmpca</a></span><span class="op">(</span>Y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">Y</span><span class="op">)</span>,X <span class="op">=</span> <span class="va">design</span><span class="op">[</span>,<span class="op">-</span><span class="fl">1</span><span class="op">]</span>,L  <span class="op">=</span> <span class="fl">4</span>,fam <span class="op">=</span> <span class="st">"nb2"</span>,
-                     sz <span class="op">=</span> <span class="va">si</span>,ctl <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>minIter <span class="op">=</span> <span class="fl">1</span>,maxIter <span class="op">=</span> <span class="fl">20</span><span class="op">)</span><span class="op">)</span>
+                     sz <span class="op">=</span> <span class="va">si</span>,ctl <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>minIter <span class="op">=</span> <span class="fl">1</span>,maxIter <span class="op">=</span> <span class="fl">20</span>,
+                                        verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span>
+<span class="co"># Trying AvaGrad with learning rate: 0.1</span>
+<span class="co"># Iteration: 1 | deviance=1.779e+06</span>
+<span class="co"># Iteration: 2 | deviance=5.659e+06</span>
+<span class="co"># Iteration: 3 | deviance=1.396e+07</span>
+<span class="co"># Iteration: 4 | deviance=1.369e+07</span>
+<span class="co"># Iteration: 5 | deviance=1.357e+07</span>
+<span class="co"># Iteration: 6 | deviance=1.35e+07</span>
+<span class="co"># Iteration: 7 | deviance=1.314e+07</span>
+<span class="co"># Iteration: 8 | deviance=4.41e+08</span>
+<span class="co"># Trying AvaGrad with learning rate: 0.02</span>
+<span class="co"># Iteration: 1 | deviance=1.779e+06</span>
+<span class="co"># Iteration: 2 | deviance=1.918e+06</span>
+<span class="co"># Iteration: 3 | deviance=1.886e+06</span>
+<span class="co"># Iteration: 4 | deviance=1.845e+06</span>
+<span class="co"># Iteration: 5 | deviance=1.811e+06</span>
+<span class="co"># Iteration: 6 | deviance=1.8e+06</span>
+<span class="co"># Iteration: 7 | deviance=1.787e+06</span>
+<span class="co"># Iteration: 8 | deviance=1.777e+06</span>
+<span class="co"># Iteration: 9 | deviance=1.766e+06</span>
+<span class="co"># Iteration: 10 | deviance=1.756e+06</span>
+<span class="co"># Iteration: 11 | deviance=1.747e+06</span>
+<span class="co"># Iteration: 12 | deviance=1.738e+06</span>
+<span class="co"># Iteration: 13 | deviance=1.729e+06</span>
+<span class="co"># Iteration: 14 | deviance=1.72e+06</span>
+<span class="co"># Iteration: 15 | deviance=1.71e+06</span>
+<span class="co"># Iteration: 16 | deviance=1.699e+06</span>
+<span class="co"># Iteration: 17 | deviance=1.687e+06</span>
+<span class="co"># Iteration: 18 | deviance=1.675e+06</span>
+<span class="co"># Iteration: 19 | deviance=1.661e+06</span>
+<span class="co"># Iteration: 20 | deviance=1.647e+06</span>
 <span class="co"># Warning in glmpca(Y = as.matrix(Y), X = design[, -1], L = 4, fam = "nb2", :</span>
 <span class="co"># Reached maximum number of iterations (20) without numerical convergence. Results</span>
 <span class="co"># may be unreliable.</span>
@@ -211,7 +245,7 @@ across conditions; <span class="math inline">\(\pi_{kl}\)</span> are
 corresponding mixture proportions that are estimated from the data
 during model fitting.</p>
 <p>To use Poisson mash, you need to specify the prior covariance
-matrices. This maay include “canonical” covariance matrices that
+matrices. This may include “canonical” covariance matrices that
 represent, for example, DE specific to a condition; and “data-driven”
 covariance matrices that are learned from the data and can capture
 arbitrary patterns of DE among conditions.</p>
@@ -225,22 +259,31 @@ process: (1) initialization, (2) refinement, (3) diagonal entry
 modification. The initialization phase is implemented by the function
 <code>pois_cov_init</code>. To estimate data-driven covariance matrices,
 we only use the subset of genes containing “strong signals”; that is,
-the genes that are considered DE by a multinomial goodness-of-fit
-test.</p>
+the genes that are considered DE by a multinomial goodness-of-fit test.
+The selection of genes with strong signals is implicitly performed by
+the call to <code>pois_cov_init</code>, e.g., setting
+<code>cutoff = 3</code> selects the genes for which the magnitude of
+<span class="math inline">\(Z\)</span>-score (inverted from the <span class="math inline">\(p\)</span>-value of the goodness-of-fit test)
+exceeds 3.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">res.pca</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pois_cov_init.html">pois_cov_init</a></span><span class="op">(</span><span class="va">dat</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="va">res.pca</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pois_cov_init.html">pois_cov_init</a></span><span class="op">(</span><span class="va">dat</span>, cutoff <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></code></pre></div>
 <p>The refinement phase refines the initial estimates of data-driven
 covariance matrices using the Extreme Eeconvolution (ED) algorithm, and
 is implemented by the function <code>pois_cov_ed</code>. As in the
 initialization phase, only data from the genes with strong signals are
-used. For the purposes of this vignette, we just ran
-<code>pois_cov_ed</code> for 10 iterations, but we recommend using the
-default value <code>maxiter = 500</code> when analyzing your own
-data.</p>
+used. It should be noted that only data-driven covariance matrices need
+to be refined, so they need to be distinguished from the canonical
+covariance matrices in the <code>pois_cov_ed</code> call using the
+argument <code>ulist.dd</code>. For the purposes of this vignette, we
+just ran <code>pois_cov_ed</code> for 10 iterations, but we recommend
+using the default value <code>maxiter = 500</code> when analyzing your
+own data.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">R</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">dat</span><span class="op">$</span><span class="va">X</span><span class="op">)</span>
+<span class="co"># Merge data-driven and canonical rank-1 prior covariance matrices</span>
 <span class="va">ulist</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">res.pca</span><span class="op">$</span><span class="va">ulist</span>,<span class="va">ulist.c</span><span class="op">)</span>
-<span class="co"># Specify whether each prior covariance matrix is data-driven or not.</span>
+<span class="co"># Specify whether a rank-1 prior covariance matrix is data-driven or not</span>
+<span class="co"># (note all full-rank covariance matrices are data-driven so do not need this specification)</span>
 <span class="va">ulist.dd</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="cn">TRUE</span>,<span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">res.pca</span><span class="op">$</span><span class="va">ulist</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span>,<span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="cn">FALSE</span>,<span class="va">R</span> <span class="op">+</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span> 
 <span class="co"># Run ED on the genes with strong signals.</span>
 <span class="va">fit.ed</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pois_cov_ed.html">pois_cov_ed</a></span><span class="op">(</span><span class="va">dat</span>,subset <span class="op">=</span> <span class="va">res.pca</span><span class="op">$</span><span class="va">subset</span>,Ulist <span class="op">=</span> <span class="va">res.pca</span><span class="op">$</span><span class="va">Ulist</span>,
@@ -269,13 +312,17 @@ data.</p>
 <span class="co"># [1] "iter         ELBO"</span>
 <span class="co"># [1] "10:    -23470.835015"</span>
 <span class="co"># Finish running extreme deconvolution to estimate prior covariance matrices.</span></code></pre></div>
-<p>The modification phase adds a small constant (e.g., <span class="math inline">\(0.01\)</span>) to the diagonal entries of the
+<p>The modification phase adds a small constant <span class="math inline">\(\epsilon^2\)</span> (e.g., <span class="math inline">\(0.01\)</span>) to the diagonal entries of the
 estimated data-driven covariance matrices. This step is done to
 alleviate issues of inflated <a href="https://doi.org/10.1093/biostatistics/kxw041" class="external-link">local false sign
 rates (lfsr)</a>, which are analogous to but more conservative than
-local false discovery rates.</p>
+local false discovery rates. Similarly, only data-driven covariance
+matrices require such modification, and this information is encoded in
+the vector <code>epsilon2.G</code> and will be passed to the function
+call in the next step.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># add epsilon*I to each full-rank data-driven prior covariance matrix</span>
+<code class="sourceCode R"><span class="co"># add epsilon2*I to each full-rank data-driven prior covariance matrix</span>
+<span class="co"># all the full-rank covariance matrices are data-driven and need this modification</span>
 <span class="va">Ulist</span> <span class="op">&lt;-</span> <span class="va">fit.ed</span><span class="op">$</span><span class="va">Ulist</span>
 <span class="va">H</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">Ulist</span><span class="op">)</span>
 <span class="kw">for</span><span class="op">(</span><span class="va">h</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="va">H</span><span class="op">)</span><span class="op">{</span>
@@ -284,7 +331,8 @@ local false discovery rates.</p>
   <span class="va">Ulist</span><span class="op">[[</span><span class="va">h</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">Uh</span> <span class="op">+</span> <span class="fl">1e-2</span><span class="op">*</span><span class="fu"><a href="https://rdrr.io/r/base/diag.html" class="external-link">diag</a></span><span class="op">(</span><span class="va">R</span><span class="op">)</span>
 <span class="op">}</span>
 
-<span class="co"># add epsilon*I to each rank-1 data-driven prior covariance matrix</span>
+<span class="co"># add epsilon2*I to each rank-1 data-driven prior covariance matrix</span>
+<span class="co"># only a subset of the rank-1 covariance matrices are data-driven and need this modification</span>
 <span class="va">G</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">fit.ed</span><span class="op">$</span><span class="va">ulist</span><span class="op">)</span>
 <span class="va">epsilon2.G</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1e-8</span>, <span class="va">G</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">epsilon2.G</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">fit.ed</span><span class="op">$</span><span class="va">ulist</span><span class="op">)</span>
@@ -376,16 +424,17 @@ effect sizes (log-fold changes) and measures of significance (lfsr), for
 each gene in the dataset. These DE effect posterior summaries are stored
 in the <code>result</code> component.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># Rransform DE effect estimates to the scale of log2 fold change.</span>
-<span class="va">res</span><span class="op">$</span><span class="va">result</span><span class="op">$</span><span class="va">PosteriorMean</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span>
-<span class="co"># gene-specific, condition-specific lfsr</span>
-<span class="va">res</span><span class="op">$</span><span class="va">result</span><span class="op">$</span><span class="va">lfsr</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span>
+<code class="sourceCode R"><span class="co"># Transform DE effect estimates to the scale of log2 fold change from natural log scale.</span>
+<span class="va">neutrophils_pois_mash_ruv_fit</span><span class="op">$</span><span class="va">result</span><span class="op">$</span><span class="va">PosteriorMean</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span>
 <span class="co">#          Ctrl_2-mean   CCL20-mean    CXCL1-mean    CCL22-mean   CXCL5-mean</span>
 <span class="co"># Mrpl15  -0.034042592 -0.007468183  0.0104375255 -0.0212980437 -0.017696220</span>
 <span class="co"># Lypla1  -0.009057545 -0.002816239 -0.0312773830 -0.0100671020 -0.011641034</span>
 <span class="co"># Tcea1    0.006406279  0.003163708  0.0117792404  0.0112956807  0.007417445</span>
 <span class="co"># Atp6v1h  0.005641873  0.004324441 -0.0009984417  0.0001755186  0.002388297</span>
-<span class="co"># Rb1cc1   0.005531303  0.010590542 -0.0071790326  0.0060939489  0.003342450</span>
+<span class="co"># Rb1cc1   0.005531303  0.010590542 -0.0071790326  0.0060939489  0.003342450</span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># Obtain gene-specific, condition-specific lfsr for detecting gene-condition DE effects.</span>
+<span class="va">neutrophils_pois_mash_ruv_fit</span><span class="op">$</span><span class="va">result</span><span class="op">$</span><span class="va">lfsr</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span>
 <span class="co">#         Ctrl_2-mean CCL20-mean CXCL1-mean CCL22-mean CXCL5-mean</span>
 <span class="co"># Mrpl15    0.2527081  0.4012463  0.4501408  0.3236194  0.3458751</span>
 <span class="co"># Lypla1    0.4041496  0.4586630  0.2824110  0.3962331  0.3803850</span>
@@ -396,8 +445,8 @@ in the <code>result</code> component.</p>
 <em>lfsr</em> less than <span class="math inline">\(\alpha\)</span> in
 at least one condition, where <span class="math inline">\(\alpha\)</span> is a threshold specified by the
 user (e.g., 0.05).</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">lfsr</span> <span class="op">&lt;-</span> <span class="va">res</span><span class="op">$</span><span class="va">result</span><span class="op">$</span><span class="va">lfsr</span>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">lfsr</span> <span class="op">&lt;-</span> <span class="va">neutrophils_pois_mash_ruv_fit</span><span class="op">$</span><span class="va">result</span><span class="op">$</span><span class="va">lfsr</span>
 <span class="co"># Get the indices of identified DE genes.</span>
 <span class="va">min.lfsr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">lfsr</span>,<span class="fl">1</span>,<span class="va">min</span><span class="op">)</span>
 <span class="co"># Order genes by significance based on mininum lfsr across conditions.</span>
@@ -409,45 +458,56 @@ user (e.g., 0.05).</p>
 <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">de.genes</span><span class="op">)</span>
 <span class="co"># [1] 2636</span></code></pre></div>
 <p>The model parameter estimates are stored in the
-<code>pois.mash.fit</code> component. In particular, let us look at the
-estimates of the mixture proportions for different prior covariance
-matrices:</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/colSums.html" class="external-link">rowSums</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">pois.mash.fit</span><span class="op">$</span><span class="va">pi</span><span class="op">)</span>,<span class="fl">3</span><span class="op">)</span>
-<span class="co">#    tPCA Emp_cov    PC_1    PC_2    PC_3    PC_4    PC_5     u_0     e_1     e_2 </span>
-<span class="co">#   0.912   0.002   0.002   0.010   0.034   0.012   0.004   0.001   0.000   0.001 </span>
-<span class="co">#     e_3     e_4     e_5     e_6     e_7     e_8     e_9    e_10    e_11    e_12 </span>
-<span class="co">#   0.000   0.000   0.000   0.000   0.001   0.000   0.000   0.001   0.000   0.000 </span>
-<span class="co">#    e_13    e_14    e_15    e_16    e_17    e_18    e_19    e_20    e_21    e_22 </span>
-<span class="co">#   0.000   0.001   0.000   0.000   0.000   0.000   0.000   0.000   0.000   0.000 </span>
-<span class="co">#    e_23    e_24    e_25    e_26    e_27    e_28    e_29    e_30    e_31    e_32 </span>
-<span class="co">#   0.000   0.000   0.000   0.001   0.000   0.000   0.000   0.000   0.000   0.000 </span>
-<span class="co">#    e_33    e_34    e_35    e_36    e_37    e_38    e_39    e_40    e_41    e_42 </span>
-<span class="co">#   0.000   0.004   0.001   0.000   0.000   0.000   0.000   0.000   0.002   0.001 </span>
-<span class="co">#    e_43    e_44    e_45 </span>
-<span class="co">#   0.000   0.000   0.000</span></code></pre></div>
-<p>The data-driven covariance matrix “tPCA” has by far the largest
-proportion estimate (91%). We plot the correlation heatmap for this
-covariance matrix, which captures the most frequent pattern of sharing
-of DE effects across cytokine treatments in the neutrophils data. For
-space reason, here we present the correlation heatmap only for selected
-conditions.</p>
+<code>pois.mash.fit</code> component. In particular, let us look at
+<span class="math inline">\(\pi_{kl}\)</span>, the estimates of the
+mixture proportions for combinations of different scaling coefficients
+<span class="math inline">\(w_l\)</span> and prior covariance matrices
+<span class="math inline">\(U_k\)</span>:</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/pkg/pheatmap/man/pheatmap.html" class="external-link">pheatmap</a></span><span class="op">(</span><span class="va">neutrophils_pois_mash_ruv_fit</span><span class="op">$</span><span class="va">pois.mash.fit</span><span class="op">$</span><span class="va">pi</span>, cluster_rows<span class="op">=</span><span class="cn">FALSE</span>, cluster_cols<span class="op">=</span><span class="cn">FALSE</span>, fontsize_row<span class="op">=</span><span class="fl">6</span>, fontsize_col<span class="op">=</span><span class="fl">6</span>, main<span class="op">=</span><span class="st">"Proportion estimates of prior covariance matrices"</span><span class="op">)</span></code></pre></div>
+<p><img src="intro_poisson_mash_files/figure-html/mixture-proportion-1.png" width="875" style="display: block; margin: auto;"></p>
+<p>The data-driven covariance matrix “tPCA” has by far the largest
+proportion estimate (91%; summed over all scaling coefficients). We plot
+the correlation heatmap for this covariance matrix, which captures the
+most frequent pattern of sharing of DE effects across cytokine
+treatments in the neutrophils data. For space reason, here we present
+the correlation heatmap only for selected conditions.</p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">condition_colors</span><span class="op">)</span>
-<span class="va">U</span> <span class="op">&lt;-</span> <span class="va">res</span><span class="op">$</span><span class="va">pois.mash.fit</span><span class="op">$</span><span class="va">Ulist</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>
-<span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">U</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">pois.mash.fit</span><span class="op">$</span><span class="va">mu</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">U</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">pois.mash.fit</span><span class="op">$</span><span class="va">mu</span><span class="op">)</span>
-<span class="va">idx.trts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/match.html" class="external-link">match</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">cols.trt</span><span class="op">)</span>,<span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">pois.mash.fit</span><span class="op">$</span><span class="va">mu</span><span class="op">)</span><span class="op">)</span>
+<span class="va">U</span> <span class="op">&lt;-</span> <span class="va">neutrophils_pois_mash_ruv_fit</span><span class="op">$</span><span class="va">pois.mash.fit</span><span class="op">$</span><span class="va">Ulist</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>
+<span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">U</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">neutrophils_pois_mash_ruv_fit</span><span class="op">$</span><span class="va">pois.mash.fit</span><span class="op">$</span><span class="va">mu</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">U</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">neutrophils_pois_mash_ruv_fit</span><span class="op">$</span><span class="va">pois.mash.fit</span><span class="op">$</span><span class="va">mu</span><span class="op">)</span>
+<span class="va">idx.trts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/match.html" class="external-link">match</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">condition_colors</span><span class="op">)</span>,<span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">neutrophils_pois_mash_ruv_fit</span><span class="op">$</span><span class="va">pois.mash.fit</span><span class="op">$</span><span class="va">mu</span><span class="op">)</span><span class="op">)</span>
 <span class="va">corr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cov2cor</a></span><span class="op">(</span><span class="va">U</span><span class="op">[</span><span class="va">idx.trts</span>,<span class="va">idx.trts</span><span class="op">]</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/pkg/pheatmap/man/pheatmap.html" class="external-link">pheatmap</a></span><span class="op">(</span><span class="va">corr</span>,cluster_rows <span class="op">=</span> <span class="cn">FALSE</span>,cluster_cols <span class="op">=</span> <span class="cn">FALSE</span>,angle_col <span class="op">=</span> <span class="fl">90</span>,
-         fontsize <span class="op">=</span> <span class="fl">12</span>,main <span class="op">=</span> <span class="st">"Major prior covariance matrix (weight = 91%)"</span><span class="op">)</span></code></pre></div>
-<p><img src="intro_poisson_mash_files/figure-html/plot-sharing-pattern-1.png" width="600" style="display: block; margin: auto;"></p>
+         fontsize <span class="op">=</span> <span class="fl">8</span>,main <span class="op">=</span> <span class="st">"Correlation matrix for\nthe major prior covariance (weight = 91%)"</span><span class="op">)</span></code></pre></div>
+<p><img src="intro_poisson_mash_files/figure-html/plot-sharing-pattern-1.png" width="480" style="display: block; margin: auto;"></p>
+<p>This correlation heatmap suggests strong sharing of DE effects among
+two groups of cytokines (1) IL-1<span class="math inline">\(\alpha\)</span>, IL-1<span class="math inline">\(\beta\)</span>, G-CSF and (2) IL-12 p70, IFN-<span class="math inline">\(\gamma\)</span>, IL-18, IL-15, IL-33. We then plot
+the log-fold changes for a few DE genes that either show effect sharing
+among (1) or (2), where the reference condition is the mean across all
+conditions.</p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co">### define the color map for LFC</span>
+<span class="va">cols</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/grDevices/colorRamp.html" class="external-link">colorRampPalette</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"blue"</span>,<span class="st">"white"</span>,<span class="st">"red"</span><span class="op">)</span><span class="op">)</span><span class="op">(</span><span class="fl">99</span><span class="op">)</span>
+<span class="va">brks</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">10</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">10</span><span class="op">)</span>, length<span class="op">=</span><span class="fl">100</span><span class="op">)</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span>
+
+<span class="co">### plot a few DE genes that show effect sharing among the first group of cytokines (taken from Figure 7 in our paper)</span>
+<span class="va">genes1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Prok2"</span>, <span class="st">"Nos2"</span>, <span class="st">"Teddm3"</span>, <span class="st">"Lipg"</span>, <span class="st">"Saa3"</span>, <span class="st">"Wfdc17"</span>, <span class="st">"Cd38"</span>, <span class="st">"Ggt1"</span>, <span class="st">"Dpep2"</span>, <span class="st">"Mmp19"</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/pkg/pheatmap/man/pheatmap.html" class="external-link">pheatmap</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">neutrophils_pois_mash_ruv_fit</span><span class="op">$</span><span class="va">result</span><span class="op">$</span><span class="va">PosteriorMean</span><span class="op">[</span><span class="va">genes1</span>, <span class="va">idx.trts</span><span class="op">]</span><span class="op">)</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span>, cluster_rows <span class="op">=</span> <span class="cn">FALSE</span>, cluster_cols <span class="op">=</span> <span class="cn">FALSE</span>, color <span class="op">=</span> <span class="va">cols</span>, breaks <span class="op">=</span> <span class="va">brks</span>, angle_col <span class="op">=</span> <span class="fl">90</span>, main <span class="op">=</span> <span class="st">""</span><span class="op">)</span></code></pre></div>
+<p><img src="intro_poisson_mash_files/figure-html/plot-lfc-1.png" width="480" style="display: block; margin: auto;"></p>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R">
+<span class="co">### plot a few DE genes that show effect sharing among the second group of cytokines (taken from Figure 7 in our paper)</span>
+<span class="va">genes2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Gbp2"</span>, <span class="st">"Gbp3"</span>, <span class="st">"Gbp4"</span>, <span class="st">"Gbp5"</span>, <span class="st">"Ifi47"</span>, <span class="st">"Ifit2"</span>, <span class="st">"Ifit3"</span>, <span class="st">"Socs1"</span>, <span class="st">"Tgtp2"</span>, <span class="st">"Zbp1"</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/pkg/pheatmap/man/pheatmap.html" class="external-link">pheatmap</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">neutrophils_pois_mash_ruv_fit</span><span class="op">$</span><span class="va">result</span><span class="op">$</span><span class="va">PosteriorMean</span><span class="op">[</span><span class="va">genes2</span>, <span class="va">idx.trts</span><span class="op">]</span><span class="op">)</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span>, cluster_rows <span class="op">=</span> <span class="cn">FALSE</span>, cluster_cols <span class="op">=</span> <span class="cn">FALSE</span>, color <span class="op">=</span> <span class="va">cols</span>, breaks <span class="op">=</span> <span class="va">brks</span>, angle_col <span class="op">=</span> <span class="fl">90</span>, main <span class="op">=</span> <span class="st">""</span><span class="op">)</span></code></pre></div>
+<p><img src="intro_poisson_mash_files/figure-html/plot-lfc-2.png" width="480" style="display: block; margin: auto;"></p>
 <div class="section level3">
 <h3 id="session-info">Session info<a class="anchor" aria-label="anchor" href="#session-info"></a>
 </h3>
 <p>This is the version of R and the packages that were used to generate
 these results.</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span>
 <span class="co"># R version 3.6.2 (2019-12-12)</span>
 <span class="co"># Platform: x86_64-apple-darwin15.6.0 (64-bit)</span>
@@ -465,7 +525,7 @@ these results.</p>
 <span class="co"># [8] methods   base     </span>
 <span class="co"># </span>
 <span class="co"># other attached packages:</span>
-<span class="co">#  [1] poisson.mash.alpha_0.1-92   pheatmap_1.0.12            </span>
+<span class="co">#  [1] poisson.mash.alpha_0.1-98   pheatmap_1.0.12            </span>
 <span class="co">#  [3] glmpca_0.2.0                scran_1.14.6               </span>
 <span class="co">#  [5] SingleCellExperiment_1.8.0  SummarizedExperiment_1.16.1</span>
 <span class="co">#  [7] DelayedArray_0.12.3         BiocParallel_1.18.1        </span>
