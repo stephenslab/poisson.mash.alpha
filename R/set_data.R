@@ -9,9 +9,10 @@
 #' @param si Vector of size factors for each observation.
 #' 
 #' @param subgroup Factor with R entries and M levels giving the
-#'   subgroup status of each of R conditions. Default is no subgroups
-#'   (that is, M = 1 level). If not set to \code{NULL}, the names of
-#'   subgroup must match the levels of \code{condition}.
+#'   subgroup status of each of R conditions. The default is no
+#'   subgroups (that is, M = 1 level). If not missiing, or not set to
+#'   \code{NULL}, the names of subgroup must match the levels of
+#'   \code{condition}.
 #' 
 #' @return A \dQuote{pois.mash} data object for poisson mash analysis,
 #'   including the following components:
@@ -53,7 +54,7 @@ pois_mash_set_data <- function (Y, condition, si, subgroup) {
     subgroup        <- rep(1,R)
     names(subgroup) <- trts
   }
-
+  
   # Aggregate the cell-level data into condition-level data.
   X <- matrix(as.numeric(NA),J,R)
   s <- rep(as.numeric(NA),R)

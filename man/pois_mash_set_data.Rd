@@ -16,9 +16,10 @@ condition[i] specifies the condition status of the ith observation.}
 \item{si}{Vector of size factors for each observation.}
 
 \item{subgroup}{Factor with R entries and M levels giving the
-subgroup status of each of R conditions. Default is no subgroups
-(that is, M = 1 level). If not set to \code{NULL}, the names of
-subgroup must match the levels of \code{condition}.}
+subgroup status of each of R conditions. The default is no
+subgroups (that is, M = 1 level). If not missiing, or not set to
+\code{NULL}, the names of subgroup must match the levels of
+\code{condition}.}
 }
 \value{
 A \dQuote{pois.mash} data object for poisson mash analysis,
