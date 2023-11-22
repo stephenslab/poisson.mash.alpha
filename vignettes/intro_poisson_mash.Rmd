@@ -337,7 +337,7 @@ data(condition_colors)
 U <- neutrophils_pois_mash_ruv_fit$pois.mash.fit$Ulist[[1]]
 colnames(U) <- colnames(neutrophils_pois_mash_ruv_fit$pois.mash.fit$mu)
 rownames(U) <- colnames(neutrophils_pois_mash_ruv_fit$pois.mash.fit$mu)
-idx.trts <- match(names(cols.trt),colnames(neutrophils_pois_mash_ruv_fit$pois.mash.fit$mu))
+idx.trts <- match(names(condition_colors),colnames(neutrophils_pois_mash_ruv_fit$pois.mash.fit$mu))
 corr <- cov2cor(U[idx.trts,idx.trts])
 pheatmap(corr,cluster_rows = FALSE,cluster_cols = FALSE,angle_col = 90,
          fontsize = 8,main = "Correlation matrix for\nthe major prior covariance (weight = 91%)")
