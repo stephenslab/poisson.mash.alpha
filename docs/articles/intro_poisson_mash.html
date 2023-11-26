@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">poisson.mash.alpha</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1-99</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1-100</span>
       </span>
     </div>
 
@@ -71,7 +71,7 @@ in single-cell RNA-seq data using Poisson mash</h1>
                         <h4 data-toc-skip class="author">Yusha Liu,
 Peter Carbonetto</h4>
             
-            <h4 data-toc-skip class="date">2023-11-22</h4>
+            <h4 data-toc-skip class="date">2023-11-26</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/stephenslab/poisson.mash.alpha/blob/HEAD/vignettes/intro_poisson_mash.Rmd" class="external-link"><code>vignettes/intro_poisson_mash.Rmd</code></a></small>
       <div class="hidden name"><code>intro_poisson_mash.Rmd</code></div>
@@ -91,40 +91,35 @@ many (e.g., dozens) of different conditions. The aim is to detect which
 genes are differentially expressed (DE) and to estimate expression
 differences (log-fold changes) among multiple conditions. This approach
 makes use of the multivariate adaptive shrinkage (<a href="https://dx.doi.org/10.1038/s41588-018-0268-8" class="external-link">mash</a>) prior.</p>
-<p>We illustrate how to implement this approach by analyzing data from
-an experiment intended to study the effects of cytokine stimulation on
-gene expression in neutrophils collected from cytokine-injected
-mice.</p>
-<p>We first load in the R packages that will be used in the analysis,
-then we work through an example to illustrate how to apply Poisson mash
-step-by-step.</p>
+<p>We illustrate this approach by analyzing scRNA-seq data for learning
+about the effects of cytokine stimulation on gene expression. We will
+work through the Poisson mash analysis step-by-step.</p>
+<p>First, we load the R packages needed to run the analysis.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="http://Matrix.R-forge.R-project.org/" class="external-link">Matrix</a></span><span class="op">)</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">scran</span><span class="op">)</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/willtownes/glmpca" class="external-link">glmpca</a></span><span class="op">)</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">pheatmap</span><span class="op">)</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/stephenslab/poisson.mash.alpha" class="external-link">poisson.mash.alpha</a></span><span class="op">)</span></code></pre></div>
-<p>Also, set the random number generator seed to ensure that the results
-are more reproducible.</p>
+<p>We also set the random number generator seed to ensure that the
+results are reproducible.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="create-a-data-object-for-poisson-mash-analysis">Create a data object for Poisson mash analysis<a class="anchor" aria-label="anchor" href="#create-a-data-object-for-poisson-mash-analysis"></a>
 </h3>
-<p>To run Poisson mash, you need to provide (1) a matrix of UMI counts,
-stored as a <span class="math inline">\(J \times N\)</span> matrix <span class="math inline">\(Y\)</span> with entries <span class="math inline">\(y_{ji}\)</span>, where <span class="math inline">\(i = 1, \dots,N\)</span> indexes cells and <span class="math inline">\(j=1,\dots,J\)</span> indexes genes; and (2) an
+<p>To run Poisson mash, you need to provide: (1) a matrix of UMI counts,
+stored as a <span class="math inline">\(J \times N\)</span> matrix <span class="math inline">\(Y\)</span> with entries <span class="math inline">\(y_{ji}\)</span>, where <span class="math inline">\(i = 1, \dots,N\)</span> indexes cells and <span class="math inline">\(j=1,\dots,J\)</span> indexes genes; and (2) a
 vector of length <span class="math inline">\(n\)</span> in which the
 <span class="math inline">\(i^{\mathrm{th}}\)</span> element gives the
 condition label of cell <span class="math inline">\(i\)</span>. We
-assume that the <span class="math inline">\(N\)</span> cells come from
-<span class="math inline">\(R\)</span> conditions (in practice, <span class="math inline">\(R\)</span> should be considerably larger than
-2).</p>
-<p>The original neutrophils dataset contained counts for 13,362 cells,
-8,543 genes and 45 conditions (44 cytokine treatments plus one control).
-For the purposes of illustrating the interface, we use a small subset of
-these data (1,936 cells, 2,158 genes, 12 conditions), but later we
-examine the results from running Poisson mash on the full data.</p>
+denote the number of conditions by <span class="math inline">\(R\)</span>. (<span class="math inline">\(R\)</span> should be much larger than 2.)</p>
+<p>The original data contained counts for 13,362 cells, 8,543 genes and
+45 conditions (44 cytokine treatments plus one control). For the this
+vignette, we will use subset (1,936 cells, 2,158 genes, 12 conditions),
+but later we will inspect the results obtained from running Poisson mash
+on the full data set.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">neutrophils_subset</span><span class="op">)</span>
 <span class="va">Y</span> <span class="op">&lt;-</span> <span class="va">neutrophils_subset</span><span class="op">$</span><span class="va">Y</span>
@@ -142,7 +137,7 @@ examine the results from running Poisson mash on the full data.</p>
 This can be done in various ways. The simplest option is to take the sum
 of the counts <span class="math inline">\(y_{ji}\)</span> across all
 genes in each cell <span class="math inline">\(i\)</span>. Here we take
-a deconvolution-based approach that was implemented in the scran
+a deconvolution-based approach implemented in the <strong>scran</strong>
 package:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">clusters</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/scran/man/quickCluster.html" class="external-link">quickCluster</a></span><span class="op">(</span><span class="va">Y</span><span class="op">)</span>
@@ -153,25 +148,25 @@ function <code>pois_mash_set_data</code>.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">dat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pois_mash_set_data.html">pois_mash_set_data</a></span><span class="op">(</span><span class="va">Y</span>,<span class="va">conditions</span>,<span class="va">si</span><span class="op">)</span></code></pre></div>
 <p>By default, Poisson mash assumes a gene-specific baseline expression
-level, <span class="math inline">\(\mu_j\)</span>, shared across all
-conditions. Poisson mash can also handle the more complex setting in
-which the <span class="math inline">\(R\)</span> conditions arise from
-<span class="math inline">\(m = 1, \dots, M\)</span> subgroups, and each
+level, <span class="math inline">\(\mu_j\)</span>, that is shared across
+all conditions.</p>
+<p>(Poisson mash can also handle the more complex setting in which the
+<span class="math inline">\(R\)</span> conditions arise from <span class="math inline">\(m = 1, \dots, M\)</span> subgroups, and each
 subgroup has its own baseline, <span class="math inline">\(\mu_{jm}\)</span>. For example, one may want to
 perform a DE analysis across multiple treatment conditions, jointly for
 multiple cell types. In this case, <span class="math inline">\(M\)</span> is the number of cell types, and <span class="math inline">\(R\)</span> represents the total number of
 combinations of treatment conditions and cell types. Please refer to the
 documentation for the function <code>pois_mash_set_data</code> to see
-how to do this.</p>
+how to do this.)</p>
 </div>
 <div class="section level3">
 <h3 id="estimate-latent-factors-capturing-unwanted-variation">Estimate latent factors capturing unwanted variation<a class="anchor" aria-label="anchor" href="#estimate-latent-factors-capturing-unwanted-variation"></a>
 </h3>
 <p>Unwanted variation present in the data can induce dependence among
-gene-wise tests and confound DE analysis. In some cases, the confounding
-variables are known, such as when these capture batch effects. More
-often, the unwanted variation is due to unmeasured factors. Here we
-estimating the confounding variables using <a href="https://github.com/willtownes/glmpca" class="external-link">glmpca</a>.</p>
+gene-wise tests and confound the DE analysis. In some cases, the
+confounding variables are known, such as when these capture batch
+effects. More often, the unwanted variation is due to unmeasured
+factors. Here we estimating the confounding variables using <a href="https://github.com/willtownes/glmpca" class="external-link">glmpca</a>.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">design</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/model.matrix.html" class="external-link">model.matrix</a></span><span class="op">(</span><span class="op">~</span><span class="va">conditions</span><span class="op">)</span>
 <span class="va">fit.glmpca</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/glmpca/man/glmpca.html" class="external-link">glmpca</a></span><span class="op">(</span>Y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">Y</span><span class="op">)</span>,X <span class="op">=</span> <span class="va">design</span><span class="op">[</span>,<span class="op">-</span><span class="fl">1</span><span class="op">]</span>,L  <span class="op">=</span> <span class="fl">4</span>,fam <span class="op">=</span> <span class="st">"nb2"</span>,
@@ -207,25 +202,22 @@ estimating the confounding variables using <a href="https://github.com/willtowne
 <span class="co"># Iteration: 18 | deviance=1.675e+06</span>
 <span class="co"># Iteration: 19 | deviance=1.661e+06</span>
 <span class="co"># Iteration: 20 | deviance=1.647e+06</span>
-<span class="co"># Warning in glmpca(Y = as.matrix(Y), X = design[, -1], L = 4, fam = "nb2", :</span>
-<span class="co"># Reached maximum number of iterations (20) without numerical convergence. Results</span>
-<span class="co"># may be unreliable.</span>
 <span class="va">Fuv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">fit.glmpca</span><span class="op">$</span><span class="va">loadings</span><span class="op">)</span></code></pre></div>
-<p>To save time, we ran <code>glmpca</code> for only 20 iterations, but
-typically more iterations will be needed (100, or perhaps more).</p>
+<p>For this vignette, we ran <code>glmpca</code> for only 20 iterations,
+but typically it is better to perform more iterations (100, or perhaps
+more).</p>
 </div>
 <div class="section level3">
 <h3 id="fit-the-poisson-mash-model">Fit the Poisson mash model<a class="anchor" aria-label="anchor" href="#fit-the-poisson-mash-model"></a>
 </h3>
 <div class="section level4">
-<h4 id="step-1-prefit-the-model-to-initialize-parameters">Step 1: Prefit the model to initialize parameters<a class="anchor" aria-label="anchor" href="#step-1-prefit-the-model-to-initialize-parameters"></a>
+<h4 id="step-1-prefit-the-model">Step 1: Prefit the model<a class="anchor" aria-label="anchor" href="#step-1-prefit-the-model"></a>
 </h4>
 <p>We first fit Poisson mash under the assumption of no DE to get
 sensible initial estimates of the other model parameters, including the
-gene-specific baseline expressions <span class="math inline">\(\mu_j\)</span>. Please refer to the <a href="https://arxiv.org/abs/2210.00697" class="external-link">paper</a> for details.</p>
+gene-specific baseline expressions <span class="math inline">\(\mu_j\)</span>. (See the <a href="https://arxiv.org/abs/2210.00697" class="external-link">paper</a> for details.)</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">prefit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pois_mash_prefit.html">pois_mash_prefit</a></span><span class="op">(</span><span class="va">dat</span>,ruv <span class="op">=</span> <span class="cn">TRUE</span>,Fuv <span class="op">=</span> <span class="va">Fuv</span>,verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>
-<span class="co"># Initializing psi2 via grid search.</span></code></pre></div>
+<code class="sourceCode R"><span class="va">prefit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pois_mash_prefit.html">pois_mash_prefit</a></span><span class="op">(</span><span class="va">dat</span>,ruv <span class="op">=</span> <span class="cn">TRUE</span>,Fuv <span class="op">=</span> <span class="va">Fuv</span>,verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
 </div>
 <div class="section level4">
 <h4 id="step-2-set-up-the-prior-covariance-matrices">Step 2: Set up the prior covariance matrices<a class="anchor" aria-label="anchor" href="#step-2-set-up-the-prior-covariance-matrices"></a>
@@ -234,24 +226,26 @@ gene-specific baseline expressions <span class="math inline">\(\mu_j\)</span>. P
 \beta_{jR})'\)</span> denote the true DE effects of each of the
 <span class="math inline">\(R\)</span> conditions relative to the
 baseline expression <span class="math inline">\(\mu_j\)</span> for gene
-<span class="math inline">\(j\)</span>. We assume that <span class="math inline">\(\beta_j\)</span> follows a mash prior, which is a
-mixture of multivariate normal distributions: <span class="math display">\[ p(\beta_j; \pi, U) =
-\sum_{k=1}^K \sum_{l=1}^L \pi_{kl} N_R(\beta_j; 0, w_l U_k).\]</span> In
-the mash prior, <span class="math inline">\(w_l\)</span> is a
-pre-specified grid of scaling coefficients, spanning from very small to
-very large, to capture the full range of possible DE effect sizes; <span class="math inline">\(U_k\)</span> is a set of covariance matrices, each
-of which capturing a different pattern of covariation of DE effects
+<span class="math inline">\(j\)</span>. We assume that <span class="math inline">\(\beta_j\)</span> follows a “mash prior”, which is
+a mixture of multivariate normal distributions: <span class="math display">\[
+p(\beta_j; \pi, U) =
+\sum_{k=1}^K \sum_{l=1}^L \pi_{kl} N_R(\beta_j; 0, w_l U_k).
+\]</span> In the mash prior, <span class="math inline">\(w_l\)</span> is
+a pre-specified grid of scaling coefficients, spanning from very small
+to very large to capture the full range of possible DE effect sizes;
+<span class="math inline">\(U_k\)</span> is a set of covariance
+matrices, each of which capture a different pattern of covariation
 across conditions; <span class="math inline">\(\pi_{kl}\)</span> are
-corresponding mixture proportions that are estimated from the data
-during model fitting.</p>
-<p>To use Poisson mash, you need to specify the prior covariance
+mixture proportions that are estimated from the data during model
+fitting.</p>
+<p>To use Poisson mash, you need to specify these prior covariance
 matrices. This may include “canonical” covariance matrices that
 represent, for example, DE specific to a condition; and “data-driven”
 covariance matrices that are learned from the data and can capture
 arbitrary patterns of DE among conditions.</p>
 <p>For the canonical matrices, here we consider the matrices capturing
 condition-specific effects for each of the <span class="math inline">\(R\)</span> conditions. These matrices can be
-generate using the function <code>pois_cov_canonical</code>.</p>
+generated using the <code>pois_cov_canonical</code> function:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">ulist.c</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pois_cov_canonical.html">pois_cov_canonical</a></span><span class="op">(</span><span class="va">dat</span><span class="op">)</span></code></pre></div>
 <p>Data-driven covariance matrices are estimated using a three-step
@@ -263,10 +257,10 @@ the genes that are considered DE by a multinomial goodness-of-fit test.
 The selection of genes with strong signals is implicitly performed by
 the call to <code>pois_cov_init</code>, e.g., setting
 <code>cutoff = 3</code> selects the genes for which the magnitude of
-<span class="math inline">\(Z\)</span>-score (inverted from the <span class="math inline">\(p\)</span>-value of the goodness-of-fit test)
-exceeds 3.</p>
+z-score (inverted from the p-value of the goodness-of-fit test) exceeds
+3.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">res.pca</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pois_cov_init.html">pois_cov_init</a></span><span class="op">(</span><span class="va">dat</span>, cutoff <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="va">res.pca</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pois_cov_init.html">pois_cov_init</a></span><span class="op">(</span><span class="va">dat</span>,cutoff <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></code></pre></div>
 <p>The refinement phase refines the initial estimates of data-driven
 covariance matrices using the Extreme Eeconvolution (ED) algorithm, and
 is implemented by the function <code>pois_cov_ed</code>. As in the
@@ -276,50 +270,29 @@ to be refined, so they need to be distinguished from the canonical
 covariance matrices in the <code>pois_cov_ed</code> call using the
 argument <code>ulist.dd</code>. For the purposes of this vignette, we
 just ran <code>pois_cov_ed</code> for 10 iterations, but we recommend
-using the default value <code>maxiter = 500</code> when analyzing your
-own data.</p>
+performing more iterations when analyzing your own data (the default
+number of iterations is 500).</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">R</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">dat</span><span class="op">$</span><span class="va">X</span><span class="op">)</span>
-<span class="co"># Merge data-driven and canonical rank-1 prior covariance matrices</span>
+<span class="co"># Merge data-driven and canonical rank-1 prior covariance matrices.</span>
 <span class="va">ulist</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">res.pca</span><span class="op">$</span><span class="va">ulist</span>,<span class="va">ulist.c</span><span class="op">)</span>
-<span class="co"># Specify whether a rank-1 prior covariance matrix is data-driven or not</span>
-<span class="co"># (note all full-rank covariance matrices are data-driven so do not need this specification)</span>
+<span class="co"># Specify whether a rank-1 prior covariance matrix is data-driven</span>
+<span class="co"># or not (note all full-rank covariance matrices are data-driven</span>
+<span class="co"># so do not need this specification).</span>
 <span class="va">ulist.dd</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="cn">TRUE</span>,<span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">res.pca</span><span class="op">$</span><span class="va">ulist</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span>,<span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="cn">FALSE</span>,<span class="va">R</span> <span class="op">+</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span> 
 <span class="co"># Run ED on the genes with strong signals.</span>
 <span class="va">fit.ed</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pois_cov_ed.html">pois_cov_ed</a></span><span class="op">(</span><span class="va">dat</span>,subset <span class="op">=</span> <span class="va">res.pca</span><span class="op">$</span><span class="va">subset</span>,Ulist <span class="op">=</span> <span class="va">res.pca</span><span class="op">$</span><span class="va">Ulist</span>,
                       ulist <span class="op">=</span> <span class="va">ulist</span>,ulist.dd <span class="op">=</span> <span class="va">ulist.dd</span>,ruv <span class="op">=</span> <span class="cn">TRUE</span>,
                       Fuv <span class="op">=</span> <span class="va">Fuv</span>,verbose <span class="op">=</span> <span class="cn">TRUE</span>,init <span class="op">=</span> <span class="va">prefit</span>,
-                      control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>maxiter <span class="op">=</span> <span class="fl">10</span><span class="op">)</span><span class="op">)</span>
-<span class="co"># Start running extreme deconvolution to estimate prior covariance matrices.</span>
-<span class="co"># [1] "iter         ELBO"</span>
-<span class="co"># [1] "1:    -24608.666465"</span>
-<span class="co"># [1] "iter         ELBO"</span>
-<span class="co"># [1] "2:    -24345.614492"</span>
-<span class="co"># [1] "iter         ELBO"</span>
-<span class="co"># [1] "3:    -24153.516130"</span>
-<span class="co"># [1] "iter         ELBO"</span>
-<span class="co"># [1] "4:    -23985.986148"</span>
-<span class="co"># [1] "iter         ELBO"</span>
-<span class="co"># [1] "5:    -23857.513161"</span>
-<span class="co"># [1] "iter         ELBO"</span>
-<span class="co"># [1] "6:    -23760.482292"</span>
-<span class="co"># [1] "iter         ELBO"</span>
-<span class="co"># [1] "7:    -23682.316394"</span>
-<span class="co"># [1] "iter         ELBO"</span>
-<span class="co"># [1] "8:    -23611.507470"</span>
-<span class="co"># [1] "iter         ELBO"</span>
-<span class="co"># [1] "9:    -23541.062859"</span>
-<span class="co"># [1] "iter         ELBO"</span>
-<span class="co"># [1] "10:    -23470.835015"</span>
-<span class="co"># Finish running extreme deconvolution to estimate prior covariance matrices.</span></code></pre></div>
-<p>The modification phase adds a small constant <span class="math inline">\(\epsilon^2\)</span> (e.g., <span class="math inline">\(0.01\)</span>) to the diagonal entries of the
-estimated data-driven covariance matrices. This step is done to
-alleviate issues of inflated <a href="https://doi.org/10.1093/biostatistics/kxw041" class="external-link">local false sign
-rates (lfsr)</a>, which are analogous to but more conservative than
-local false discovery rates. Similarly, only data-driven covariance
-matrices require such modification, and this information is encoded in
-the vector <code>epsilon2.G</code> and will be passed to the function
-call in the next step.</p>
+                      control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>maxiter <span class="op">=</span> <span class="fl">10</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<p>The modification phase adds a small constant <span class="math inline">\(\epsilon^2\)</span> (e.g., 0.01) to the diagonal
+entries of the estimated data-driven covariance matrices. This step is
+done to alleviate issues of inflated <a href="https://doi.org/10.1093/biostatistics/kxw041" class="external-link">local false sign
+rates (lfsr)</a> (the lfsr is analogous to but typically more more
+conservative than a local false discovery rate). Similarly, only
+data-driven covariance matrices require such modification, and this
+information is encoded in the vector <code>epsilon2.G</code> and will be
+passed to the function call in the next step.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># add epsilon2*I to each full-rank data-driven prior covariance matrix</span>
 <span class="co"># all the full-rank covariance matrices are data-driven and need this modification</span>
@@ -342,10 +315,11 @@ call in the next step.</p>
 <h4 id="step-3-fit-the-poisson-mash-model">Step 3: Fit the Poisson mash model<a class="anchor" aria-label="anchor" href="#step-3-fit-the-poisson-mash-model"></a>
 </h4>
 <p>Now we are ready to fit the Poisson mash model to data from all
-genes, which is implemented by the function <code>pois_mash</code>. For
-the purposes of this illustration, we only run <code>pois_mash</code>
-for 10 iterations, but we in practice recommend setting
-<code>maxiter = 100</code> (or more) when analyzing your own data.</p>
+genes, which is implemented by the function <code>pois_mash</code>.</p>
+<p>By default, differences in expression are measured relative to the
+mean across all conditions. To change this, see the
+<code>pois_mash</code> input arguments <code>C</code> and
+<code>res.colnames</code>.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pois_mash.html">pois_mash</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">dat</span>,Ulist <span class="op">=</span> <span class="va">Ulist</span>,ulist <span class="op">=</span> <span class="va">fit.ed</span><span class="op">$</span><span class="va">ulist</span>,
                  ulist.epsilon2 <span class="op">=</span> <span class="va">epsilon2.G</span>,gridmult <span class="op">=</span> <span class="fl">2.5</span>,ruv <span class="op">=</span> <span class="cn">TRUE</span>,
@@ -396,15 +370,9 @@ for 10 iterations, but we in practice recommend setting
 <span class="co"># Finished fitting Poisson mash model.</span>
 <span class="co"># Start calculating posterior summary.</span>
 <span class="co"># Finish calculating posterior summary.</span></code></pre></div>
-<p>Poisson mash aims to detect and estimate expression differences
-relative to some “reference” condition, which needs to be specified by
-the user. By default, the reference condition is the mean across all
-conditions. Alternatively, users can specify a particular condition as
-the reference condition using the arguments <code>C</code> and
-<code>res.colnames</code> of the function <code>pois_mash</code>. If it
-is also of interest to detect and estimate expression differences
-relative to the median across all conditions, this can be accomplished
-by setting <code>median_deviations = TRUE</code> in the above call.</p>
+<p>For this vignette, we ran <code>pois_mash</code> for only 10
+iterations, but in practice we recommend setting
+<code>maxiter = 100</code>, or perhaps more.</p>
 </div>
 </div>
 <div class="section level2">
