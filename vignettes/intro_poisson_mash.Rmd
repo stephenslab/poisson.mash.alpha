@@ -55,20 +55,18 @@ set.seed(1)
 Create a data object for Poisson mash analysis
 ----------------------------------------------
 
-To run Poisson mash, you need to provide (1) a matrix of UMI counts,
+To run Poisson mash, you need to provide: (1) a matrix of UMI counts,
 stored as a $J \times N$ matrix $Y$ with entries $y_{ji}$, where $i =
-1, \dots,N$ indexes cells and $j=1,\dots,J$ indexes genes; and (2) an
+1, \dots,N$ indexes cells and $j=1,\dots,J$ indexes genes; and (2) a
 vector of length $n$ in which the $i^{\mathrm{th}}$ element gives the
-condition label of cell $i$. We assume that the $N$ cells come from
-$R$ conditions (in practice, $R$ should be considerably larger than
-2).
+condition label of cell $i$. We denote the number of conditions by
+$R$. ($R$ should be much larger than 2.)
 
-The original neutrophils dataset contained counts for 13,362 cells,
-8,543 genes and 45 conditions (44 cytokine treatments plus one
-control). For the purposes of illustrating the interface, we use a
-small subset of these data (1,936 cells, 2,158 genes, 12 conditions),
-but later we examine the results from running Poisson mash on the full
-data.
+The original data contained counts for 13,362 cells, 8,543 genes and
+45 conditions (44 cytokine treatments plus one control). For the this
+vignette, we will use subset (1,936 cells, 2,158 genes, 12
+conditions), but later we will inspect the results obtained from
+running Poisson mash on the full data set.
 
 ```{r load-data}
 data(neutrophils_subset)
