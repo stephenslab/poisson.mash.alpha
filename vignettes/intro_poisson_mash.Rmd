@@ -80,8 +80,8 @@ table(conditions)
 After loading in the data, we compute the cell-specific size factors.
 This can be done in various ways. The simplest option is to take the
 sum of the counts $y_{ji}$ across all genes in each cell $i$. Here
-we take a deconvolution-based approach that was implemented in the
-scran package:
+we take a deconvolution-based approach implemented in the
+**scran** package:
 
 ```{r calculate-size-factor}
 clusters  <- quickCluster(Y)
@@ -97,15 +97,16 @@ dat <- pois_mash_set_data(Y,conditions,si)
 ```
 
 By default, Poisson mash assumes a gene-specific baseline expression
-level, $\mu_j$, shared across all conditions. Poisson mash can also
-handle the more complex setting in which the $R$ conditions arise from
-$m = 1, \dots, M$ subgroups, and each subgroup has its own baseline,
-$\mu_{jm}$. For example, one may want to perform a DE analysis across
-multiple treatment conditions, jointly for multiple cell types. In
-this case, $M$ is the number of cell types, and $R$ represents the
-total number of combinations of treatment conditions and cell
-types. Please refer to the documentation for the function
-`pois_mash_set_data` to see how to do this.
+level, $\mu_j$, that is shared across all conditions.
+
+(Poisson mash can also handle the more complex setting in which the
+$R$ conditions arise from $m = 1, \dots, M$ subgroups, and each
+subgroup has its own baseline, $\mu_{jm}$. For example, one may want
+to perform a DE analysis across multiple treatment conditions, jointly
+for multiple cell types. In this case, $M$ is the number of cell
+types, and $R$ represents the total number of combinations of
+treatment conditions and cell types. Please refer to the documentation
+for the function `pois_mash_set_data` to see how to do this.)
 
 Estimate latent factors capturing unwanted variation
 ----------------------------------------------------
