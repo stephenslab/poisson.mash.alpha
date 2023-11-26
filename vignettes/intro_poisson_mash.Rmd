@@ -112,13 +112,13 @@ Estimate latent factors capturing unwanted variation
 ----------------------------------------------------
 
 Unwanted variation present in the data can induce dependence among
-gene-wise tests and confound DE analysis. In some cases, the
+gene-wise tests and confound the DE analysis. In some cases, the
 confounding variables are known, such as when these capture batch
 effects. More often, the unwanted variation is due to unmeasured
 factors. Here we estimating the confounding variables using
 [glmpca][glmpca].
 
-```{r ruv}
+```{r ruv, results="hide", warning=FALSE}
 design <- model.matrix(~conditions)
 fit.glmpca <- glmpca(Y = as.matrix(Y),X = design[,-1],L  = 4,fam = "nb2",
                      sz = si,ctl = list(minIter = 1,maxIter = 20,
@@ -126,21 +126,22 @@ fit.glmpca <- glmpca(Y = as.matrix(Y),X = design[,-1],L  = 4,fam = "nb2",
 Fuv <- as.matrix(fit.glmpca$loadings)
 ```
 
-To save time, we ran `glmpca` for only 20 iterations, but typically
-more iterations will be needed (100, or perhaps more).
+For this vignette, we ran `glmpca` for only 20 iterations, but
+typically it is better to perform more iterations (100, or perhaps
+more).
 
 Fit the Poisson mash model
 --------------------------
 
-### Step 1: Prefit the model to initialize parameters
+### Step 1: Prefit the model
 
 We first fit Poisson mash under the assumption of no DE to get
 sensible initial estimates of the other model parameters, including
-the gene-specific baseline expressions $\mu_j$. Please refer to the
-[paper][paper] for details.
+the gene-specific baseline expressions $\mu_j$. (See the
+[paper][paper] for details.)
 
-```{r prefit}
-prefit <- pois_mash_prefit(dat,ruv = TRUE,Fuv = Fuv,verbose = FALSE)
+```{r prefit, results="hide"}
+prefit <- pois_mash_prefit(dat,ruv = TRUE,Fuv = Fuv,verbose = TRUE)
 ```
 
 ### Step 2: Set up the prior covariance matrices
@@ -148,17 +149,20 @@ prefit <- pois_mash_prefit(dat,ruv = TRUE,Fuv = Fuv,verbose = FALSE)
 Let the $R \times 1$ vector $\beta_j = (\beta_{j1}, \dots,
 \beta_{jR})'$ denote the true DE effects of each of the $R$ conditions
 relative to the baseline expression $\mu_j$ for gene $j$. We assume
-that $\beta_j$ follows a mash prior, which is a mixture of
-multivariate normal distributions: $$ p(\beta_j; \pi, U) =
-\sum_{k=1}^K \sum_{l=1}^L \pi_{kl} N_R(\beta_j; 0, w_l U_k).$$ In the
-mash prior, $w_l$ is a pre-specified grid of scaling coefficients,
-spanning from very small to very large, to capture the full range of
-possible DE effect sizes; $U_k$ is a set of covariance matrices, each
-of which capturing a different pattern of covariation of DE effects
-across conditions; $\pi_{kl}$ are corresponding mixture proportions
-that are estimated from the data during model fitting.
+that $\beta_j$ follows a "mash prior", which is a mixture of
+multivariate normal distributions:
+$$
+p(\beta_j; \pi, U) =
+\sum_{k=1}^K \sum_{l=1}^L \pi_{kl} N_R(\beta_j; 0, w_l U_k).
+$$
+In the mash prior, $w_l$ is a pre-specified grid of scaling
+coefficients, spanning from very small to very large to capture the
+full range of possible DE effect sizes; $U_k$ is a set of covariance
+matrices, each of which capture a different pattern of covariation
+across conditions; $\pi_{kl}$ are mixture proportions that are
+estimated from the data during model fitting.
 
-To use Poisson mash, you need to specify the prior covariance
+To use Poisson mash, you need to specify these prior covariance
 matrices. This may include "canonical" covariance matrices that
 represent, for example, DE specific to a condition; and "data-driven"
 covariance matrices that are learned from the data and can capture
@@ -166,7 +170,7 @@ arbitrary patterns of DE among conditions.
 
 For the canonical matrices, here we consider the matrices capturing
 condition-specific effects for each of the $R$ conditions. These
-matrices can be generate using the function `pois_cov_canonical`.
+matrices can be generated using the `pois_cov_canonical` function:
 
 ```{r canonical}
 ulist.c <- pois_cov_canonical(dat)
@@ -180,11 +184,11 @@ use the subset of genes containing "strong signals"; that is, the
 genes that are considered DE by a multinomial goodness-of-fit test.
 The selection of genes with strong signals is implicitly performed
 by the call to `pois_cov_init`, e.g., setting `cutoff = 3` selects
-the genes for which the magnitude of $Z$-score (inverted from the 
-$p$-value of the goodness-of-fit test) exceeds 3. 
+the genes for which the magnitude of z-score (inverted from the 
+p-value of the goodness-of-fit test) exceeds 3. 
 
 ```{r cov-init}
-res.pca <- pois_cov_init(dat, cutoff = 3)
+res.pca <- pois_cov_init(dat,cutoff = 3)
 ```
 
 The refinement phase refines the initial estimates of data-driven
@@ -192,18 +196,20 @@ covariance matrices using the Extreme Eeconvolution (ED) algorithm,
 and is implemented by the function `pois_cov_ed`. As in the
 initialization phase, only data from the genes with strong signals are
 used. It should be noted that only data-driven covariance matrices
-need to be refined, so they need to be distinguished from the canonical
-covariance matrices in the `pois_cov_ed` call using the argument 
-`ulist.dd`. For the purposes of this vignette, we just ran `pois_cov_ed` 
-for 10 iterations, but we recommend using the default value `maxiter =
-500` when analyzing your own data.
+need to be refined, so they need to be distinguished from the
+canonical covariance matrices in the `pois_cov_ed` call using the
+argument `ulist.dd`. For the purposes of this vignette, we just ran
+`pois_cov_ed` for 10 iterations, but we recommend performing more
+iterations when analyzing your own data (the default number of
+iterations is 500).
 
-```{r cov-ed}
+```{r cov-ed, results="hide"}
 R <- ncol(dat$X)
-# Merge data-driven and canonical rank-1 prior covariance matrices
+# Merge data-driven and canonical rank-1 prior covariance matrices.
 ulist <- c(res.pca$ulist,ulist.c)
-# Specify whether a rank-1 prior covariance matrix is data-driven or not
-# (note all full-rank covariance matrices are data-driven so do not need this specification)
+# Specify whether a rank-1 prior covariance matrix is data-driven
+# or not (note all full-rank covariance matrices are data-driven
+# so do not need this specification).
 ulist.dd <- c(rep(TRUE,length(res.pca$ulist) - 1),rep(FALSE,R + 1)) 
 # Run ED on the genes with strong signals.
 fit.ed <- pois_cov_ed(dat,subset = res.pca$subset,Ulist = res.pca$Ulist,
@@ -212,14 +218,14 @@ fit.ed <- pois_cov_ed(dat,subset = res.pca$subset,Ulist = res.pca$Ulist,
 					  control = list(maxiter = 10))
 ```
 
-The modification phase adds a small constant $\epsilon^2$ (e.g., $0.01$) 
-to the diagonal entries of the estimated data-driven covariance
+The modification phase adds a small constant $\epsilon^2$ (e.g.,
+0.01) to the diagonal entries of the estimated data-driven covariance
 matrices. This step is done to alleviate issues of inflated
-[local false sign rates (lfsr)][lfsr], which are analogous to but 
-more conservative than local false discovery rates. Similarly, only 
-data-driven covariance matrices require such modification, and 
-this information is encoded in the vector `epsilon2.G` and 
-will be passed to the function call in the next step.
+[local false sign rates (lfsr)][lfsr] (the lfsr is analogous to but
+typically more more conservative than a local false discovery
+rate). Similarly, only data-driven covariance matrices require such
+modification, and this information is encoded in the vector
+`epsilon2.G` and will be passed to the function call in the next step.
 
 ```{r cov-mod}
 # add epsilon2*I to each full-rank data-driven prior covariance matrix
@@ -243,10 +249,11 @@ epsilon2.G[ulist.dd] <- 1e-2
 ### Step 3: Fit the Poisson mash model
 
 Now we are ready to fit the Poisson mash model to data from all genes,
-which is implemented by the function `pois_mash`. For the purposes of
-this illustration, we only run `pois_mash` for 10 iterations, but we
-in practice recommend setting `maxiter = 100` (or more) when
-analyzing your own data.
+which is implemented by the function `pois_mash`.
+
+By default, differences in expression are measured relative to the
+mean across all conditions. To  change this, see the `pois_mash` input
+arguments `C` and `res.colnames`.
 
 ```{r fit-model}
 res <- pois_mash(data = dat,Ulist = Ulist,ulist = fit.ed$ulist,
@@ -256,15 +263,8 @@ res <- pois_mash(data = dat,Ulist = Ulist,ulist = fit.ed$ulist,
 				 control = list(maxiter = 10,nc = 2)) 
 ```
 
-Poisson mash aims to detect and estimate expression differences
-relative to some "reference" condition, which needs to be specified by
-the user. By default, the reference condition is the mean across all
-conditions. Alternatively, users can specify a particular condition as
-the reference condition using the arguments `C` and `res.colnames` of
-the function `pois_mash`. If it is also of interest to detect and
-estimate expression differences relative to the median across all
-conditions, this can be accomplished by setting `median_deviations =
-TRUE` in the above call.
+For this vignette, we ran `pois_mash` for only 10 iterations, but 
+in practice we recommend setting `maxiter = 100`, or perhaps more.
 
 # Examining the results
 
