@@ -31,13 +31,11 @@ expressed (DE) and to estimate expression differences (log-fold
 changes) among multiple conditions. This approach makes use of the
 multivariate adaptive shrinkage ([mash][mash]) prior.
 
-We illustrate how to implement this approach by analyzing data from an
-experiment intended to study the effects of cytokine stimulation on
-gene expression in neutrophils collected from cytokine-injected mice.
+We illustrate this approach by analyzing scRNA-seq data for learning
+about the effects of cytokine stimulation on gene expression.
+We will work through the Poisson mash analysis step-by-step.
 
-We first load in the R packages that will be used in the analysis,
-then we work through an example to illustrate how to apply Poisson
-mash step-by-step.
+First, we load the R packages needed to run the analysis.
 
 ```{r load-pkgs, message=FALSE, warning=FALSE}
 library(Matrix)
@@ -47,8 +45,8 @@ library(pheatmap)
 library(poisson.mash.alpha)
 ```
 
-Also, set the random number generator seed to ensure that the
-results are more reproducible.
+We also set the random number generator seed to ensure that the
+results are reproducible.
 
 ```{r set-seed}
 set.seed(1)
