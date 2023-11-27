@@ -91,7 +91,11 @@
 #' @return List with the following elements:
 #'
 #' \item{result}{List containing the posterior summaries of the J x Q
-#'   matrix of effects.}
+#'   matrix of effects relative to the reference condition, as defined 
+#'   using \code{C}. If \code{median_deviations = TRUE}, the list also 
+#'   contains a component named \code{beta_median_dev_post}, which is 
+#'   a list containing the posterior summaries of the J x R matrix of 
+#'   effects relative to the median over all conditions.}
 #'
 #' \item{pois.mash.fit}{List containing the parameter estimates of the
 #'   poisson mash model.}
