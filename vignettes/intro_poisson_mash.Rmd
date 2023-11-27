@@ -272,39 +272,40 @@ Above, we illustrated the steps involved in analyzing scRNA-seq data
 using Poisson mash. Separately, we analyzed the full scRNA-seq data
 set using
 [this script](https://github.com/stephenslab/poisson.mash.alpha/blob/main/inst/code/application_neutrophils.R),
-and here we examine the results of this analysis.
+and here we examine the results of this analysis on the full data.
 
 ```{r load-results}
 data(neutrophils_pois_mash_ruv_fit)
 ```
 
-The output provides posterior summaries of the condition-specific DE
-effects relative to the reference condition, including posterior means
-and posterior standard deviations of the DE effect sizes (log-fold
-changes), and measures of significance (local false sign rates).
-These posterior quantities are stored in the "result" output.  For
-example, this gives the posterior mean estimates of the log-fold
-changes (LFCs):
+The Poisson masah result provides posterior summaries of the
+condition-specific DE effects relative to the reference condition,
+including: posterior means and posterior standard deviations of the
+log-fold changes (LFCs); and measures of significance for the LFCs
+(local false sign rates). These posterior quantities are stored in the
+"result" output.  For example, this gives the posterior mean estimates
+of the LFCs:
 
 ```{r posterior-mean}
 head(neutrophils_pois_mash_ruv_fit$result$PosteriorMean)/log(2)
 ```
 
-TO DO: Explain that these are differences relative to...?
+Here, we divided by `log(2)` to obtain LFC estimates using the base-2
+logarithm, which is the convention in differential expression
+analyses. (The LFCs returned by `pois_mash()` are on the natural
+log-scale.)
 
-Here, we divided by `log(2)` to obtain the log-fold changes in the
-base-2 logarithm, which is the convention in DE analysis. (The
-outputted LFCs are on the natural log-scale.)
-
-These are the local false sign rates (lfsrs) for these LFC estimates:
+These are the local false sign rates (lfsrs) corresponding to these
+LFC estimates:
 
 ```{r posterior-lfsr}
 head(neutrophils_pois_mash_ruv_fit$result$lfsr)
 ```
  
-We can find the number of DE genes, which are defined as genes having
-*lfsr* less than $\alpha$ in at least one condition, where $\alpha$ is a
-threshold specified by the user (e.g., 0.05):
+We can find the number of differentially expressed genes, which are
+defined as genes having *lfsr* less than $\alpha$ in at least one
+condition, where $\alpha$ is a threshold specified by the user
+(e.g., 0.05):
 
 ```{r find-de}
 lfsr <- neutrophils_pois_mash_ruv_fit$result$lfsr
@@ -313,10 +314,10 @@ sum(min.lfsr < 0.05)
 ```
 
 The estimates of other model parameters are stored in the
-`pois.mash.fit` component. The the estimated mixture proportions
-$\pi_{kl}$ for combinations of different scaling coefficients $w_l$
-and prior covariance matrices $U_k$ tell us which sharing patterns
-were most prominent in the data:
+`pois.mash.fit` component. For example, the mixture
+proportions $\pi_{kl}$ for combinations of different scaling
+coefficients $w_l$ and prior covariance matrices $U_k$ tell us which
+sharing patterns were estimated to be most prominent in the data:
 
 ```{r mixture-proportions, fig.height=5, fig.width=3}
 pheatmap(neutrophils_pois_mash_ruv_fit$pois.mash.fit$pi,
@@ -325,13 +326,9 @@ pheatmap(neutrophils_pois_mash_ruv_fit$pois.mash.fit$pi,
 ```
 
 The "tPCA" covariance matrix has by far the largest mixture weight
-(91% when summed over all scaling coefficients, i.e., over columns in
-this plot).
-
-We plot the correlation heatmap for this covariance matrix, which
-captures the most frequent pattern of sharing of DE effects across
-cytokine treatments in the neutrophils data. For space reason, here we
-present the correlation heatmap only for selected conditions.
+(91% when summed over all scalings, *i.e.*, over columns in this
+plot). This is the correlation matrix obtained from this covariance
+matrix (shown here for 27 of the 45 conditions):
 
 ```{r plot-sharing-pattern, fig.height=3.5, fig.width=4}
 data(condition_colors)
@@ -345,28 +342,32 @@ pheatmap(corr,cluster_rows = FALSE,cluster_cols = FALSE,angle_col = 90,
          fontsize = 7,main = "")
 ```
 
-This correlation heatmap suggests strong sharing of DE effects among
+This correlation matrix suggests strong sharing of DE effects among
 two groups of cytokines: (1) IL-1$\alpha$, IL-1$\beta$, G-CSF and (2)
-IL-12 p70, IFN-$\gamma$, IL-18, IL-15, IL-33. We then plot the LFCs
-for a few DE genes that either show effect sharing among (1) or (2),
-where the reference condition is the mean across all conditions.
+IL-12 p70, IFN-$\gamma$, IL-18, IL-15, IL-33.
 
-Plot a few DE genes that show effect sharing among the first group of
-cytokines (taken from Figure 7 in our paper):
+Here's a few differentially expressed genes that show effect sharing
+among the first group of cytokines:
 
 ```{r plot-lfc-1, fig.height=4, fig.width=2.5}
 cols <- colorRampPalette(c("blue","white","red"))(99)
-brks <- seq(-log(10), log(10), length=100)/log(2)
-genes1 <- c("Prok2", "Nos2", "Teddm3", "Lipg", "Saa3", "Wfdc17", "Cd38", "Ggt1", "Dpep2", "Mmp19")
-pheatmap(t(neutrophils_pois_mash_ruv_fit$result$PosteriorMean[genes1, idx.trts])/log(2), cluster_rows = FALSE, cluster_cols = FALSE, color = cols, breaks = brks, angle_col = 90, fontsize = 7, main = "")
+brks <- seq(-log2(10),log2(10),length = 100)
+genes1 <- c("Prok2","Nos2","Teddm3","Lipg","Saa3","Wfdc17","Cd38","Ggt1",
+            "Dpep2","Mmp19")
+pdat <- t(neutrophils_pois_mash_ruv_fit$result$PosteriorMean[genes1,idx.trts])/log(2)
+pheatmap(pdat,cluster_rows = FALSE,cluster_cols = FALSE,color = cols,
+         breaks = brks,angle_col = 90,fontsize = 7,main = "")
 ```
 
-Plot a few DE genes that show effect sharing among the second group of
-cytokines (taken from Figure 7 in our paper):
+These genes are with strong effect sharing among the second group of
+cytokines:
 
 ```{r plot-lfc-2, fig.height=4, fig.width=2.5}
-genes2 <- c("Gbp2", "Gbp3", "Gbp4", "Gbp5", "Ifi47", "Ifit2", "Ifit3", "Socs1", "Tgtp2", "Zbp1")
-pheatmap(t(neutrophils_pois_mash_ruv_fit$result$PosteriorMean[genes2, idx.trts])/log(2), cluster_rows = FALSE, cluster_cols = FALSE, color = cols, breaks = brks, angle_col = 90, fontsize = 7, main = "")
+genes2 <- c("Gbp2","Gbp3","Gbp4","Gbp5","Ifi47","Ifit2","Ifit3","Socs1",
+            "Tgtp2","Zbp1")
+pdat <- t(neutrophils_pois_mash_ruv_fit$result$PosteriorMean[genes2, idx.trts])/log(2)
+pheatmap(pdat,cluster_rows = FALSE,cluster_cols = FALSE,color = cols,
+         breaks = brks,angle_col = 90,fontsize = 7,main = "")
 ```
 
 Session info
