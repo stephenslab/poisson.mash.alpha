@@ -359,7 +359,7 @@ pheatmap(pdat,cluster_rows = FALSE,cluster_cols = FALSE,color = cols,
          breaks = brks,angle_col = 90,fontsize = 7,main = "")
 ```
 
-These genes are with strong effect sharing among the second group of
+These genes show strong effect sharing among the second group of
 cytokines:
 
 ```{r plot-lfc-2, fig.height=4, fig.width=2.5}
