@@ -192,7 +192,7 @@ res.pca <- pois_cov_init(dat,cutoff = 3)
 ```
 
 The refinement phase refines the initial estimates of data-driven
-covariance matrices using the Extreme Eeconvolution (ED) algorithm,
+covariance matrices using the Extreme Deconvolution (ED) algorithm,
 and is implemented by the function `pois_cov_ed()`. As in the
 initialization phase, only data from the genes with strong signals are
 used. It should be noted that only the data-driven covariance matrices
@@ -225,13 +225,10 @@ The modification phase adds a small constant $\epsilon^2$ (e.g.,
 matrices. This step is done to alleviate issues of inflated
 [local false sign rates (lfsr)][lfsr] (the lfsr is analogous to but
 typically more more conservative than a local false discovery
-rate). Similarly, only data-driven covariance matrices require such
-modification, and this information is encoded in the vector
-`epsilon2.G` and will be passed to the function call in the next step.
+rate).
 
 ```{r cov-mod}
-# add epsilon2*I to each full-rank data-driven prior covariance matrix
-# all the full-rank covariance matrices are data-driven and need this modification
+# Add epsilon2*I to each full-rank data-driven prior covariance matrix.
 Ulist <- fit.ed$Ulist
 H <- length(Ulist)
 for(h in 1:H){
@@ -240,10 +237,9 @@ for(h in 1:H){
   Ulist[[h]] <- Uh + 0.01*diag(R)
 }
 
-# add epsilon2*I to each rank-1 data-driven prior covariance matrix
-# only a subset of the rank-1 covariance matrices are data-driven and need this modification
+# Add epsilon2*I to each rank-1 data-driven prior covariance matrix.
 G <- length(fit.ed$ulist)
-epsilon2.G <- rep(1e-8, G)
+epsilon2.G <- rep(1e-8,G)
 names(epsilon2.G) <- names(fit.ed$ulist)
 epsilon2.G[ulist.dd] <- 0.01
 ```
@@ -254,8 +250,10 @@ Now we are ready to fit the Poisson mash model to data from all genes,
 which is implemented by the function `pois_mash()`.
 
 By default, differences in expression are measured relative to the
-mean across all conditions. To  change this, see the `pois_mash()` input
-arguments `C` and `res.colnames`.
+mean across all conditions. (To change how expression differences are
+measured, see the `pois_mash()` input arguments `C` and
+`res.colnames`. See also the `median_deviations` input argument for
+computing differences relative to medians as well as means.)
 
 ```{r fit-model, results="hide"}
 res <- pois_mash(data = dat,Ulist = Ulist,ulist = fit.ed$ulist,
