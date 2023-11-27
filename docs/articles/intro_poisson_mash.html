@@ -172,36 +172,6 @@ factors. Here we estimating the confounding variables using <a href="https://git
 <span class="va">fit.glmpca</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/glmpca/man/glmpca.html" class="external-link">glmpca</a></span><span class="op">(</span>Y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">Y</span><span class="op">)</span>,X <span class="op">=</span> <span class="va">design</span><span class="op">[</span>,<span class="op">-</span><span class="fl">1</span><span class="op">]</span>,L  <span class="op">=</span> <span class="fl">4</span>,fam <span class="op">=</span> <span class="st">"nb2"</span>,
                      sz <span class="op">=</span> <span class="va">si</span>,ctl <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>minIter <span class="op">=</span> <span class="fl">1</span>,maxIter <span class="op">=</span> <span class="fl">20</span>,
                                         verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span>
-<span class="co"># Trying AvaGrad with learning rate: 0.1</span>
-<span class="co"># Iteration: 1 | deviance=1.779e+06</span>
-<span class="co"># Iteration: 2 | deviance=5.659e+06</span>
-<span class="co"># Iteration: 3 | deviance=1.396e+07</span>
-<span class="co"># Iteration: 4 | deviance=1.369e+07</span>
-<span class="co"># Iteration: 5 | deviance=1.357e+07</span>
-<span class="co"># Iteration: 6 | deviance=1.35e+07</span>
-<span class="co"># Iteration: 7 | deviance=1.314e+07</span>
-<span class="co"># Iteration: 8 | deviance=4.41e+08</span>
-<span class="co"># Trying AvaGrad with learning rate: 0.02</span>
-<span class="co"># Iteration: 1 | deviance=1.779e+06</span>
-<span class="co"># Iteration: 2 | deviance=1.918e+06</span>
-<span class="co"># Iteration: 3 | deviance=1.886e+06</span>
-<span class="co"># Iteration: 4 | deviance=1.845e+06</span>
-<span class="co"># Iteration: 5 | deviance=1.811e+06</span>
-<span class="co"># Iteration: 6 | deviance=1.8e+06</span>
-<span class="co"># Iteration: 7 | deviance=1.787e+06</span>
-<span class="co"># Iteration: 8 | deviance=1.777e+06</span>
-<span class="co"># Iteration: 9 | deviance=1.766e+06</span>
-<span class="co"># Iteration: 10 | deviance=1.756e+06</span>
-<span class="co"># Iteration: 11 | deviance=1.747e+06</span>
-<span class="co"># Iteration: 12 | deviance=1.738e+06</span>
-<span class="co"># Iteration: 13 | deviance=1.729e+06</span>
-<span class="co"># Iteration: 14 | deviance=1.72e+06</span>
-<span class="co"># Iteration: 15 | deviance=1.71e+06</span>
-<span class="co"># Iteration: 16 | deviance=1.699e+06</span>
-<span class="co"># Iteration: 17 | deviance=1.687e+06</span>
-<span class="co"># Iteration: 18 | deviance=1.675e+06</span>
-<span class="co"># Iteration: 19 | deviance=1.661e+06</span>
-<span class="co"># Iteration: 20 | deviance=1.647e+06</span>
 <span class="va">Fuv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">fit.glmpca</span><span class="op">$</span><span class="va">loadings</span><span class="op">)</span></code></pre></div>
 <p>For this vignette, we ran <code>glmpca</code> for only 20 iterations,
 but typically it is better to perform more iterations (100, or perhaps
@@ -325,51 +295,7 @@ mean across all conditions. To change this, see the
                  ulist.epsilon2 <span class="op">=</span> <span class="va">epsilon2.G</span>,gridmult <span class="op">=</span> <span class="fl">2.5</span>,ruv <span class="op">=</span> <span class="cn">TRUE</span>,
                  Fuv <span class="op">=</span> <span class="va">Fuv</span>,rho <span class="op">=</span> <span class="va">prefit</span><span class="op">$</span><span class="va">rho</span>,verbose <span class="op">=</span> <span class="cn">TRUE</span>,
                  init <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>mu <span class="op">=</span> <span class="va">prefit</span><span class="op">$</span><span class="va">mu</span>,psi2 <span class="op">=</span> <span class="va">prefit</span><span class="op">$</span><span class="va">psi2</span><span class="op">)</span>,
-                 control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>maxiter <span class="op">=</span> <span class="fl">10</span>,nc <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span> 
-<span class="co"># Start fitting Poisson mash model.</span>
-<span class="co"># [1] "iter         ELBO"</span>
-<span class="co"># [1] "1:    -67705.176984"</span>
-<span class="co"># [1] "iter         number_of_j_to_update"</span>
-<span class="co"># [1] "1:    667"</span>
-<span class="co"># [1] "iter         ELBO"</span>
-<span class="co"># [1] "2:    -67431.051782"</span>
-<span class="co"># [1] "iter         number_of_j_to_update"</span>
-<span class="co"># [1] "2:    463"</span>
-<span class="co"># [1] "iter         ELBO"</span>
-<span class="co"># [1] "3:    -67279.622606"</span>
-<span class="co"># [1] "iter         number_of_j_to_update"</span>
-<span class="co"># [1] "3:    460"</span>
-<span class="co"># [1] "iter         ELBO"</span>
-<span class="co"># [1] "4:    -67154.400780"</span>
-<span class="co"># [1] "iter         number_of_j_to_update"</span>
-<span class="co"># [1] "4:    558"</span>
-<span class="co"># [1] "iter         ELBO"</span>
-<span class="co"># [1] "5:    -67053.393501"</span>
-<span class="co"># [1] "iter         number_of_j_to_update"</span>
-<span class="co"># [1] "5:    634"</span>
-<span class="co"># [1] "iter         ELBO"</span>
-<span class="co"># [1] "6:    -66970.902547"</span>
-<span class="co"># [1] "iter         number_of_j_to_update"</span>
-<span class="co"># [1] "6:    655"</span>
-<span class="co"># [1] "iter         ELBO"</span>
-<span class="co"># [1] "7:    -66903.055342"</span>
-<span class="co"># [1] "iter         number_of_j_to_update"</span>
-<span class="co"># [1] "7:    704"</span>
-<span class="co"># [1] "iter         ELBO"</span>
-<span class="co"># [1] "8:    -66846.947201"</span>
-<span class="co"># [1] "iter         number_of_j_to_update"</span>
-<span class="co"># [1] "8:    722"</span>
-<span class="co"># [1] "iter         ELBO"</span>
-<span class="co"># [1] "9:    -66800.982448"</span>
-<span class="co"># [1] "iter         number_of_j_to_update"</span>
-<span class="co"># [1] "9:    720"</span>
-<span class="co"># [1] "iter         ELBO"</span>
-<span class="co"># [1] "10:    -66763.296734"</span>
-<span class="co"># [1] "iter         number_of_j_to_update"</span>
-<span class="co"># [1] "10:    737"</span>
-<span class="co"># Finished fitting Poisson mash model.</span>
-<span class="co"># Start calculating posterior summary.</span>
-<span class="co"># Finish calculating posterior summary.</span></code></pre></div>
+                 control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>maxiter <span class="op">=</span> <span class="fl">10</span>,nc <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span> </code></pre></div>
 <p>For this vignette, we ran <code>pois_mash</code> for only 10
 iterations, but in practice we recommend setting
 <code>maxiter = 100</code>, or perhaps more.</p>

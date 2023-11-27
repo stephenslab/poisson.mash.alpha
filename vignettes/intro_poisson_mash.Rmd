@@ -118,7 +118,7 @@ effects. More often, the unwanted variation is due to unmeasured
 factors. Here we estimating the confounding variables using
 [glmpca][glmpca].
 
-```{r ruv, results="hide", warning=FALSE}
+```{r ruv, results="hide", message=FALSE, warning=FALSE}
 design <- model.matrix(~conditions)
 fit.glmpca <- glmpca(Y = as.matrix(Y),X = design[,-1],L  = 4,fam = "nb2",
                      sz = si,ctl = list(minIter = 1,maxIter = 20,
@@ -255,7 +255,7 @@ By default, differences in expression are measured relative to the
 mean across all conditions. To  change this, see the `pois_mash` input
 arguments `C` and `res.colnames`.
 
-```{r fit-model}
+```{r fit-model, results="hide"}
 res <- pois_mash(data = dat,Ulist = Ulist,ulist = fit.ed$ulist,
                  ulist.epsilon2 = epsilon2.G,gridmult = 2.5,ruv = TRUE,
 				 Fuv = Fuv,rho = prefit$rho,verbose = TRUE,
