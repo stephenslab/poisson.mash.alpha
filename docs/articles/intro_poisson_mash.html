@@ -71,7 +71,7 @@ in single-cell RNA-seq data using Poisson mash</h1>
                         <h4 data-toc-skip class="author">Yusha Liu,
 Peter Carbonetto</h4>
             
-            <h4 data-toc-skip class="date">2023-11-26</h4>
+            <h4 data-toc-skip class="date">2023-11-27</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/stephenslab/poisson.mash.alpha/blob/HEAD/vignettes/intro_poisson_mash.Rmd" class="external-link"><code>vignettes/intro_poisson_mash.Rmd</code></a></small>
       <div class="hidden name"><code>intro_poisson_mash.Rmd</code></div>
@@ -302,105 +302,218 @@ iterations, but in practice we recommend setting
 </div>
 </div>
 <div class="section level2">
-<h2 id="examining-the-results">Examining the results<a class="anchor" aria-label="anchor" href="#examining-the-results"></a>
+<h2 id="examining-the-poisson-mash-results">Examining the Poisson mash results<a class="anchor" aria-label="anchor" href="#examining-the-poisson-mash-results"></a>
 </h2>
-<p>We will next look at the results, which are stored in the
-<code>res</code> object produced by the call to <code>pois_mash</code>.
-Recall that we illustrate how to fit the Poisson mash model using a
-subset of the neutrophils data to save time. Here we load in the Poisson
-mash fit to the entire neutrophils dataset.</p>
+<p>Above, we illustrated the steps involved in analyzing scRNA-seq data
+using Poisson mash. Separately, we analyzed the full scRNA-seq data set
+using <a href="https://github.com/stephenslab/poisson.mash.alpha/blob/main/inst/code/application_neutrophils.R" class="external-link">this
+script</a>, and here we examine the results of this analysis.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">neutrophils_pois_mash_ruv_fit</span><span class="op">)</span></code></pre></div>
-<p>The output contains posterior summaries of the condition-specific DE
-effects relative to the reference condition specified by the user,
-including posterior means and posterior standard deviations of the DE
-effect sizes (log-fold changes) and measures of significance (lfsr), for
-each gene in the dataset. These DE effect posterior summaries are stored
-in the <code>result</code> component.</p>
+<p>The output provides posterior summaries of the condition-specific DE
+effects relative to the reference condition, including posterior means
+and posterior standard deviations of the DE effect sizes (log-fold
+changes), and measures of significance (local false sign rates). These
+posterior quantities are stored in the “result” output. For example,
+this gives the posterior mean estimates of the log-fold changes
+(LFCs):</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># Transform DE effect estimates to the scale of log2 fold change from natural log scale.</span>
-<span class="va">neutrophils_pois_mash_ruv_fit</span><span class="op">$</span><span class="va">result</span><span class="op">$</span><span class="va">PosteriorMean</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span>
-<span class="co">#          Ctrl_2-mean   CCL20-mean    CXCL1-mean    CCL22-mean   CXCL5-mean</span>
-<span class="co"># Mrpl15  -0.034042592 -0.007468183  0.0104375255 -0.0212980437 -0.017696220</span>
-<span class="co"># Lypla1  -0.009057545 -0.002816239 -0.0312773830 -0.0100671020 -0.011641034</span>
-<span class="co"># Tcea1    0.006406279  0.003163708  0.0117792404  0.0112956807  0.007417445</span>
-<span class="co"># Atp6v1h  0.005641873  0.004324441 -0.0009984417  0.0001755186  0.002388297</span>
-<span class="co"># Rb1cc1   0.005531303  0.010590542 -0.0071790326  0.0060939489  0.003342450</span></code></pre></div>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">neutrophils_pois_mash_ruv_fit</span><span class="op">$</span><span class="va">result</span><span class="op">$</span><span class="va">PosteriorMean</span><span class="op">)</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span>
+<span class="co">#                Ctrl_2-mean    CCL20-mean    CXCL1-mean    CCL22-mean</span>
+<span class="co"># Mrpl15        -0.034042592 -0.0074681827  0.0104375255 -0.0212980437</span>
+<span class="co"># Lypla1        -0.009057545 -0.0028162390 -0.0312773830 -0.0100671020</span>
+<span class="co"># Tcea1          0.006406279  0.0031637077  0.0117792404  0.0112956807</span>
+<span class="co"># Atp6v1h        0.005641873  0.0043244408 -0.0009984417  0.0001755186</span>
+<span class="co"># Rb1cc1         0.005531303  0.0105905421 -0.0071790326  0.0060939489</span>
+<span class="co"># 4732440D04Rik -0.008846585 -0.0003553177  0.0248291673 -0.0009278163</span>
+<span class="co">#                 CXCL5-mean   CCL11-mean     CCL4-mean    CCL17-mean</span>
+<span class="co"># Mrpl15        -0.017696220 -0.005062400 -0.0188073088 -0.0004958562</span>
+<span class="co"># Lypla1        -0.011641034 -0.034870283 -0.0052598409 -0.0489983029</span>
+<span class="co"># Tcea1          0.007417445  0.018070010  0.0059066159  0.0251398080</span>
+<span class="co"># Atp6v1h        0.002388297 -0.002812183  0.0002977357 -0.0038973739</span>
+<span class="co"># Rb1cc1         0.003342450 -0.011461863  0.0064281778 -0.0279408869</span>
+<span class="co"># 4732440D04Rik -0.003123874  0.025364909 -0.0059579239  0.0390409658</span>
+<span class="co">#                  CCL5-mean   CXCL13-mean  CXCL10-mean   CXCL9-mean  CXCL12-mean</span>
+<span class="co"># Mrpl15        -0.033427164 -0.0193033143 -0.030417476 -0.022281407 -0.025163326</span>
+<span class="co"># Lypla1        -0.007691913 -0.0085652232 -0.011486987 -0.014891750 -0.008054578</span>
+<span class="co"># Tcea1          0.004426990  0.0103737032  0.013105638  0.017414325  0.006215443</span>
+<span class="co"># Atp6v1h        0.003540437  0.0084019881  0.004709271  0.001339506  0.001860474</span>
+<span class="co"># Rb1cc1         0.006098348  0.0154390774  0.014276063  0.006610999  0.002812130</span>
+<span class="co"># 4732440D04Rik -0.009417124 -0.0001110654 -0.004154084  0.005365928 -0.002993656</span>
+<span class="co">#                 GCSF-mean    MCSF-mean    GMCSF-mean    IFNg-mean    IL10-mean</span>
+<span class="co"># Mrpl15        -0.04762754 -0.011974981 -0.0040743996  0.073542495 -0.019084842</span>
+<span class="co"># Lypla1         0.14384314 -0.003109597 -0.0081087780 -0.039236940 -0.007648764</span>
+<span class="co"># Tcea1         -0.05427278  0.001577959  0.0023373278  0.003621784  0.003729513</span>
+<span class="co"># Atp6v1h       -0.02877024  0.003926684 -0.0009182916  0.019606260  0.002691518</span>
+<span class="co"># Rb1cc1         0.03195692  0.003707192 -0.0001500394 -0.029808303 -0.002084963</span>
+<span class="co"># 4732440D04Rik -0.06384574 -0.007555636 -0.0007171226  0.023251851 -0.009499298</span>
+<span class="co">#                IL12p70-mean   IL17a-mean    IL13-mean    IL15-mean</span>
+<span class="co"># Mrpl15         0.2576041103 -0.001024305  0.011740475  0.035485679</span>
+<span class="co"># Lypla1        -0.0828283220 -0.046523655 -0.009346285 -0.025208920</span>
+<span class="co"># Tcea1         -0.0009465631  0.018992787  0.005639251 -0.002893936</span>
+<span class="co"># Atp6v1h        0.0342083395 -0.001067275 -0.008369830  0.011317109</span>
+<span class="co"># Rb1cc1        -0.1651456352 -0.018245683 -0.009315472 -0.012970846</span>
+<span class="co"># 4732440D04Rik  0.1364570899  0.026939736  0.021427294  0.012409178</span>
+<span class="co">#                  IL17f-mean    IL22-mean   IL18-mean   IL1a-mean     IL2-mean</span>
+<span class="co"># Mrpl15        -0.0214237310 -0.027338931  0.13505580  0.17858759 -0.011638392</span>
+<span class="co"># Lypla1        -0.0262238707 -0.025832683 -0.09694090  0.37605931 -0.013308553</span>
+<span class="co"># Tcea1          0.0160574340  0.018964004  0.01279576 -0.16013889  0.005249033</span>
+<span class="co"># Atp6v1h        0.0051885570  0.009948429  0.04888996 -0.13480913  0.007314477</span>
+<span class="co"># Rb1cc1        -0.0029898176  0.004610991 -0.06709438  0.09961320  0.001127090</span>
+<span class="co"># 4732440D04Rik  0.0001264711 -0.006596828  0.05459626 -0.07111402 -0.008259135</span>
+<span class="co">#                    IL3-mean   IL1b-mean    IL23-mean    IL21-mean    IL33-mean</span>
+<span class="co"># Mrpl15        -0.0009068703  0.05281386 -0.042690753 -0.034675571  0.018658887</span>
+<span class="co"># Lypla1        -0.0082352512  0.31148869 -0.004993754 -0.020986050 -0.034343159</span>
+<span class="co"># Tcea1          0.0041293566 -0.13669710  0.008776216  0.010878092  0.011885645</span>
+<span class="co"># Atp6v1h        0.0044677986 -0.06724345  0.003236710  0.006627147  0.012358900</span>
+<span class="co"># Rb1cc1         0.0056172066  0.07400191  0.007084813  0.005422794 -0.013401797</span>
+<span class="co"># 4732440D04Rik  0.0023447159 -0.11975825 -0.004488205 -0.001061083  0.006579908</span>
+<span class="co">#                  IL25-mean     IL34-mean   IL36a-mean     IL4-mean     IL6-mean</span>
+<span class="co"># Mrpl15        -0.016490274 -0.0164906818 -0.002782744 -0.027822774 -0.030788378</span>
+<span class="co"># Lypla1        -0.017875933  0.0008588503 -0.005382598 -0.011071839 -0.014087099</span>
+<span class="co"># Tcea1          0.008257777 -0.0021607365  0.002050769  0.008573827  0.008767113</span>
+<span class="co"># Atp6v1h        0.001986599 -0.0023217803  0.005815554  0.003513273  0.006532946</span>
+<span class="co"># Rb1cc1        -0.003602535  0.0068418637 -0.000534509  0.017830621  0.008586397</span>
+<span class="co"># 4732440D04Rik -0.002212745 -0.0133139487 -0.005107259 -0.004839267 -0.005515926</span>
+<span class="co">#                   IL5-mean      IL7-mean     IL9-mean    IL11-mean    TGFb-mean</span>
+<span class="co"># Mrpl15        -0.022185494 -0.0158299311 -0.023641709 -0.025434091 -0.050005560</span>
+<span class="co"># Lypla1        -0.007578267 -0.0099514961 -0.013130808 -0.007497674 -0.011780427</span>
+<span class="co"># Tcea1          0.004431804  0.0059533811  0.006840927  0.001427087  0.006641472</span>
+<span class="co"># Atp6v1h        0.002658004  0.0003339911  0.008573222  0.005973927  0.003977395</span>
+<span class="co"># Rb1cc1         0.011690195  0.0080848387  0.001159327  0.005354917  0.008766968</span>
+<span class="co"># 4732440D04Rik -0.002355840 -0.0039932668  0.002081985 -0.008332532 -0.010743094</span>
+<span class="co">#                  CCL2-mean     CCL3-mean    TSLP-mean</span>
+<span class="co"># Mrpl15        -0.034567597 -0.0103474167 -0.039616166</span>
+<span class="co"># Lypla1        -0.027622491 -0.0352499237 -0.013467768</span>
+<span class="co"># Tcea1          0.012298922  0.0173536034  0.009164278</span>
+<span class="co"># Atp6v1h        0.006248766 -0.0006421229  0.003775009</span>
+<span class="co"># Rb1cc1         0.010470586 -0.0140145528 -0.003210554</span>
+<span class="co"># 4732440D04Rik -0.003063816  0.0176087841 -0.010163785</span></code></pre></div>
+<p>TO DO: Explain that these are differences relative to…?</p>
+<p>Here, we divided by <code>log(2)</code> to obtain the log-fold
+changes in the base-2 logarithm, which is the convention in DE analysis.
+(The outputted LFCs are on the natural log-scale.)</p>
+<p>These are the local false sign rates (lfsrs) for these LFC
+estimates:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># Obtain gene-specific, condition-specific lfsr for detecting gene-condition DE effects.</span>
-<span class="va">neutrophils_pois_mash_ruv_fit</span><span class="op">$</span><span class="va">result</span><span class="op">$</span><span class="va">lfsr</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span>
-<span class="co">#         Ctrl_2-mean CCL20-mean CXCL1-mean CCL22-mean CXCL5-mean</span>
-<span class="co"># Mrpl15    0.2527081  0.4012463  0.4501408  0.3236194  0.3458751</span>
-<span class="co"># Lypla1    0.4041496  0.4586630  0.2824110  0.3962331  0.3803850</span>
-<span class="co"># Tcea1     0.4273815  0.4727043  0.3991172  0.3839887  0.4144509</span>
-<span class="co"># Atp6v1h   0.4512667  0.4597141  0.4917574  0.4894398  0.4710016</span>
-<span class="co"># Rb1cc1    0.4402427  0.3958559  0.4170690  0.4337283  0.4628668</span></code></pre></div>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">neutrophils_pois_mash_ruv_fit</span><span class="op">$</span><span class="va">result</span><span class="op">$</span><span class="va">lfsr</span><span class="op">)</span>
+<span class="co">#               Ctrl_2-mean CCL20-mean CXCL1-mean CCL22-mean CXCL5-mean</span>
+<span class="co"># Mrpl15          0.2527081  0.4012463  0.4501408  0.3236194  0.3458751</span>
+<span class="co"># Lypla1          0.4041496  0.4586630  0.2824110  0.3962331  0.3803850</span>
+<span class="co"># Tcea1           0.4273815  0.4727043  0.3991172  0.3839887  0.4144509</span>
+<span class="co"># Atp6v1h         0.4512667  0.4597141  0.4917574  0.4894398  0.4710016</span>
+<span class="co"># Rb1cc1          0.4402427  0.3958559  0.4170690  0.4337283  0.4628668</span>
+<span class="co"># 4732440D04Rik   0.4327946  0.4654769  0.3436250  0.4950268  0.4815622</span>
+<span class="co">#               CCL11-mean CCL4-mean CCL17-mean CCL5-mean CXCL13-mean CXCL10-mean</span>
+<span class="co"># Mrpl15         0.4503198 0.3341797  0.4890418 0.2597855   0.3272724   0.2708464</span>
+<span class="co"># Lypla1         0.2825026 0.4510857  0.2562523 0.4106041   0.3939088   0.3778143</span>
+<span class="co"># Tcea1          0.3573428 0.4453036  0.3363813 0.4379274   0.3983058   0.3799305</span>
+<span class="co"># Atp6v1h        0.4959188 0.4908357  0.4919694 0.4657350   0.4275249   0.4526731</span>
+<span class="co"># Rb1cc1         0.3991688 0.4255101  0.3040819 0.4316898   0.3563062   0.3636811</span>
+<span class="co"># 4732440D04Rik  0.3422911 0.4339455  0.2909048 0.4412258   0.4881681   0.4554252</span>
+<span class="co">#               CXCL9-mean CXCL12-mean GCSF-mean MCSF-mean GMCSF-mean IFNg-mean</span>
+<span class="co"># Mrpl15         0.3140237   0.2992497 0.3862640 0.3833967  0.4622146 0.2401656</span>
+<span class="co"># Lypla1         0.3614019   0.4142332 0.1452817 0.4530279  0.4303208 0.3312796</span>
+<span class="co"># Tcea1          0.3414202   0.4310399 0.3113968 0.4735670  0.4699903 0.4753059</span>
+<span class="co"># Atp6v1h        0.4792271   0.4775559 0.4042329 0.4627960  0.4971617 0.4117819</span>
+<span class="co"># Rb1cc1         0.4318283   0.4606759 0.3334752 0.4614786  0.4997896 0.2825765</span>
+<span class="co"># 4732440D04Rik  0.4638220   0.4692696 0.2762227 0.4438452  0.5003250 0.3659072</span>
+<span class="co">#               IL10-mean IL12p70-mean IL17a-mean IL13-mean IL15-mean IL17f-mean</span>
+<span class="co"># Mrpl15        0.3427273    0.1744947  0.4716441 0.4123012 0.3177474  0.3106887</span>
+<span class="co"># Lypla1        0.4247063    0.3924265  0.2288754 0.4595318 0.3401948  0.2803512</span>
+<span class="co"># Tcea1         0.4475322    0.4999636  0.3517753 0.4708802 0.4989087  0.3444343</span>
+<span class="co"># Atp6v1h       0.4742497    0.4494211  0.4919772 0.4406686 0.4237398  0.4452778</span>
+<span class="co"># Rb1cc1        0.4896823    0.1491159  0.3438041 0.4111042 0.3677096  0.4624288</span>
+<span class="co"># 4732440D04Rik 0.4375540    0.2703745  0.3192068 0.3842615 0.3906055  0.4873929</span>
+<span class="co">#               IL22-mean IL18-mean  IL1a-mean  IL2-mean  IL3-mean  IL1b-mean</span>
+<span class="co"># Mrpl15        0.2840685 0.2496381 0.24094477 0.3844175 0.4771050 0.38724729</span>
+<span class="co"># Lypla1        0.2920991 0.2921420 0.08710416 0.3715688 0.4046607 0.07767338</span>
+<span class="co"># Tcea1         0.3285671 0.4618855 0.23738905 0.4318351 0.4480975 0.22084556</span>
+<span class="co"># Atp6v1h       0.4171052 0.3896886 0.32148386 0.4329320 0.4559605 0.37399802</span>
+<span class="co"># Rb1cc1        0.4562436 0.2469379 0.22706304 0.4864023 0.4489441 0.24520985</span>
+<span class="co"># 4732440D04Rik 0.4636854 0.3521125 0.33522628 0.4499985 0.4692893 0.21622228</span>
+<span class="co">#               IL23-mean IL21-mean IL33-mean IL25-mean IL34-mean IL36a-mean</span>
+<span class="co"># Mrpl15        0.2345988 0.2530787 0.3984001 0.3534076 0.3745368  0.4676462</span>
+<span class="co"># Lypla1        0.4452661 0.3332269 0.2552843 0.3322697 0.4987002  0.4289364</span>
+<span class="co"># Tcea1         0.4187680 0.3950206 0.3904403 0.4001663 0.4996069  0.4686664</span>
+<span class="co"># Atp6v1h       0.4749808 0.4440192 0.4012765 0.4721274 0.4913212  0.4443712</span>
+<span class="co"># Rb1cc1        0.4226749 0.4423292 0.3448722 0.4573188 0.4255365  0.4920261</span>
+<span class="co"># 4732440D04Rik 0.4573653 0.4841981 0.4080683 0.4918012 0.4243858  0.4715751</span>
+<span class="co">#                IL4-mean  IL6-mean  IL5-mean  IL7-mean  IL9-mean IL11-mean</span>
+<span class="co"># Mrpl15        0.2829187 0.2736145 0.3188849 0.3494112 0.3107035 0.3113687</span>
+<span class="co"># Lypla1        0.3931525 0.3754091 0.4300739 0.3971178 0.3768724 0.4279538</span>
+<span class="co"># Tcea1         0.4204489 0.4090162 0.4498226 0.4286115 0.4221452 0.4548560</span>
+<span class="co"># Atp6v1h       0.4638306 0.4447204 0.4752750 0.4886532 0.4290461 0.4639057</span>
+<span class="co"># Rb1cc1        0.3258085 0.4049600 0.3723182 0.4111479 0.4849725 0.4372864</span>
+<span class="co"># 4732440D04Rik 0.4380127 0.4538717 0.4691893 0.4712914 0.4881865 0.4532162</span>
+<span class="co">#               TGFb-mean CCL2-mean CCL3-mean TSLP-mean</span>
+<span class="co"># Mrpl15        0.2069668 0.2603012 0.4277883 0.2431181</span>
+<span class="co"># Lypla1        0.4058294 0.2903189 0.2679369 0.3818475</span>
+<span class="co"># Tcea1         0.4355067 0.3798035 0.3524328 0.4064448</span>
+<span class="co"># Atp6v1h       0.4692016 0.4438632 0.4932315 0.4665161</span>
+<span class="co"># Rb1cc1        0.4064475 0.4005704 0.3684423 0.4793225</span>
+<span class="co"># 4732440D04Rik 0.4158820 0.4869377 0.3579516 0.4369963</span></code></pre></div>
 <p>We can find the number of DE genes, which are defined as genes having
 <em>lfsr</em> less than <span class="math inline">\(\alpha\)</span> in
 at least one condition, where <span class="math inline">\(\alpha\)</span> is a threshold specified by the
-user (e.g., 0.05).</p>
+user (e.g., 0.05):</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">lfsr</span> <span class="op">&lt;-</span> <span class="va">neutrophils_pois_mash_ruv_fit</span><span class="op">$</span><span class="va">result</span><span class="op">$</span><span class="va">lfsr</span>
-<span class="co"># Get the indices of identified DE genes.</span>
 <span class="va">min.lfsr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">lfsr</span>,<span class="fl">1</span>,<span class="va">min</span><span class="op">)</span>
-<span class="co"># Order genes by significance based on mininum lfsr across conditions.</span>
-<span class="va">rows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">min.lfsr</span><span class="op">)</span>
-<span class="va">lfsr</span> <span class="op">&lt;-</span> <span class="va">lfsr</span><span class="op">[</span><span class="va">rows</span>,<span class="op">]</span>
-<span class="va">min.lfsr</span> <span class="op">&lt;-</span> <span class="va">min.lfsr</span><span class="op">[</span><span class="va">rows</span><span class="op">]</span>
-<span class="va">de.genes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">min.lfsr</span> <span class="op">&lt;</span> <span class="fl">0.05</span><span class="op">)</span>
-<span class="co"># Get the total number of DE genes.</span>
-<span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">de.genes</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">min.lfsr</span> <span class="op">&lt;</span> <span class="fl">0.05</span><span class="op">)</span>
 <span class="co"># [1] 2636</span></code></pre></div>
-<p>The model parameter estimates are stored in the
-<code>pois.mash.fit</code> component. In particular, let us look at
-<span class="math inline">\(\pi_{kl}\)</span>, the estimates of the
-mixture proportions for combinations of different scaling coefficients
-<span class="math inline">\(w_l\)</span> and prior covariance matrices
-<span class="math inline">\(U_k\)</span>:</p>
+<p>The estimates of other model parameters are stored in the
+<code>pois.mash.fit</code> component. The the estimated mixture
+proportions <span class="math inline">\(\pi_{kl}\)</span> for
+combinations of different scaling coefficients <span class="math inline">\(w_l\)</span> and prior covariance matrices <span class="math inline">\(U_k\)</span> tell us which sharing patterns were
+most prominent in the data:</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/pkg/pheatmap/man/pheatmap.html" class="external-link">pheatmap</a></span><span class="op">(</span><span class="va">neutrophils_pois_mash_ruv_fit</span><span class="op">$</span><span class="va">pois.mash.fit</span><span class="op">$</span><span class="va">pi</span>, cluster_rows<span class="op">=</span><span class="cn">FALSE</span>, cluster_cols<span class="op">=</span><span class="cn">FALSE</span>, fontsize_row<span class="op">=</span><span class="fl">6</span>, fontsize_col<span class="op">=</span><span class="fl">6</span>, main<span class="op">=</span><span class="st">"Proportion estimates of prior covariance matrices"</span><span class="op">)</span></code></pre></div>
-<p><img src="intro_poisson_mash_files/figure-html/mixture-proportion-1.png" width="875" style="display: block; margin: auto;"></p>
-<p>The data-driven covariance matrix “tPCA” has by far the largest
-proportion estimate (91%; summed over all scaling coefficients). We plot
-the correlation heatmap for this covariance matrix, which captures the
-most frequent pattern of sharing of DE effects across cytokine
-treatments in the neutrophils data. For space reason, here we present
-the correlation heatmap only for selected conditions.</p>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/pkg/pheatmap/man/pheatmap.html" class="external-link">pheatmap</a></span><span class="op">(</span><span class="va">neutrophils_pois_mash_ruv_fit</span><span class="op">$</span><span class="va">pois.mash.fit</span><span class="op">$</span><span class="va">pi</span>,
+         cluster_rows <span class="op">=</span> <span class="cn">FALSE</span>,cluster_cols <span class="op">=</span> <span class="cn">FALSE</span>,fontsize_row <span class="op">=</span> <span class="fl">6</span>,
+         fontsize_col <span class="op">=</span> <span class="fl">6</span>,main <span class="op">=</span> <span class="st">""</span><span class="op">)</span></code></pre></div>
+<p><img src="intro_poisson_mash_files/figure-html/mixture-proportions-1.png" width="360" style="display: block; margin: auto;"></p>
+<p>The “tPCA” covariance matrix has by far the largest mixture weight
+(91% when summed over all scaling coefficients, i.e., over columns in
+this plot).</p>
+<p>We plot the correlation heatmap for this covariance matrix, which
+captures the most frequent pattern of sharing of DE effects across
+cytokine treatments in the neutrophils data. For space reason, here we
+present the correlation heatmap only for selected conditions.</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">condition_colors</span><span class="op">)</span>
-<span class="va">U</span> <span class="op">&lt;-</span> <span class="va">neutrophils_pois_mash_ruv_fit</span><span class="op">$</span><span class="va">pois.mash.fit</span><span class="op">$</span><span class="va">Ulist</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>
+<span class="va">U</span> <span class="op">&lt;-</span> <span class="va">neutrophils_pois_mash_ruv_fit</span><span class="op">$</span><span class="va">pois.mash.fit</span><span class="op">$</span><span class="va">Ulist</span><span class="op">$</span><span class="va">tPCA</span>
 <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">U</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">neutrophils_pois_mash_ruv_fit</span><span class="op">$</span><span class="va">pois.mash.fit</span><span class="op">$</span><span class="va">mu</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">U</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">neutrophils_pois_mash_ruv_fit</span><span class="op">$</span><span class="va">pois.mash.fit</span><span class="op">$</span><span class="va">mu</span><span class="op">)</span>
-<span class="va">idx.trts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/match.html" class="external-link">match</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">condition_colors</span><span class="op">)</span>,<span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">neutrophils_pois_mash_ruv_fit</span><span class="op">$</span><span class="va">pois.mash.fit</span><span class="op">$</span><span class="va">mu</span><span class="op">)</span><span class="op">)</span>
+<span class="va">idx.trts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/match.html" class="external-link">match</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">condition_colors</span><span class="op">)</span>,
+                  <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">neutrophils_pois_mash_ruv_fit</span><span class="op">$</span><span class="va">pois.mash.fit</span><span class="op">$</span><span class="va">mu</span><span class="op">)</span><span class="op">)</span>
 <span class="va">corr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cov2cor</a></span><span class="op">(</span><span class="va">U</span><span class="op">[</span><span class="va">idx.trts</span>,<span class="va">idx.trts</span><span class="op">]</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/pkg/pheatmap/man/pheatmap.html" class="external-link">pheatmap</a></span><span class="op">(</span><span class="va">corr</span>,cluster_rows <span class="op">=</span> <span class="cn">FALSE</span>,cluster_cols <span class="op">=</span> <span class="cn">FALSE</span>,angle_col <span class="op">=</span> <span class="fl">90</span>,
-         fontsize <span class="op">=</span> <span class="fl">8</span>,main <span class="op">=</span> <span class="st">"Correlation matrix for\nthe major prior covariance (weight = 91%)"</span><span class="op">)</span></code></pre></div>
+         fontsize <span class="op">=</span> <span class="fl">7</span>,main <span class="op">=</span> <span class="st">""</span><span class="op">)</span></code></pre></div>
 <p><img src="intro_poisson_mash_files/figure-html/plot-sharing-pattern-1.png" width="480" style="display: block; margin: auto;"></p>
 <p>This correlation heatmap suggests strong sharing of DE effects among
-two groups of cytokines (1) IL-1<span class="math inline">\(\alpha\)</span>, IL-1<span class="math inline">\(\beta\)</span>, G-CSF and (2) IL-12 p70, IFN-<span class="math inline">\(\gamma\)</span>, IL-18, IL-15, IL-33. We then plot
-the log-fold changes for a few DE genes that either show effect sharing
-among (1) or (2), where the reference condition is the mean across all
+two groups of cytokines: (1) IL-1<span class="math inline">\(\alpha\)</span>, IL-1<span class="math inline">\(\beta\)</span>, G-CSF and (2) IL-12 p70, IFN-<span class="math inline">\(\gamma\)</span>, IL-18, IL-15, IL-33. We then plot
+the LFCs for a few DE genes that either show effect sharing among (1) or
+(2), where the reference condition is the mean across all
 conditions.</p>
+<p>Plot a few DE genes that show effect sharing among the first group of
+cytokines (taken from Figure 7 in our paper):</p>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co">### define the color map for LFC</span>
-<span class="va">cols</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/grDevices/colorRamp.html" class="external-link">colorRampPalette</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"blue"</span>,<span class="st">"white"</span>,<span class="st">"red"</span><span class="op">)</span><span class="op">)</span><span class="op">(</span><span class="fl">99</span><span class="op">)</span>
+<code class="sourceCode R"><span class="va">cols</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/grDevices/colorRamp.html" class="external-link">colorRampPalette</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"blue"</span>,<span class="st">"white"</span>,<span class="st">"red"</span><span class="op">)</span><span class="op">)</span><span class="op">(</span><span class="fl">99</span><span class="op">)</span>
 <span class="va">brks</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">10</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">10</span><span class="op">)</span>, length<span class="op">=</span><span class="fl">100</span><span class="op">)</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span>
-
-<span class="co">### plot a few DE genes that show effect sharing among the first group of cytokines (taken from Figure 7 in our paper)</span>
 <span class="va">genes1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Prok2"</span>, <span class="st">"Nos2"</span>, <span class="st">"Teddm3"</span>, <span class="st">"Lipg"</span>, <span class="st">"Saa3"</span>, <span class="st">"Wfdc17"</span>, <span class="st">"Cd38"</span>, <span class="st">"Ggt1"</span>, <span class="st">"Dpep2"</span>, <span class="st">"Mmp19"</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/pkg/pheatmap/man/pheatmap.html" class="external-link">pheatmap</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">neutrophils_pois_mash_ruv_fit</span><span class="op">$</span><span class="va">result</span><span class="op">$</span><span class="va">PosteriorMean</span><span class="op">[</span><span class="va">genes1</span>, <span class="va">idx.trts</span><span class="op">]</span><span class="op">)</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span>, cluster_rows <span class="op">=</span> <span class="cn">FALSE</span>, cluster_cols <span class="op">=</span> <span class="cn">FALSE</span>, color <span class="op">=</span> <span class="va">cols</span>, breaks <span class="op">=</span> <span class="va">brks</span>, angle_col <span class="op">=</span> <span class="fl">90</span>, main <span class="op">=</span> <span class="st">""</span><span class="op">)</span></code></pre></div>
-<p><img src="intro_poisson_mash_files/figure-html/plot-lfc-1.png" width="480" style="display: block; margin: auto;"></p>
+<span class="fu"><a href="https://rdrr.io/pkg/pheatmap/man/pheatmap.html" class="external-link">pheatmap</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">neutrophils_pois_mash_ruv_fit</span><span class="op">$</span><span class="va">result</span><span class="op">$</span><span class="va">PosteriorMean</span><span class="op">[</span><span class="va">genes1</span>, <span class="va">idx.trts</span><span class="op">]</span><span class="op">)</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span>, cluster_rows <span class="op">=</span> <span class="cn">FALSE</span>, cluster_cols <span class="op">=</span> <span class="cn">FALSE</span>, color <span class="op">=</span> <span class="va">cols</span>, breaks <span class="op">=</span> <span class="va">brks</span>, angle_col <span class="op">=</span> <span class="fl">90</span>, fontsize <span class="op">=</span> <span class="fl">7</span>, main <span class="op">=</span> <span class="st">""</span><span class="op">)</span></code></pre></div>
+<p><img src="intro_poisson_mash_files/figure-html/plot-lfc-1-1.png" width="300" style="display: block; margin: auto;"></p>
+<p>Plot a few DE genes that show effect sharing among the second group
+of cytokines (taken from Figure 7 in our paper):</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
-<code class="sourceCode R">
-<span class="co">### plot a few DE genes that show effect sharing among the second group of cytokines (taken from Figure 7 in our paper)</span>
-<span class="va">genes2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Gbp2"</span>, <span class="st">"Gbp3"</span>, <span class="st">"Gbp4"</span>, <span class="st">"Gbp5"</span>, <span class="st">"Ifi47"</span>, <span class="st">"Ifit2"</span>, <span class="st">"Ifit3"</span>, <span class="st">"Socs1"</span>, <span class="st">"Tgtp2"</span>, <span class="st">"Zbp1"</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/pkg/pheatmap/man/pheatmap.html" class="external-link">pheatmap</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">neutrophils_pois_mash_ruv_fit</span><span class="op">$</span><span class="va">result</span><span class="op">$</span><span class="va">PosteriorMean</span><span class="op">[</span><span class="va">genes2</span>, <span class="va">idx.trts</span><span class="op">]</span><span class="op">)</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span>, cluster_rows <span class="op">=</span> <span class="cn">FALSE</span>, cluster_cols <span class="op">=</span> <span class="cn">FALSE</span>, color <span class="op">=</span> <span class="va">cols</span>, breaks <span class="op">=</span> <span class="va">brks</span>, angle_col <span class="op">=</span> <span class="fl">90</span>, main <span class="op">=</span> <span class="st">""</span><span class="op">)</span></code></pre></div>
-<p><img src="intro_poisson_mash_files/figure-html/plot-lfc-2.png" width="480" style="display: block; margin: auto;"></p>
+<code class="sourceCode R"><span class="va">genes2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Gbp2"</span>, <span class="st">"Gbp3"</span>, <span class="st">"Gbp4"</span>, <span class="st">"Gbp5"</span>, <span class="st">"Ifi47"</span>, <span class="st">"Ifit2"</span>, <span class="st">"Ifit3"</span>, <span class="st">"Socs1"</span>, <span class="st">"Tgtp2"</span>, <span class="st">"Zbp1"</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/pkg/pheatmap/man/pheatmap.html" class="external-link">pheatmap</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">neutrophils_pois_mash_ruv_fit</span><span class="op">$</span><span class="va">result</span><span class="op">$</span><span class="va">PosteriorMean</span><span class="op">[</span><span class="va">genes2</span>, <span class="va">idx.trts</span><span class="op">]</span><span class="op">)</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span>, cluster_rows <span class="op">=</span> <span class="cn">FALSE</span>, cluster_cols <span class="op">=</span> <span class="cn">FALSE</span>, color <span class="op">=</span> <span class="va">cols</span>, breaks <span class="op">=</span> <span class="va">brks</span>, angle_col <span class="op">=</span> <span class="fl">90</span>, fontsize <span class="op">=</span> <span class="fl">7</span>, main <span class="op">=</span> <span class="st">""</span><span class="op">)</span></code></pre></div>
+<p><img src="intro_poisson_mash_files/figure-html/plot-lfc-2-1.png" width="300" style="display: block; margin: auto;"></p>
 <div class="section level3">
 <h3 id="session-info">Session info<a class="anchor" aria-label="anchor" href="#session-info"></a>
 </h3>
 <p>This is the version of R and the packages that were used to generate
-these results.</p>
+these results:</p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span>
 <span class="co"># R version 3.6.2 (2019-12-12)</span>
