@@ -22,18 +22,19 @@ Overview
 --------
 
 This vignette illustrates how to use
-[Poisson multivariate adaptive shrinkage][paper] to analyze a data
-set. Poisson mash was developed for multi-condition differential
-expression analysis with single-cell RNA-sequencing (scRNA-seq) data in
-which gene expression is measured in many (e.g., dozens) of different
+[Poisson multivariate adaptive shrinkage ("Poisson mash")][paper] to
+analyze single-cell RNA-sequencing (scRNA-seq) data. Poisson mash was
+developed for *multi-condition* differential expression analysis with
+scRNA-seq data in which gene expression is measured in many different
 conditions. The aim is to detect which genes are differentially
 expressed (DE) and to estimate expression differences (log-fold
 changes) among multiple conditions. This approach makes use of the
 multivariate adaptive shrinkage ([mash][mash]) prior.
 
-We illustrate this approach by analyzing scRNA-seq data for learning
-about the effects of cytokine stimulation on gene expression.
-We will work through the Poisson mash analysis step-by-step.
+We illustrate Poisson mash by analyzing a scRNA-seq data set that was
+developed in order to learn about the effects of cytokine stimulation
+on gene expression. We will work through the Poisson mash analysis of
+this dataa set step-by-step.
 
 First, we load the R packages needed to run the analysis.
 
@@ -52,8 +53,8 @@ results are reproducible.
 set.seed(1)
 ```
 
-Create a data object for Poisson mash analysis
-----------------------------------------------
+Create a data object for Poisson mash
+-------------------------------------
 
 To run Poisson mash, you need to provide: (1) a matrix of UMI counts,
 stored as a $J \times N$ matrix $Y$ with entries $y_{ji}$, where $i =
@@ -62,8 +63,8 @@ vector of length $n$ in which the $i^{\mathrm{th}}$ element gives the
 condition label of cell $i$. We denote the number of conditions by
 $R$. ($R$ should be much larger than 2.)
 
-The original data contained counts for 13,362 cells, 8,543 genes and
-45 conditions (44 cytokine treatments plus one control). For the this
+The original data set contained counts for 13,362 cells, 8,543 genes
+and 45 conditions (44 cytokine treatments plus one control). For this
 vignette, we will use subset (1,936 cells, 2,158 genes, 12
 conditions), but later we will inspect the results obtained from
 running Poisson mash on the full data set.
@@ -80,8 +81,7 @@ table(conditions)
 After loading in the data, we compute the cell-specific size factors.
 This can be done in various ways. The simplest option is to take the
 sum of the counts $y_{ji}$ across all genes in each cell $i$. Here
-we take a deconvolution-based approach implemented in the
-**scran** package:
+we take a deconvolution-based approach implemented in scran:
 
 ```{r calculate-size-factor}
 clusters  <- quickCluster(Y)
@@ -90,7 +90,7 @@ names(si) <- colnames(Y)
 ```
 
 Next, we create a data object for poisson mash analysis using the
-function `pois_mash_set_data`.
+function `pois_mash_set_data()`.
 
 ```{r create-data-object}
 dat <- pois_mash_set_data(Y,conditions,si)
@@ -106,7 +106,7 @@ to perform a DE analysis across multiple treatment conditions, jointly
 for multiple cell types. In this case, $M$ is the number of cell
 types, and $R$ represents the total number of combinations of
 treatment conditions and cell types. Please refer to the documentation
-for the function `pois_mash_set_data` to see how to do this.)
+for the function `pois_mash_set_data()` to see how to do this.)
 
 Estimate latent factors capturing unwanted variation
 ----------------------------------------------------
@@ -115,7 +115,7 @@ Unwanted variation present in the data can induce dependence among
 gene-wise tests and confound the DE analysis. In some cases, the
 confounding variables are known, such as when these capture batch
 effects. More often, the unwanted variation is due to unmeasured
-factors. Here we estimating the confounding variables using
+factors. Here we estimate the unmeasured confounding variables using
 [glmpca][glmpca].
 
 ```{r ruv, results="hide", message=FALSE, warning=FALSE}
@@ -157,10 +157,10 @@ p(\beta_j; \pi, U) =
 $$
 In the mash prior, $w_l$ is a pre-specified grid of scaling
 coefficients, spanning from very small to very large to capture the
-full range of possible DE effect sizes; $U_k$ is a set of covariance
-matrices, each of which capture a different pattern of covariation
-across conditions; $\pi_{kl}$ are mixture proportions that are
-estimated from the data during model fitting.
+full range of possible DE effect sizes; each $U_k$ is a covariance
+matrix that captures a different pattern of covariation across
+conditions; $\pi_{kl}$ are the mixture proportions that are estimated
+from the data during model fitting.
 
 To use Poisson mash, you need to specify these prior covariance
 matrices. This may include "canonical" covariance matrices that
@@ -170,7 +170,7 @@ arbitrary patterns of DE among conditions.
 
 For the canonical matrices, here we consider the matrices capturing
 condition-specific effects for each of the $R$ conditions. These
-matrices can be generated using the `pois_cov_canonical` function:
+matrices can be generated using the `pois_cov_canonical()` function:
 
 ```{r canonical}
 ulist.c <- pois_cov_canonical(dat)
@@ -179,11 +179,11 @@ ulist.c <- pois_cov_canonical(dat)
 Data-driven covariance matrices are estimated using a three-step
 process: (1) initialization, (2) refinement, (3) diagonal entry
 modification. The initialization phase is implemented by the function
-`pois_cov_init`. To estimate data-driven covariance matrices, we only
+`pois_cov_init()`. To estimate the data-driven covariance matrices, we only
 use the subset of genes containing "strong signals"; that is, the
 genes that are considered DE by a multinomial goodness-of-fit test.
 The selection of genes with strong signals is implicitly performed
-by the call to `pois_cov_init`, e.g., setting `cutoff = 3` selects
+by the call to `pois_cov_init()`, e.g., setting `cutoff = 3` selects
 the genes for which the magnitude of z-score (inverted from the 
 p-value of the goodness-of-fit test) exceeds 3. 
 
@@ -193,15 +193,12 @@ res.pca <- pois_cov_init(dat,cutoff = 3)
 
 The refinement phase refines the initial estimates of data-driven
 covariance matrices using the Extreme Eeconvolution (ED) algorithm,
-and is implemented by the function `pois_cov_ed`. As in the
+and is implemented by the function `pois_cov_ed()`. As in the
 initialization phase, only data from the genes with strong signals are
-used. It should be noted that only data-driven covariance matrices
+used. It should be noted that only the data-driven covariance matrices
 need to be refined, so they need to be distinguished from the
-canonical covariance matrices in the `pois_cov_ed` call using the
-argument `ulist.dd`. For the purposes of this vignette, we just ran
-`pois_cov_ed` for 10 iterations, but we recommend performing more
-iterations when analyzing your own data (the default number of
-iterations is 500).
+canonical covariance matrices in the `pois_cov_ed()` call using the
+argument `ulist.dd`. 
 
 ```{r cov-ed, results="hide"}
 R <- ncol(dat$X)
@@ -217,6 +214,11 @@ fit.ed <- pois_cov_ed(dat,subset = res.pca$subset,Ulist = res.pca$Ulist,
 					  Fuv = Fuv,verbose = TRUE,init = prefit,
 					  control = list(maxiter = 10))
 ```
+
+For the purposes of this vignette, we just ran
+`pois_cov_ed()` for 10 iterations, but we recommend performing more
+iterations when analyzing your own data (the default number of
+iterations is 500).
 
 The modification phase adds a small constant $\epsilon^2$ (e.g.,
 0.01) to the diagonal entries of the estimated data-driven covariance
@@ -235,7 +237,7 @@ H <- length(Ulist)
 for(h in 1:H){
   Uh <- Ulist[[h]]
   Uh <- Uh/max(diag(Uh))
-  Ulist[[h]] <- Uh + 1e-2*diag(R)
+  Ulist[[h]] <- Uh + 0.01*diag(R)
 }
 
 # add epsilon2*I to each rank-1 data-driven prior covariance matrix
@@ -243,16 +245,16 @@ for(h in 1:H){
 G <- length(fit.ed$ulist)
 epsilon2.G <- rep(1e-8, G)
 names(epsilon2.G) <- names(fit.ed$ulist)
-epsilon2.G[ulist.dd] <- 1e-2
+epsilon2.G[ulist.dd] <- 0.01
 ```
 
 ### Step 3: Fit the Poisson mash model
 
 Now we are ready to fit the Poisson mash model to data from all genes,
-which is implemented by the function `pois_mash`.
+which is implemented by the function `pois_mash()`.
 
 By default, differences in expression are measured relative to the
-mean across all conditions. To  change this, see the `pois_mash` input
+mean across all conditions. To  change this, see the `pois_mash()` input
 arguments `C` and `res.colnames`.
 
 ```{r fit-model, results="hide"}
@@ -263,7 +265,7 @@ res <- pois_mash(data = dat,Ulist = Ulist,ulist = fit.ed$ulist,
 				 control = list(maxiter = 10,nc = 2)) 
 ```
 
-For this vignette, we ran `pois_mash` for only 10 iterations, but 
+For this vignette, we ran `pois_mash()` for only 10 iterations, but 
 in practice we recommend setting `maxiter = 100`, or perhaps more.
 
 # Examining the Poisson mash results
