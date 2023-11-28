@@ -59,7 +59,7 @@ Create a data object for Poisson mash
 To run Poisson mash, you need to provide: (1) a matrix of UMI counts,
 stored as a $J \times N$ matrix $Y$ with entries $y_{ji}$, where $i =
 1, \dots,N$ indexes cells and $j=1,\dots,J$ indexes genes; and (2) a
-vector of length $n$ in which the $i^{\mathrm{th}}$ element gives the
+vector of length $N$ in which the $i^{\mathrm{th}}$ element gives the
 condition label of cell $i$. We denote the number of conditions by
 $R$. ($R$ should be much larger than 2.)
 
@@ -278,7 +278,7 @@ and here we examine the results of this analysis on the full data.
 data(neutrophils_pois_mash_ruv_fit)
 ```
 
-The Poisson masah result provides posterior summaries of the
+The Poisson mash result provides posterior summaries of the
 condition-specific DE effects relative to the reference condition,
 including: posterior means and posterior standard deviations of the
 log-fold changes (LFCs); and measures of significance for the LFCs

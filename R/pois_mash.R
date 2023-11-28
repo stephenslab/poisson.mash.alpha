@@ -58,12 +58,14 @@
 #' @param posterior_samples The number of samples to be drawn from the
 #' posterior distribution of each effect.
 #' 
-#' @param median_deviations Logical scalar indicating whether to calculate
-#' posterior summary of deviation of condition-specific effects 
-#' relative to the median over all conditions.
+#' @param median_deviations Logical scalar indicating whether to also
+#'   calculate posterior summary of deviation of condition-specific
+#'   effects relative to the median over all conditions. (In addition to
+#'   computing differences relative to the mean across all conditions.)
 #' 
-#' @param seed a random number seed to use when sampling from the posteriors.
-#' It is used when \code{posterior_samples > 0} or \code{median_deviations = TRUE}. 
+#' @param seed a random number seed to use when sampling from the
+#'   posteriors.  It is used when \code{posterior_samples > 0} or
+#'   \code{median_deviations = TRUE}.
 #'
 #' @param init List of initial values for model parameters, such as an
 #'   output from \code{\link{pois_mash_prefit}}).
